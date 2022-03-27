@@ -80,13 +80,13 @@ analytics:
 
 # Site Author
 author:
-  name             : "Gabriel Peixoto de Carvalho"
-  avatar           : "profile.png"
-  bio              : "Your biography for the left-hand sidebar"
-  location         : "KOganei - Tokyo - Japan"
+  name             :  "Gabriel Peixoto de Carvalho"
+  avatar           :  "profile.png"
+  bio              :  "Your biography for the left-hand sidebar"
+  location         :  "Koganei - Tokyo - Japan"
   employer         :
-  pubmed           : # I dont have pubmed
-  googlescholar    : "https://scholar.google.com/citations?user=pe7hmi4AAAAJ&hl=en"
+  pubmed           :  # I dont have pubmed
+  googlescholar    :  "https://scholar.google.com/citations?user=pe7hmi4AAAAJ&hl=en"
   email            :
   researchgate     :  # example: "https://www.researchgate.net/profile/yourprofile"
   uri              :
