@@ -14,3 +14,6 @@ test('slugify trims leading and trailing separators', () => {
 test('slugify handles an empty result', () => {
   assert.equal(slugify('!!!'), '');
 });
+test('slugify transliterates accented Latin characters', () => {
+  assert.equal(slugify('Café com Pão'), 'cafe-com-pao');
+});
