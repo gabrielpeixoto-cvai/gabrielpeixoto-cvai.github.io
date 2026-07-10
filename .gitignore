@@ -1,2 +1,11 @@
 _site/
 
+# Astro / Node
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+# Playwright
+test-results/
+playwright-report/
