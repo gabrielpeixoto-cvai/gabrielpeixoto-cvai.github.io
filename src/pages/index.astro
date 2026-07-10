@@ -1,0 +1,9 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../site.config';
+---
+<BaseLayout>
+  <h1>{siteConfig.author.name}</h1>
+  <p>{siteConfig.author.bio}</p>
+  <p style="color:var(--muted);">{siteConfig.author.location}</p>
+</BaseLayout>

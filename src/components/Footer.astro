@@ -1,0 +1,11 @@
+---
+import { siteConfig } from '../site.config';
+---
+<footer style="border-top:1px solid var(--border);color:var(--muted);">
+  <div style="max-width:var(--max-width);margin:0 auto;padding:1.5rem 1rem;display:flex;gap:1rem;flex-wrap:wrap;">
+    <span>© {siteConfig.name}</span>
+    <div style="margin-left:auto;display:flex;gap:1rem;">
+      {siteConfig.social.map((s) => <a href={s.href} rel="me noopener">{s.label}</a>)}
+    </div>
+  </div>
+</footer>
