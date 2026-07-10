@@ -1,4 +1,5 @@
 import { slugify } from './slug.mjs';
+import { yamlEscape } from './yaml.mjs';
 
 export function parseBibtex(input) {
   const s = String(input);
@@ -76,13 +77,12 @@ export function bibEntryToPublication(entry) {
   const slug = slugify(title) || slugify(entry.key) || 'untitled';
   const relPath = `src/content/publications/${iso}-${slug}.md`;
 
-  const esc = (v) => v.replace(/"/g, '\\"');
   const fm = [
-    `title: "${esc(title)}"`,
+    `title: "${yamlEscape(title)}"`,
     `date: ${iso}`,
-    `venue: "${esc(venue)}"`,
+    `venue: "${yamlEscape(venue)}"`,
   ];
-  if (paperurl) fm.push(`paperurl: "${esc(paperurl)}"`);
+  if (paperurl) fm.push(`paperurl: "${yamlEscape(paperurl)}"`);
   fm.push('citation: ""');
   fm.push('bibtex: |');
   const contents = `---\n${fm.join('\n')}\n${indentBlock(reconstructBibtex(entry), '  ')}\n---\n\nAdd an abstract here.\n`;

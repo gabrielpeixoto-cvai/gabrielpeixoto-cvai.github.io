@@ -1,4 +1,5 @@
 import { slugify } from './slug.mjs';
+import { yamlEscape } from './yaml.mjs';
 
 export const TYPES = {
   post: { collection: 'blog', dated: true },
@@ -16,7 +17,7 @@ function isoDate(date) {
 // Front-matter body per type. Optional URL fields (paperurl, link) are OMITTED
 // on purpose: empty strings fail the schema's z.string().url().
 function frontMatter(type, title, iso) {
-  const t = `title: "${title.replace(/"/g, '\\"')}"`;
+  const t = `title: "${yamlEscape(title)}"`;
   switch (type) {
     case 'post':
     case 'note':
