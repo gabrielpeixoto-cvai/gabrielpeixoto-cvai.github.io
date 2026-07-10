@@ -10,7 +10,8 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "playwright test",
-    "test:unit": "node --test scripts/"
+    "test:unit": "node --test scripts/",
+    "new": "node scripts/new.mjs"
   },
   "dependencies": {
     "astro": "^5.0.0",
