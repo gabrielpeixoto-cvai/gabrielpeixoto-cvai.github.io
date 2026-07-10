@@ -19,7 +19,6 @@ export const siteConfig = {
   ] as SocialLink[],
   nav: [
     { label: 'Publications', href: '/publications/' },
-    { label: 'CV', href: '/cv/' },
   ] as NavItem[],
 };
 

@@ -6,7 +6,7 @@ import PublicationCard from '../../components/PublicationCard.astro';
 const pubs = (await getCollection('publications'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 ---
-<BaseLayout title="Publications">
+<BaseLayout title="Publications" description="Publications by Gabriel Peixoto de Carvalho.">
   <h1>Publications</h1>
   {pubs.map((p) => (
     <PublicationCard
