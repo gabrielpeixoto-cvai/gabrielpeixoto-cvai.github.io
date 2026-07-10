@@ -14,7 +14,7 @@ const { Content } = await render(entry);
   <article>
     <h1>{entry.data.title}</h1>
     {entry.data.image && <img src={entry.data.image} alt={entry.data.title} />}
-    {entry.data.link && <p><a href={entry.data.link}>Project link</a></p>}
+    {entry.data.link && <p><a href={entry.data.link} target="_blank" rel="noopener noreferrer">Project link</a></p>}
     <Content />
   </article>
 </BaseLayout>
