@@ -9,7 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:unit": "node --test scripts/"
   },
   "dependencies": {
     "astro": "^5.0.0",
