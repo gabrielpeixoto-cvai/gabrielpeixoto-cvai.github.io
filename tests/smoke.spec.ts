@@ -14,3 +14,13 @@ test('theme toggle switches data-theme', async ({ page }) => {
   const after = await html.getAttribute('data-theme');
   expect(after).not.toBe(before);
 });
+
+test('publications list shows migrated entries and links to detail', async ({ page }) => {
+  await page.goto('/publications/');
+  await expect(page.getByRole('heading', { name: 'Publications' })).toBeVisible();
+  const handArch = page.getByRole('link', { name: /HandArch/ });
+  await expect(handArch).toBeVisible();
+  await handArch.click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('HandArch');
+  await expect(page.getByRole('heading', { name: 'Citation' })).toBeVisible();
+});

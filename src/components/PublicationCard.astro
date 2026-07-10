@@ -1,0 +1,10 @@
+---
+interface Props { title: string; venue: string; date: Date; href: string; excerpt?: string; }
+const { title, venue, date, href, excerpt } = Astro.props;
+const year = date.getFullYear();
+---
+<article style="padding:1rem 0;border-bottom:1px solid var(--border);">
+  <a href={href} style="font-weight:600;font-size:1.05rem;">{title}</a>
+  <div style="color:var(--muted);font-size:.9rem;margin-top:.25rem;">{venue} · {year}</div>
+  {excerpt && <p style="margin:.5rem 0 0;">{excerpt}</p>}
+</article>
