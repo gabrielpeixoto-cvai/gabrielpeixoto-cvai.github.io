@@ -1,0 +1,21 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EntryList from '../../components/EntryList.astro';
+
+const portfolio = (await getCollection('portfolio')).sort((a, b) => {
+  const ta = a.data.date ? a.data.date.getTime() : 0;
+  const tb = b.data.date ? b.data.date.getTime() : 0;
+  return tb - ta;
+});
+const items = portfolio.map((p) => ({
+  title: p.data.title,
+  href: `/portfolio/${p.id}/`,
+  meta: p.data.date ? p.data.date.getFullYear().toString() : undefined,
+  excerpt: p.data.excerpt,
+}));
+---
+<BaseLayout title="Portfolio" description="Portfolio of Gabriel Peixoto de Carvalho.">
+  <h1>Portfolio</h1>
+  <EntryList items={items} empty="No portfolio items yet." />
+</BaseLayout>
