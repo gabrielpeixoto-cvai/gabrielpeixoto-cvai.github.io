@@ -19,6 +19,12 @@ export const siteConfig = {
   ] as SocialLink[],
   nav: [
     { label: 'Publications', href: '/publications/' },
+    { label: 'Talks', href: '/talks/' },
+    { label: 'Teaching', href: '/teaching/' },
+    { label: 'Portfolio', href: '/portfolio/' },
+    { label: 'Blog', href: '/blog/' },
+    { label: 'Notes', href: '/notes/' },
+    { label: 'CV', href: '/cv/' },
   ] as NavItem[],
 };
 
