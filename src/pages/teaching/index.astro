@@ -1,0 +1,18 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EntryList from '../../components/EntryList.astro';
+
+const teaching = (await getCollection('teaching'))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const items = teaching.map((t) => ({
+  title: t.data.title,
+  href: `/teaching/${t.id}/`,
+  meta: [t.data.type, t.data.venue, t.data.location, t.data.date.getFullYear()].filter(Boolean).join(' · '),
+  excerpt: t.data.excerpt,
+}));
+---
+<BaseLayout title="Teaching" description="Teaching by Gabriel Peixoto de Carvalho.">
+  <h1>Teaching</h1>
+  <EntryList items={items} empty="No teaching entries yet." />
+</BaseLayout>
