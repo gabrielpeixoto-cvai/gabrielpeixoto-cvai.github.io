@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import EntryList from '../../../components/EntryList.astro';
+import { LOCALES, t } from '../../../i18n/ui.mjs';
+import { localizedEntries, parseEntryId } from '../../../i18n/content.mjs';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+const { locale } = Astro.params as { locale: string };
+const portfolio = localizedEntries(await getCollection('portfolio'), locale).sort((a, b) => {
+  const ta = a.data.date ? a.data.date.getTime() : 0;
+  const tb = b.data.date ? b.data.date.getTime() : 0;
+  return tb - ta;
+});
+const items = portfolio.map((p) => ({
+  title: p.data.title,
+  href: `/${locale}/portfolio/${parseEntryId(p.id).baseId}/`,
+  meta: p.data.date ? p.data.date.getFullYear().toString() : undefined,
+  excerpt: p.data.excerpt,
+}));
+---
+<BaseLayout locale={locale} title={t(locale, 'heading.portfolio')} description="Portfolio of Gabriel Peixoto de Carvalho.">
+  <h1>{t(locale, 'heading.portfolio')}</h1>
+  <EntryList items={items} empty={t(locale, 'empty.portfolio')} />
+</BaseLayout>

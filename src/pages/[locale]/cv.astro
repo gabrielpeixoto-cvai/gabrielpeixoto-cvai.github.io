@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteConfig } from '../../site.config';
+import { LOCALES, t } from '../../i18n/ui.mjs';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+const { locale } = Astro.params as { locale: string };
+---
+<BaseLayout locale={locale} title={t(locale, 'nav.cv')} description={`Curriculum vitae of ${siteConfig.author.name}.`}>
+  <h1>{t(locale, 'heading.cv')}</h1>
+  <p style="color:var(--muted);">{t(locale, 'cv.intro')}</p>
+
+  <h2>{t(locale, 'cv.education')}</h2>
+  <ul>
+    <li>Degree, Institution, Year — <em>replace me</em></li>
+  </ul>
+
+  <h2>{t(locale, 'cv.experience')}</h2>
+  <ul>
+    <li>Role, Organization, Year–Year — <em>replace me</em></li>
+  </ul>
+
+  <h2>{t(locale, 'cv.skills')}</h2>
+  <ul>
+    <li><em>Add your skills here</em></li>
+  </ul>
+
+  <h2>{t(locale, 'cv.publications')}</h2>
+  <p>See the <a href={`/${locale}/publications/`}>{t(locale, 'nav.publications')}</a> page.</p>
+
+  <h2>{t(locale, 'cv.service')}</h2>
+  <ul>
+    <li><em>Add service and leadership here</em></li>
+  </ul>
+</BaseLayout>

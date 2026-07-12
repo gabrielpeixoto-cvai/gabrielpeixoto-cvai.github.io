@@ -48,7 +48,7 @@ test('talks list renders the example talk with its venue', async ({ page }) => {
 });
 
 test('cv page renders its sections', async ({ page }) => {
-  await page.goto('/cv/');
+  await page.goto('/en/cv/');
   await expect(page.getByRole('heading', { name: 'Curriculum Vitae', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Education' })).toBeVisible();
 });
@@ -58,7 +58,7 @@ test('every section list page renders its heading', async ({ page }) => {
     ['/en/publications/', 'Publications'],
     ['/en/talks/', 'Talks'],
     ['/en/teaching/', 'Teaching'],
-    ['/portfolio/', 'Portfolio'],
+    ['/en/portfolio/', 'Portfolio'],
     ['/en/blog/', 'Blog'],
     ['/en/notes/', 'Notes'],
   ];
