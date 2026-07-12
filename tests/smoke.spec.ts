@@ -67,3 +67,16 @@ test('every section list page renders its heading', async ({ page }) => {
     await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
   }
 });
+
+test('root redirects to the English homepage', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForURL(/\/en\/?$/);
+  await expect(page.locator('h1')).toContainText('Gabriel Peixoto de Carvalho');
+});
+
+test('each locale homepage renders', async ({ page }) => {
+  for (const path of ['/en/', '/ja/', '/pt-br/']) {
+    await page.goto(path);
+    await expect(page.locator('h1')).toContainText('Gabriel Peixoto de Carvalho');
+  }
+});
