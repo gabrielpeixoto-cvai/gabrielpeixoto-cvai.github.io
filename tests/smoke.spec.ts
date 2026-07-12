@@ -16,7 +16,7 @@ test('theme toggle switches data-theme', async ({ page }) => {
 });
 
 test('publications list shows migrated entries and links to detail', async ({ page }) => {
-  await page.goto('/publications/');
+  await page.goto('/en/publications/');
   await expect(page.getByRole('heading', { name: 'Publications' })).toBeVisible();
   const handArch = page.getByRole('link', { name: /HandArch/ });
   await expect(handArch).toBeVisible();
@@ -55,7 +55,7 @@ test('cv page renders its sections', async ({ page }) => {
 
 test('every section list page renders its heading', async ({ page }) => {
   const sections: [string, string][] = [
-    ['/publications/', 'Publications'],
+    ['/en/publications/', 'Publications'],
     ['/talks/', 'Talks'],
     ['/teaching/', 'Teaching'],
     ['/portfolio/', 'Portfolio'],
@@ -91,4 +91,17 @@ test('the language switcher offers all three locales', async ({ page }) => {
   for (const name of ['EN', '日本語', 'PT-BR']) {
     await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
   }
+});
+
+test('a non-English list falls back to English content', async ({ page }) => {
+  await page.goto('/ja/publications/');
+  await expect(page.getByRole('heading', { name: '論文', level: 1 })).toBeVisible();
+  await expect(page.getByRole('link', { name: /HandArch/ })).toBeVisible();
+});
+
+test('a publication detail page resolves under a locale', async ({ page }) => {
+  await page.goto('/ja/publications/');
+  await page.getByRole('link', { name: /HandArch/ }).click();
+  await expect(page).toHaveURL(/\/ja\/publications\//);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('HandArch');
 });
