@@ -105,3 +105,19 @@ test('a publication detail page resolves under a locale', async ({ page }) => {
   await expect(page).toHaveURL(/\/ja\/publications\//);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('HandArch');
 });
+
+test('every section renders under a non-English locale via fallback', async ({ page }) => {
+  const sections: [string, string][] = [
+    ['/ja/publications/', '論文'],
+    ['/ja/talks/', '講演'],
+    ['/ja/teaching/', '教育'],
+    ['/ja/portfolio/', 'ポートフォリオ'],
+    ['/ja/blog/', 'ブログ'],
+    ['/ja/notes/', 'ノート'],
+    ['/ja/cv/', '履歴書'],
+  ];
+  for (const [path, heading] of sections) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
+  }
+});
