@@ -80,3 +80,15 @@ test('each locale homepage renders', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Gabriel Peixoto de Carvalho');
   }
 });
+
+test('a non-English homepage shows a localized nav label', async ({ page }) => {
+  await page.goto('/ja/');
+  await expect(page.getByRole('link', { name: 'ブログ', exact: true })).toBeVisible();
+});
+
+test('the language switcher offers all three locales', async ({ page }) => {
+  await page.goto('/en/');
+  for (const name of ['EN', '日本語', 'PT-BR']) {
+    await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
+  }
+});

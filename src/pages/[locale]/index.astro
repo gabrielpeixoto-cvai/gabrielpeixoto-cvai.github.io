@@ -1,18 +1,19 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { siteConfig } from '../../site.config';
+import { LOCALES, t } from '../../i18n/ui.mjs';
 
 export function getStaticPaths() {
-  return ['en', 'ja', 'pt-br'].map((locale) => ({ params: { locale } }));
+  return LOCALES.map((locale) => ({ params: { locale } }));
 }
 const { locale } = Astro.params as { locale: string };
 ---
-<BaseLayout>
+<BaseLayout locale={locale}>
   <h1>{siteConfig.author.name}</h1>
   <p>{siteConfig.author.bio}</p>
   <p style="color:var(--muted);">{siteConfig.author.location}</p>
 
-  <h2>About</h2>
+  <h2>{t(locale, 'heading.about')}</h2>
   <p>Replace this with a short introduction about yourself, your research interests, and what you are currently working on.</p>
 
   <p>Browse my <a href={`/${locale}/publications/`}>publications</a>, <a href={`/${locale}/talks/`}>talks</a>, and <a href={`/${locale}/blog/`}>blog</a>.</p>

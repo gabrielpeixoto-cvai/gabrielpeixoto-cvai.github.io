@@ -1,5 +1,5 @@
 export interface SocialLink { label: string; href: string; icon: string; }
-export interface NavItem { label: string; href: string; }
+export interface NavItem { label: string; href: string; key: string; }
 
 export const siteConfig = {
   title: 'Gabriel Peixoto de Carvalho',
@@ -18,13 +18,13 @@ export const siteConfig = {
     { label: 'ORCID', href: 'https://orcid.org/0000-0001-8770-573X', icon: 'orcid' },
   ] as SocialLink[],
   nav: [
-    { label: 'Publications', href: '/publications/' },
-    { label: 'Talks', href: '/talks/' },
-    { label: 'Teaching', href: '/teaching/' },
-    { label: 'Portfolio', href: '/portfolio/' },
-    { label: 'Blog', href: '/blog/' },
-    { label: 'Notes', href: '/notes/' },
-    { label: 'CV', href: '/cv/' },
+    { label: 'Publications', href: '/publications/', key: 'nav.publications' },
+    { label: 'Talks', href: '/talks/', key: 'nav.talks' },
+    { label: 'Teaching', href: '/teaching/', key: 'nav.teaching' },
+    { label: 'Portfolio', href: '/portfolio/', key: 'nav.portfolio' },
+    { label: 'Blog', href: '/blog/', key: 'nav.blog' },
+    { label: 'Notes', href: '/notes/', key: 'nav.notes' },
+    { label: 'CV', href: '/cv/', key: 'nav.cv' },
   ] as NavItem[],
 };
 
