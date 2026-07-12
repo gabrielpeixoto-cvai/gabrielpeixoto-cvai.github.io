@@ -10,7 +10,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "playwright test",
-    "test:unit": "node --test scripts/",
+    "test:unit": "node --test scripts/ src/i18n/",
     "new": "node scripts/new.mjs",
     "import:bib": "node scripts/import-bib.mjs"
   },
