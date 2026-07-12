@@ -42,7 +42,7 @@ test('blog list renders and opens the example post', async ({ page }) => {
 });
 
 test('talks list renders the example talk with its venue', async ({ page }) => {
-  await page.goto('/talks/');
+  await page.goto('/en/talks/');
   await expect(page.getByRole('heading', { name: 'Talks', level: 1 })).toBeVisible();
   await expect(page.getByText('Example Venue')).toBeVisible();
 });
@@ -56,8 +56,8 @@ test('cv page renders its sections', async ({ page }) => {
 test('every section list page renders its heading', async ({ page }) => {
   const sections: [string, string][] = [
     ['/en/publications/', 'Publications'],
-    ['/talks/', 'Talks'],
-    ['/teaching/', 'Teaching'],
+    ['/en/talks/', 'Talks'],
+    ['/en/teaching/', 'Teaching'],
     ['/portfolio/', 'Portfolio'],
     ['/en/blog/', 'Blog'],
     ['/en/notes/', 'Notes'],

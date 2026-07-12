@@ -1,0 +1,24 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import EntryList from '../../../components/EntryList.astro';
+import { LOCALES, t } from '../../../i18n/ui.mjs';
+import { localizedEntries, parseEntryId } from '../../../i18n/content.mjs';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+const { locale } = Astro.params as { locale: string };
+const teaching = localizedEntries(await getCollection('teaching'), locale)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const items = teaching.map((t2) => ({
+  title: t2.data.title,
+  href: `/${locale}/teaching/${parseEntryId(t2.id).baseId}/`,
+  meta: [t2.data.type, t2.data.venue, t2.data.location, t2.data.date.getFullYear()].filter(Boolean).join(' · '),
+  excerpt: t2.data.excerpt,
+}));
+---
+<BaseLayout locale={locale} title={t(locale, 'heading.teaching')} description="Teaching by Gabriel Peixoto de Carvalho.">
+  <h1>{t(locale, 'heading.teaching')}</h1>
+  <EntryList items={items} empty={t(locale, 'empty.teaching')} />
+</BaseLayout>
