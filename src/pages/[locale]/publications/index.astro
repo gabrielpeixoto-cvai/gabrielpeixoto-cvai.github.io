@@ -14,13 +14,17 @@ const pubs = localizedEntries(await getCollection('publications'), locale)
 ---
 <BaseLayout locale={locale} title={t(locale, 'heading.publications')} description="Publications by Gabriel Peixoto de Carvalho.">
   <h1>{t(locale, 'heading.publications')}</h1>
-  {pubs.map((p) => (
-    <PublicationCard
-      title={p.data.title}
-      venue={p.data.venue}
-      date={p.data.date}
-      excerpt={p.data.excerpt}
-      href={`/${locale}/publications/${parseEntryId(p.id).baseId}/`}
-    />
-  ))}
+  {pubs.length === 0 ? (
+    <p style="color:var(--muted);">{t(locale, 'empty.publications')}</p>
+  ) : (
+    pubs.map((p) => (
+      <PublicationCard
+        title={p.data.title}
+        venue={p.data.venue}
+        date={p.data.date}
+        excerpt={p.data.excerpt}
+        href={`/${locale}/publications/${parseEntryId(p.id).baseId}/`}
+      />
+    ))
+  )}
 </BaseLayout>
