@@ -33,7 +33,7 @@ test('nav links to all sections from the homepage', async ({ page }) => {
 });
 
 test('blog list renders and opens the example post', async ({ page }) => {
-  await page.goto('/blog/');
+  await page.goto('/en/blog/');
   await expect(page.getByRole('heading', { name: 'Blog', level: 1 })).toBeVisible();
   const post = page.getByRole('link', { name: /Example blog post/ });
   await expect(post).toBeVisible();
@@ -59,8 +59,8 @@ test('every section list page renders its heading', async ({ page }) => {
     ['/talks/', 'Talks'],
     ['/teaching/', 'Teaching'],
     ['/portfolio/', 'Portfolio'],
-    ['/blog/', 'Blog'],
-    ['/notes/', 'Notes'],
+    ['/en/blog/', 'Blog'],
+    ['/en/notes/', 'Notes'],
   ];
   for (const [path, heading] of sections) {
     await page.goto(path);

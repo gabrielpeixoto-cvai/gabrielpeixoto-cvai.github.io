@@ -1,0 +1,24 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import EntryList from '../../../components/EntryList.astro';
+import { LOCALES, t } from '../../../i18n/ui.mjs';
+import { localizedEntries, parseEntryId } from '../../../i18n/content.mjs';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+const { locale } = Astro.params as { locale: string };
+const notes = localizedEntries(await getCollection('notes'), locale)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const items = notes.map((n) => ({
+  title: n.data.title,
+  href: `/${locale}/notes/${parseEntryId(n.id).baseId}/`,
+  meta: n.data.date.getFullYear().toString(),
+  excerpt: n.data.excerpt,
+}));
+---
+<BaseLayout locale={locale} title={t(locale, 'heading.notes')} description="Short-form notes by Gabriel Peixoto de Carvalho.">
+  <h1>{t(locale, 'heading.notes')}</h1>
+  <EntryList items={items} empty={t(locale, 'empty.notes')} />
+</BaseLayout>

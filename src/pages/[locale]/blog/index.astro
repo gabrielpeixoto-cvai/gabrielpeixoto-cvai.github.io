@@ -1,0 +1,24 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import EntryList from '../../../components/EntryList.astro';
+import { LOCALES, t } from '../../../i18n/ui.mjs';
+import { localizedEntries, parseEntryId } from '../../../i18n/content.mjs';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+const { locale } = Astro.params as { locale: string };
+const posts = localizedEntries(await getCollection('blog'), locale)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const items = posts.map((p) => ({
+  title: p.data.title,
+  href: `/${locale}/blog/${parseEntryId(p.id).baseId}/`,
+  meta: p.data.date.getFullYear().toString(),
+  excerpt: p.data.excerpt,
+}));
+---
+<BaseLayout locale={locale} title={t(locale, 'heading.blog')} description="Blog posts by Gabriel Peixoto de Carvalho.">
+  <h1>{t(locale, 'heading.blog')}</h1>
+  <EntryList items={items} empty={t(locale, 'empty.blog')} />
+</BaseLayout>
