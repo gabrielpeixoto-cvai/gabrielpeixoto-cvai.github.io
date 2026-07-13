@@ -121,3 +121,12 @@ test('every section renders under a non-English locale via fallback', async ({ p
     await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
   }
 });
+
+test('a page emits hreflang alternates for all three locales plus x-default', async ({ page }) => {
+  await page.goto('/en/publications/');
+  await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(4);
+  for (const hreflang of ['en', 'ja', 'pt-BR']) {
+    await expect(page.locator(`link[rel="alternate"][hreflang="${hreflang}"]`)).toHaveCount(1);
+  }
+  await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveCount(1);
+});

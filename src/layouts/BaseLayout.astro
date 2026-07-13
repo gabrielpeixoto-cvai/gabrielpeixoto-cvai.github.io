@@ -9,6 +9,15 @@ const { title, description, locale } = Astro.props;
 const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
 const desc = description ?? siteConfig.description;
 const htmlLang = locale === 'pt-br' ? 'pt-BR' : locale;
+
+// hreflang alternates: swap the leading /<locale>/ segment, same as LanguageSwitcher.
+const HREFLANG = { en: 'en', ja: 'ja', 'pt-br': 'pt-BR' };
+const tail = Astro.url.pathname.replace(/^\/(en|ja|pt-br)(?=\/|$)/, '');
+const alternates = Object.entries(HREFLANG).map(([loc, hreflang]) => ({
+  hreflang,
+  href: new URL(`/${loc}${tail || '/'}`, siteConfig.url).href,
+}));
+const xDefaultHref = new URL(`/en${tail || '/'}`, siteConfig.url).href;
 ---
 <!doctype html>
 <html lang={htmlLang}>
@@ -18,6 +27,10 @@ const htmlLang = locale === 'pt-br' ? 'pt-BR' : locale;
     <title>{pageTitle}</title>
     <meta name="description" content={desc} />
     <link rel="canonical" href={new URL(Astro.url.pathname, siteConfig.url)} />
+    {alternates.map((alt) => (
+      <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={xDefaultHref} />
     <script is:inline>
       const t = localStorage.getItem('theme');
       if (t) document.documentElement.setAttribute('data-theme', t);

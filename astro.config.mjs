@@ -11,6 +11,14 @@ export default defineConfig({
     routing: { prefixDefaultLocale: true },
   },
   redirects: { '/': '/en/' },
-  integrations: [mdx(), sitemap()],
+  integrations: [
+    mdx(),
+    sitemap({
+      i18n: {
+        defaultLocale: 'en',
+        locales: { en: 'en', ja: 'ja', 'pt-br': 'pt-BR' },
+      },
+    }),
+  ],
   build: { format: 'directory' },
 });
