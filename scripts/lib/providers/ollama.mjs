@@ -45,7 +45,12 @@ export function makeOllamaTranslate({
     if (!res.ok) {
       throw new Error(`Ollama returned HTTP ${res.status} from ${host}/api/chat.`);
     }
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch (err) {
+      throw new Error(`Ollama returned a non-JSON body from ${host}/api/chat: ${err.message}.`);
+    }
     const content = data?.message?.content;
     if (typeof content !== 'string') {
       throw new Error(`Unexpected Ollama response shape from ${host}/api/chat (missing message.content).`);

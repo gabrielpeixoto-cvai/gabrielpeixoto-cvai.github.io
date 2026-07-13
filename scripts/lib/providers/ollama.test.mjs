@@ -67,3 +67,9 @@ test('wraps a network error with a helpful message', async () => {
   const translate = makeOllamaTranslate({ host: 'http://localhost:11434', fetchImpl });
   await assert.rejects(translate('x', 'ja'), /Ollama request to http:\/\/localhost:11434 failed/);
 });
+
+test('throws a clear error when the response body is not valid JSON', async () => {
+  const fetchImpl = async () => ({ ok: true, status: 200, json: async () => { throw new Error('Unexpected token'); } });
+  const translate = makeOllamaTranslate({ fetchImpl });
+  await assert.rejects(translate('x', 'ja'), /non-JSON body/);
+});
