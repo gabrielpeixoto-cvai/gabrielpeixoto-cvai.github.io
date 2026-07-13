@@ -11,6 +11,9 @@ export default defineConfig({
     routing: { prefixDefaultLocale: true },
   },
   redirects: {
+    // NOTE: keys mirror the exact historical Jekyll URLs — the publication permalinks have
+    // NO trailing slash (a Jekyll front-matter override) while section pages DO. This mixed
+    // style is deliberate; do not "normalize" it or the old citation links will 404.
     '/': '/en/',
     // Old Jekyll publication permalinks → new Astro publication pages (load-bearing for citations).
     '/publication/2017-10-17-sibgrapi2017-pose-recognition-gabriel': '/en/publications/2017-10-17-sibgrapi-pose-recognition/',
