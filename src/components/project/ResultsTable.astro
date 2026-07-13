@@ -1,0 +1,27 @@
+---
+interface Props { headers: (string | number)[]; rows: (string | number)[][]; caption?: string; }
+const { headers, rows, caption } = Astro.props;
+---
+<div style="overflow-x:auto;margin:1.5rem 0;">
+  <table style="border-collapse:collapse;width:100%;min-width:20rem;">
+    {caption && (
+      <caption style="caption-side:top;color:var(--muted);font-size:.9rem;margin-bottom:.5rem;text-align:left;">{caption}</caption>
+    )}
+    <thead>
+      <tr>
+        {headers.map((h) => (
+          <th style="border-bottom:2px solid var(--border);padding:.5rem .75rem;text-align:left;">{h}</th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row) => (
+        <tr>
+          {row.map((cell) => (
+            <td style="border-bottom:1px solid var(--border);padding:.5rem .75rem;">{cell}</td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
