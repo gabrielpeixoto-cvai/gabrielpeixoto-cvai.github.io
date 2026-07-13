@@ -10,7 +10,20 @@ export default defineConfig({
     locales: ['en', 'ja', 'pt-br'],
     routing: { prefixDefaultLocale: true },
   },
-  redirects: { '/': '/en/' },
+  redirects: {
+    '/': '/en/',
+    // Old Jekyll publication permalinks → new Astro publication pages (load-bearing for citations).
+    '/publication/2017-10-17-sibgrapi2017-pose-recognition-gabriel': '/en/publications/2017-10-17-sibgrapi-pose-recognition/',
+    '/publication/2021-11-22-wvc2021-handarch-gabriel': '/en/publications/2021-11-22-wvc-handarch/',
+    // Old Jekyll section landing pages → their English Astro equivalents.
+    '/publications/': '/en/publications/',
+    '/talks/': '/en/talks/',
+    '/teaching/': '/en/teaching/',
+    '/portfolio/': '/en/portfolio/',
+    '/cv/': '/en/cv/',
+    '/year-archive/': '/en/blog/',
+    '/markdown/': '/en/',
+  },
   integrations: [
     mdx(),
     sitemap({

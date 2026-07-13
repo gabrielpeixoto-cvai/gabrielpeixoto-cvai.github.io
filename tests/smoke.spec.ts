@@ -152,3 +152,15 @@ test('projects render under a non-English locale via fallback', async ({ page })
   await expect(page.getByRole('heading', { name: 'プロジェクト', level: 1 })).toBeVisible();
   await expect(page.getByRole('link', { name: /Example Project/ })).toBeVisible();
 });
+
+test('an old Jekyll publication URL redirects to the new Astro page', async ({ page }) => {
+  await page.goto('/publication/2021-11-22-wvc2021-handarch-gabriel');
+  await page.waitForURL(/\/en\/publications\/2021-11-22-wvc-handarch\/?$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('HandArch');
+});
+
+test('an old Jekyll section URL redirects to the English section', async ({ page }) => {
+  await page.goto('/publications/');
+  await page.waitForURL(/\/en\/publications\/?$/);
+  await expect(page.getByRole('heading', { name: 'Publications', level: 1 })).toBeVisible();
+});
