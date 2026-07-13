@@ -46,6 +46,12 @@ translated file's front matter to protect a hand-edit — the pipeline will repo
 `skip (locked)` and never overwrite it. This is the main quality safeguard, since
 local-MT output is a notch below a cloud LLM (most noticeably for Japanese).
 
+The cache key is the English source content only — not the provider or model.
+So switching `--model` and re-running reports `skip (cached)` and will not
+re-translate; edit the source or delete the target `.ja.md`/`.pt-br.md` files to
+force a re-run. Never leave `--provider mock` output on disk before a real run —
+a later run would treat the `[ja] …` stub as cached.
+
 ### Running the Ollama engine (hands-on)
 
     docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
