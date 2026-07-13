@@ -18,6 +18,9 @@ paper's repository — can produce a working page from it alone**.
   `/<locale>/projects/omniguide/`.
 - **The file must be `.mdx`** (the collection globs `**/*.mdx` only). A `.md`
   file in this directory is ignored.
+- **Keep project files flat** (`src/content/projects/<slug>.mdx`, not in a
+  subdirectory). The component import paths in this guide assume a flat file;
+  a nested file would need a different relative import depth.
 
 ## 2. Fill the front matter
 
@@ -111,6 +114,10 @@ as a `<video controls>` (use `poster` for a still frame).
 <TeaserVideo src="https://www.youtube.com/watch?v=XXXXXXXXXXX" />
 <TeaserVideo src="/files/demo.mp4" poster="/images/demo-poster.png" />
 ```
+
+> Note: for a YouTube `watch?v=…` URL the `v` parameter must come first;
+> otherwise use a `https://youtu.be/<id>` short link. Anything unrecognized
+> falls back to an HTML `<video>` element.
 
 `Authors`, `LinkRow`, and `BibTeX` are used by the layout from the front matter;
 you normally do not import them by hand.
