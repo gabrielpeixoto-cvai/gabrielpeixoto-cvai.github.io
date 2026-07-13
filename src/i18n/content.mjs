@@ -58,3 +58,20 @@ export function findLocalized(allEntries, baseId, locale) {
   }
   return match ?? base;
 }
+
+/**
+ * De-duplicated base ids of entries whose locale is English (the publishable set).
+ * An orphan translation (e.g. `foo.ja.md` with no `foo.md`) contributes no base id,
+ * so detail pages never emit a route for it and `findLocalized(...)` never misses.
+ * @template {{ id: string }} T
+ * @param {T[]} allEntries
+ * @returns {string[]}
+ */
+export function englishBaseIds(allEntries) {
+  const ids = [];
+  for (const entry of allEntries) {
+    const { baseId, locale } = parseEntryId(entry.id);
+    if (locale === 'en') ids.push(baseId);
+  }
+  return [...new Set(ids)];
+}

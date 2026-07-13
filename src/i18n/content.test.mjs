@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseEntryId, localizedEntries, findLocalized } from './content.mjs';
+import { parseEntryId, localizedEntries, findLocalized, englishBaseIds } from './content.mjs';
 
 test('parseEntryId: no suffix is English', () => {
   assert.deepEqual(parseEntryId('foo'), { baseId: 'foo', locale: 'en' });
@@ -52,4 +52,21 @@ test('findLocalized: falls back to the en base when the locale is missing', () =
 });
 test('findLocalized: returns undefined for an unknown base id', () => {
   assert.equal(findLocalized(entries, 'nope', 'en'), undefined);
+});
+
+const withOrphan = [
+  { id: 'a', data: {} },
+  { id: 'a.ja', data: {} },
+  { id: 'b', data: {} },
+  { id: 'orphan.ja', data: {} }, // a translation with no English base
+];
+
+test('englishBaseIds returns only base ids that have an English file', () => {
+  assert.deepEqual(englishBaseIds(withOrphan).sort(), ['a', 'b']);
+});
+test('englishBaseIds excludes an orphan translation with no English base', () => {
+  assert.ok(!englishBaseIds(withOrphan).includes('orphan'));
+});
+test('englishBaseIds de-duplicates ids that have several locales', () => {
+  assert.deepEqual(englishBaseIds([{ id: 'x' }, { id: 'x.ja' }, { id: 'x.pt-br' }]), ['x']);
 });
