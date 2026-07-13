@@ -130,3 +130,25 @@ test('a page emits hreflang alternates for all three locales plus x-default', as
   }
   await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveCount(1);
 });
+
+test('projects list shows the example project', async ({ page }) => {
+  await page.goto('/en/projects/');
+  await expect(page.getByRole('heading', { name: 'Projects', level: 1 })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Example Project/ })).toBeVisible();
+});
+
+test('a project detail page renders its hero, table, and links', async ({ page }) => {
+  await page.goto('/en/projects/');
+  await page.getByRole('link', { name: /Example Project/ }).click();
+  await expect(page).toHaveURL(/\/en\/projects\/example-project\//);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Example Project');
+  await expect(page.getByText('Ada Lovelace')).toBeVisible();
+  await expect(page.getByText('0.947')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Paper', exact: true })).toBeVisible();
+});
+
+test('projects render under a non-English locale via fallback', async ({ page }) => {
+  await page.goto('/ja/projects/');
+  await expect(page.getByRole('heading', { name: 'プロジェクト', level: 1 })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Example Project/ })).toBeVisible();
+});
