@@ -73,7 +73,15 @@ async function main() {
     for (const locale of args.locales) {
       const dest = translatedPath(src, locale);
       const translatedExists = existsSync(dest);
-      const translatedData = translatedExists ? matter(readFileSync(dest, 'utf8')).data : undefined;
+      let translatedData;
+      if (translatedExists) {
+        try {
+          translatedData = matter(readFileSync(dest, 'utf8')).data;
+        } catch (err) {
+          console.error(`Skipping ${rel(dest)}: could not parse its front matter (${err.message}). Fix or delete the file.`);
+          continue;
+        }
+      }
       const action = decideAction({ translatedExists, translatedData, sourceHash: hash });
       counts[action]++;
 
