@@ -65,4 +65,29 @@ const portfolio = defineCollection({
   }),
 });
 
-export const collections = { publications, blog, notes, talks, teaching, portfolio };
+const projects = defineCollection({
+  loader: glob({ pattern: '**/*.mdx', base: './src/content/projects' }),
+  schema: z.object({
+    title: z.string(),
+    authors: z.array(
+      z.object({
+        name: z.string(),
+        affiliation: z.string().optional(),
+        url: z.string().url().optional(),
+      }),
+    ),
+    venue: z.string().optional(),
+    date: z.coerce.date(),
+    teaserImage: z.string().optional(),
+    teaserVideo: z.string().optional(),
+    links: z
+      .array(z.object({ label: z.string(), href: z.string().url() }))
+      .optional(),
+    excerpt: z.string().optional(),
+    bibtex: z.string().optional(),
+    translationHash: z.string().optional(),
+    translationLocked: z.boolean().optional(),
+  }),
+});
+
+export const collections = { publications, blog, notes, talks, teaching, portfolio, projects };

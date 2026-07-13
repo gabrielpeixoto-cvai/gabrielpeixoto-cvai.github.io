@@ -22,6 +22,7 @@ export const siteConfig = {
     { label: 'Talks', href: '/talks/', key: 'nav.talks' },
     { label: 'Teaching', href: '/teaching/', key: 'nav.teaching' },
     { label: 'Portfolio', href: '/portfolio/', key: 'nav.portfolio' },
+    { label: 'Projects', href: '/projects/', key: 'nav.projects' },
     { label: 'Blog', href: '/blog/', key: 'nav.blog' },
     { label: 'Notes', href: '/notes/', key: 'nav.notes' },
     { label: 'CV', href: '/cv/', key: 'nav.cv' },
