@@ -4,7 +4,7 @@ interface Props { links: LinkItem[]; }
 const { links } = Astro.props;
 ---
 {links.length > 0 && (
-  <nav style="display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;margin:1rem 0;">
+  <nav aria-label="Project links" style="display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;margin:1rem 0;">
     {links.map((l) => (
       <a
         href={l.href}
