@@ -11,6 +11,8 @@ const publications = defineCollection({
     citation: z.string(),
     excerpt: z.string().optional(),
     bibtex: z.string().optional(),
+    translationHash: z.string().optional(),
+    translationLocked: z.boolean().optional(),
   }),
 });
 
@@ -19,6 +21,8 @@ const postLike = z.object({
   date: z.coerce.date(),
   tags: z.array(z.string()).optional(),
   excerpt: z.string().optional(),
+  translationHash: z.string().optional(),
+  translationLocked: z.boolean().optional(),
 });
 
 const eventLike = z.object({
@@ -28,6 +32,8 @@ const eventLike = z.object({
   venue: z.string().optional(),
   location: z.string().optional(),
   excerpt: z.string().optional(),
+  translationHash: z.string().optional(),
+  translationLocked: z.boolean().optional(),
 });
 
 const blog = defineCollection({
@@ -54,6 +60,8 @@ const portfolio = defineCollection({
     excerpt: z.string().optional(),
     image: z.string().optional(),
     link: z.string().url().optional(),
+    translationHash: z.string().optional(),
+    translationLocked: z.boolean().optional(),
   }),
 });
 

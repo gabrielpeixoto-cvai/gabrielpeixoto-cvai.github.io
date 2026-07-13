@@ -14,7 +14,8 @@
     "test": "playwright test",
     "test:unit": "node --test scripts/ src/i18n/",
     "new": "node scripts/new.mjs",
-    "import:bib": "node scripts/import-bib.mjs"
+    "import:bib": "node scripts/import-bib.mjs",
+    "translate": "node scripts/translate.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.0.0",
