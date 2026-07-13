@@ -1,0 +1,45 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Authors from '../components/project/Authors.astro';
+import LinkRow from '../components/project/LinkRow.astro';
+import TeaserVideo from '../components/project/TeaserVideo.astro';
+import Figure from '../components/project/Figure.astro';
+import BibTeX from '../components/project/BibTeX.astro';
+
+interface Author { name: string; affiliation?: string; url?: string; }
+interface LinkItem { label: string; href: string; }
+interface ProjectData {
+  title: string;
+  authors: Author[];
+  venue?: string;
+  date: Date;
+  teaserImage?: string;
+  teaserVideo?: string;
+  links?: LinkItem[];
+  excerpt?: string;
+  bibtex?: string;
+}
+interface Props { data: ProjectData; locale: string; }
+const { data, locale } = Astro.props;
+const venueLine = [data.venue, data.date.getFullYear()].filter(Boolean).join(' · ');
+---
+<BaseLayout locale={locale} title={data.title} description={data.excerpt}>
+  <article style="max-width:var(--max-width);margin:0 auto;">
+    <header style="text-align:center;margin-bottom:2rem;">
+      <h1 style="margin-bottom:.5rem;">{data.title}</h1>
+      <Authors authors={data.authors} />
+      {venueLine && <p style="color:var(--muted);margin:.5rem 0;">{venueLine}</p>}
+      {data.teaserVideo
+        ? <TeaserVideo src={data.teaserVideo} poster={data.teaserImage} />
+        : data.teaserImage && <Figure src={data.teaserImage} alt={data.title} />}
+      <LinkRow links={data.links ?? []} />
+    </header>
+    <slot />
+    {data.bibtex && (
+      <section style="margin-top:2.5rem;">
+        <h2>BibTeX</h2>
+        <BibTeX entry={data.bibtex} />
+      </section>
+    )}
+  </article>
+</BaseLayout>
