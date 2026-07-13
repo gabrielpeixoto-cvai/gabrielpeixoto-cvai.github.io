@@ -26,6 +26,29 @@ export function decideAction({ translatedExists, translatedData, sourceHash }) {
 }
 
 /**
+ * Strip a single wrapping code fence some models add around their whole answer
+ * (```` ```markdown … ``` ````). Only strips when the first and last non-blank
+ * lines are a bare/markdown opening fence and a closing fence — internal code
+ * blocks are untouched.
+ * @param {string} text
+ * @returns {string}
+ */
+export function stripCodeFence(text) {
+  const lines = String(text).split('\n');
+  let start = 0;
+  let end = lines.length - 1;
+  while (start < lines.length && lines[start].trim() === '') start++;
+  while (end >= 0 && lines[end].trim() === '') end--;
+  if (start >= end) return text;
+  const open = lines[start].trim();
+  const close = lines[end].trim();
+  if (/^```(markdown|md)?$/.test(open) && close === '```') {
+    return lines.slice(start + 1, end).join('\n');
+  }
+  return text;
+}
+
+/**
  * Build a translated Markdown file from an English source.
  *
  * ONLY `title`, `excerpt`, and the Markdown body are translated. Every other
@@ -50,7 +73,7 @@ export async function buildTranslatedFile(sourceRaw, targetLang, translateFn, so
   // gray-matter preserves the blank line conventionally left between the
   // closing `---` and the body, so trim it before handing text to the
   // provider (avoids feeding stray boundary whitespace into translation).
-  const body = await translateFn(parsed.content.trim(), targetLang);
+  const body = stripCodeFence(await translateFn(parsed.content.trim(), targetLang));
 
   data.translationHash = sourceHash;
   return matter.stringify(body, data);

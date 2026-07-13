@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sourceHash, decideAction } from './translate-core.mjs';
+import { sourceHash, decideAction, stripCodeFence } from './translate-core.mjs';
 import matter from 'gray-matter';
 import { buildTranslatedFile } from './translate-core.mjs';
 import { translate as mockTranslate } from './providers/mock.mjs';
@@ -100,4 +100,18 @@ test('buildTranslatedFile copies an empty excerpt verbatim (does not translate i
   const src = `---\ntitle: "T"\ndate: 2026-01-01\nexcerpt: ""\n---\n\nBody.\n`;
   const parsed = matter(await buildTranslatedFile(src, 'ja', mockTranslate, 'H'));
   assert.equal(parsed.data.excerpt, '');
+});
+
+test('stripCodeFence removes a wrapping ```markdown fence', () => {
+  assert.equal(stripCodeFence('```markdown\n# Title\n\nBody.\n```'), '# Title\n\nBody.');
+});
+test('stripCodeFence removes a wrapping bare fence', () => {
+  assert.equal(stripCodeFence('```\nHello\n```'), 'Hello');
+});
+test('stripCodeFence leaves unfenced text unchanged', () => {
+  assert.equal(stripCodeFence('# Title\n\nBody.'), '# Title\n\nBody.');
+});
+test('stripCodeFence leaves an internal code block untouched', () => {
+  const s = 'Intro.\n\n```python\nprint(1)\n```\n\nOutro.';
+  assert.equal(stripCodeFence(s), s);
 });
