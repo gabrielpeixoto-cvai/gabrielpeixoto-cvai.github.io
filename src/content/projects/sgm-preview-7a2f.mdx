@@ -1,0 +1,407 @@
+---
+title: "Safe Generative Motion in Dynamic Environments"
+authors:
+  - name: "Anonymous Authors"
+venue: "IEEE Robotics and Automation Letters (under review)"
+date: 2026-07-13
+excerpt: "A safety framework that augments frozen generative motion policies with whole-arm collision avoidance via a unified control barrier function, reaching 63.8% safe task completion at zero penetration on a dynamic-obstacle manipulation benchmark."
+bibtex: |
+  @article{anonymous2026safegenmotion,
+    title   = {Safe Generative Motion in Dynamic Environments: Multi-Link Collision Avoidance with Model Predictive Control and Control Barrier Functions},
+    author  = {Anonymous Authors},
+    journal = {IEEE Robotics and Automation Letters (under review)},
+    year    = {2026}
+  }
+unlisted: true
+passwordHash: "776c70cce5302064413863545d37054368890f88b455354b16eba846e3935b3a"
+---
+
+import VideoCompare from '../../components/project/VideoCompare.astro';
+import VideoGrid from '../../components/project/VideoGrid.astro';
+import Figure from '../../components/project/Figure.astro';
+import ResultsTable from '../../components/project/ResultsTable.astro';
+import Tabs from '../../components/project/Tabs.astro';
+import Tab from '../../components/project/Tab.astro';
+
+export const dynamicScenes = ["dyn_armlink_v1","dyn_armlink_v1_slow","dyn_armlink_v2","dyn_armlink_v2_slow","dyn_carry_deflect_v2","dyn_carry_deflect_v2_slow","dyn_pregrasp_wait_v2","dyn_pregrasp_wait_v2_slow","elbow_carry_stress","elbow_carry_stress_slow","t8s2_handup_then_away","t8s2_handup_then_away_slow","upper_arm_carry_stress","upper_arm_carry_stress_slow","wrist_carry_stress","wrist_carry_stress_slow"];
+
+export const goldSilverScenes = ["paper_gold_01","paper_gold_02","paper_gold_03","paper_gold_04","paper_gold_05","paper_gold_06","paper_gold_07","paper_gold_08","paper_gold_09","paper_gold_10","paper_gold_11","paper_silver_01","paper_silver_02","paper_silver_03","paper_silver_04","paper_silver_05","paper_silver_06","paper_silver_07","paper_silver_08","paper_silver_09","paper_silver_10","paper_silver_11"];
+
+export const Gallery = ({ scenes }) => (
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr));gap:1.25rem;margin:1.25rem 0;">
+    {scenes.map((s) => (
+      <figure style="margin:0;">
+        <img src={`/projects/sgm-preview-7a2f/figures/${s}_placement.webp`} alt={`Placement composite for the ${s} scene`} loading="lazy" data-zoomable style="width:100%;height:auto;border-radius:8px;border:1px solid var(--border);" />
+        <figcaption style="color:var(--muted);font-size:.8rem;margin-top:.35rem;word-break:break-word;">{s}</figcaption>
+      </figure>
+    ))}
+  </div>
+);
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="Identical scene: the frozen generator drives its elbow into the moving obstacle while the filter reroutes the whole arm and still completes the task."
+/>
+
+## Abstract
+
+Generative motion policies, from diffusion planners to vision-language-action models, enable robots to perform complex manipulation tasks from demonstrations but lack safety guarantees in dynamic environments with novel or moving obstacles. We present a safety framework that augments frozen generative policies with whole-arm collision avoidance through a unified control barrier function formulation. The framework supports both guided sampling during generation and model predictive control filtering during execution. These capabilities avoid moving obstacles without modifying the underlying generative model or assuming a specific robot embodiment. Unlike existing methods that restrict safety to the robot tip or rely on reactive braking, our approach anticipates obstacle motion and reroutes the whole arm while preserving task progress wherever feasible. Experiments with diffusion policies and flow-matching policies across multiple robot platforms show improved safe task completion over representative baselines, with the model predictive control filter the strongest configuration at 63.8% safe task completion.
+
+## Method
+
+<Figure
+  src="/projects/sgm-preview-7a2f/figures/elbow_carry_stress_placement.webp"
+  alt="Start/finish placement composite for the elbow_carry_stress scene, showing the obstacle path and the frozen-generator versus filter end-effector traces"
+  caption="Start and finish composite for one scene, across three cameras, with swept-motion traces: magenta marks the obstacle path, orange the frozen-generator end-effector trace, cyan the filter end-effector trace. The paper's exact reroute-vs-collision sequence figure is not included in this preview package; this placement composite is shown instead as an honest stand-in."
+/>
+
+The safety layer wraps a **frozen** generative motion policy and enforces whole-arm collision avoidance at execution time, without retraining. It is **generator-agnostic**: one interface wraps a diffusion planner, a flow-matching model, a Diffusion Policy, and a pi0.5 vision-language-action policy. It is **robot-agnostic**: one parametric forward-kinematics and capsule model instantiates the Franka Panda, UR5e, KUKA IIWA, and Kinova Gen3 from a per-robot description.
+
+The robot and the obstacles are over-approximated by **capsules** (a segment plus a radius). The signed clearance `d(q)` is the exact closest-point capsule-to-capsule distance over all robot-obstacle pairs, and the barrier is the margin-shifted clearance `h(q) = d(q) - r_safe`. A conservative capsule radius makes a positive capsule clearance certify a positive mesh clearance. Because the decision input is the joint velocity and `q_{k+1} = q_k + qdot * dt`, the barrier has relative degree one, so a **first-order discrete control barrier function** is well posed and sufficient.
+
+One CBF specification is applied at three points along the generation-to-execution axis:
+
+- **Guidance** at generation time, shaping the sample against the obstacle by the barrier gradient.
+- **Filter** at execution time, a model-predictive controller that re-solves a hard, state-feedback problem against the live joint state and the predicted (constant-velocity) obstacle at every tick.
+- **Hybrid**, guidance then filter.
+
+Only the execution-time filter repairs the command against the live state and the predicted obstacle, so it is the placement that yields a hard guarantee independent of how the plan was produced.
+
+<Tabs tabs={[
+  { id: "main", label: "Main results" },
+  { id: "ablations", label: "Ablations" },
+  { id: "perception", label: "Perception" },
+  { id: "crossembod", label: "Cross-embodiment" },
+  { id: "safelibero", label: "SafeLIBERO" },
+  { id: "scenes", label: "Scenes" },
+]}>
+
+<Tab id="main">
+
+### Results
+
+We evaluate in Robosuite on the PickPlace-can task. The robot picks a can and places it in a bin while a separate dynamic obstacle, an articulated arm of ten capsule links, moves into the workspace. The obstacle is grasp-triggered and executes one of sixteen curated motions that challenge each link and joint of the arm in turn, so checking only the end effector is structurally insufficient. The headline generator is a Diffusion Policy in absolute joint position, the loop runs at 20 Hz, and the obstacle is crossed with ten seeds.
+
+The filter delivers the guarantee the baselines do not, holding penetration at **zero** across every whole-arm configuration on the designed matrix, while every faithful baseline penetrates the obstacle on a third to three quarters of episodes. The best cell, whole-arm coverage with obstacle prediction on a Diffusion Policy, reaches **63.8% safe task completion at zero penetration**, beating the strongest baseline by roughly 31 points and widening the gap on the harder stress set. The guarantee extends to the carried can through the post-grasp object capsule.
+
+### Whole-arm safe rerouting — designed dynamic scenes
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="dyn_armlink_v2 — the frozen generator collides with the moving obstacle; the filter reroutes and stays clear."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/dyn_carry_deflect_v2_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/dyn_carry_deflect_v2_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="dyn_carry_deflect_v2 — the carried object is also kept clear through the post-grasp object capsule."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/wrist_carry_stress_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/wrist_carry_stress_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="wrist_carry_stress — a wrist-focused stress scene from the designed dynamic matrix."
+/>
+
+### Whole-arm safe rerouting — gold/silver stress scenes
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="paper_gold_02 — one of the curated gold-tier stress poses, built so the frozen generator is forced to penetrate."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_01_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_01_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="paper_silver_01 — a silver-tier stress pose."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_02_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_02_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="paper_silver_02 — a silver-tier stress pose where the frozen generator completes the task but collides; the filter stays safe even where it must forfeit the place."
+/>
+
+### Headline numbers
+
+<ResultsTable
+  caption="Table 1. Panda, designed dynamic matrix (16 scenes x 10 seeds, n = 160). Safe-Succ. is task completion AND zero penetration; Penetration is exact mesh-to-mesh overlap. Max-slk is the worst single-episode CBF slack the MPC filter admitted (our filter/hybrid configs only). Dev-pk is peak trajectory deviation from the frozen plan. Ctrl is median control rate from a contention-free solo timing pass. Baselines are shown in both the faithful (paper reproduction) and augmented (our geometry + prediction added) tiers."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Max-slk (mm) ↓", "Worst geom dist (m)", "Dev-pk (m)", "Ctrl (Hz) ↑"]}
+  rows={[
+    ["Filter whole-arm predict · DP", 160, 63.8, 63.8, 79.4, 0.6, 0.0, 22, "+0.000", 0.171, 38.0],
+    ["Filter whole-arm nopredict · DP", 160, 59.4, 59.4, 80.0, 0.0, 0.0, 0.34, "+0.005", 0.123, 37.9],
+    ["Filter whole-arm predict · DDPM-abs", 160, 57.5, 57.5, 71.9, 0.6, 0.0, 10, "+0.000", 0.133, 41.7],
+    ["Filter whole-arm predict · FM", 160, 48.8, 48.8, 78.1, 1.9, 0.0, 0.30, "+0.000", 0.107, 40.7],
+    ["Filter whole-arm nopredict · FM", 160, 48.1, 48.1, 76.9, 1.2, 0.6, 0.25, "-0.008", "—", 41.5],
+    ["Filter whole-arm predict · FM-abs", 160, 38.1, 38.1, 48.1, 0.0, 0.0, 10, "+0.011", "—", 37.4],
+    ["Filter whole-arm nopredict · DDPM", 160, 36.9, 36.9, 73.1, 2.5, 0.6, 6.3, "-0.048", "—", 37.4],
+    ["Filter whole-arm predict · DDPM", 160, 35.6, 35.6, 73.1, 1.9, 0.0, 2.8, "+0.000", 0.143, 37.3],
+    ["Filter EE predict · DDPM", 160, 37.5, 73.8, 86.9, 53.1, 53.1, 0.08, "-0.097", "—", 44.5],
+    ["Filter EE predict · FM", 160, 35.6, 79.4, 91.9, 58.1, 58.1, 0.07, "-0.096", "—", 44.9],
+    ["Filter EE nopredict · DDPM", 160, 35.0, 67.5, 86.2, 54.4, 54.4, 0.08, "-0.097", "—", "-"],
+    ["Filter EE predict · DP", 160, 34.4, 76.2, 80.0, 56.9, 56.9, 38, "-0.086", 0.110, 45.6],
+    ["Filter EE nopredict · FM", 160, 34.4, 76.9, 90.0, 58.8, 58.8, 0.07, "-0.096", "—", "-"],
+    ["Filter EE nopredict · DP", 160, 32.5, 74.4, 78.8, 58.1, 58.1, 0.15, "-0.088", "—", 46.2],
+    ["Hybrid · DDPM-abs", 160, 55.0, 55.0, 70.0, 0.0, 0.0, 54, "+0.011", "—", 29.9],
+    ["Hybrid · DP", 160, 45.6, 45.6, 70.0, 0.0, 0.0, 2.1, "+0.011", 0.207, 31.9],
+    ["Hybrid · FM", 160, 36.9, 36.9, 71.2, 1.9, 0.6, 0.48, "-0.016", 0.100, 33.2],
+    ["Hybrid · FM-abs", 160, 29.4, 29.4, 35.0, 0.0, 0.0, 29, "+0.011", "—", 33.0],
+    ["Hybrid · DDPM", 160, 25.6, 25.6, 68.8, 1.2, 1.2, 1.2, "-0.022", 0.144, 29.1],
+    ["Guidance · DP", 160, 36.2, 60.6, 73.8, 36.9, 36.9, "—", "-0.083", "—", 13.0],
+    ["Guidance · DDPM-abs", 160, 35.6, 65.6, 78.1, 44.4, 43.1, "—", "-0.082", "—", 12.9],
+    ["Guidance · FM", 160, 28.8, 65.6, 76.9, 46.2, 45.6, "—", "-0.096", "—", "-"],
+    ["Guidance · DDPM", 160, 28.1, 58.8, 70.6, 46.2, 46.2, "—", "-0.097", "—", "-"],
+    ["Guidance · FM-abs", 160, 26.2, 48.8, 50.6, 31.2, 31.2, "—", "-0.066", "—", 13.0],
+    ["Frozen Generator · DP", 160, 36.2, 83.1, 83.1, 59.4, 59.4, "—", "-0.090", "—", "-"],
+    ["Frozen Generator · FM", 160, 26.9, 84.4, "n/a", 66.9, 66.9, "—", "-0.096", "—", "-"],
+    ["Frozen Generator · DDPM", 160, 26.9, 68.8, "n/a", 63.1, 62.5, "—", "-0.124", "—", "-"],
+    ["CBF-QP / VLSA — faithful", 160, 33.1, 76.2, 85.0, 53.1, 53.1, "—", "-0.096", 0.008, 13.9],
+    ["PACS — augmented", 160, 33.1, 47.5, 80.0, 31.9, 31.9, "—", "-0.094", "—", "-"],
+    ["PACS — faithful", 160, 31.9, 48.8, 78.8, 31.2, 31.2, "—", "-0.092", "—", 4.0],
+    ["SafeFlow — faithful", 160, 31.2, 73.1, 81.9, 55.6, 55.6, "—", "-0.097", "—", 14.7],
+    ["SafeFlowMatcher-Y2 — augmented", 160, 27.5, 30.0, 67.5, 8.1, 8.1, "—", "-0.095", "—", "-"],
+    ["SafeDiffuser — faithful", 160, 23.1, 61.9, 73.1, 57.5, 57.5, "—", "-0.123", "—", 13.6],
+    ["CBF-QP / VLSA — augmented", 160, 22.5, 52.5, 77.5, 46.9, 46.9, "—", "-0.095", "—", "-"],
+    ["OmniGuide — faithful", 160, 18.8, 77.5, 83.8, 73.1, 73.1, "—", "-0.097", "—", 12.9],
+    ["SafeFlowMatcher-Y2 — faithful", 160, 14.4, 45.6, 69.4, 45.0, 45.0, "—", "-0.096", "—", 12.7],
+    ["SafeDiffuser — augmented", 160, 13.1, 41.2, 63.1, 61.2, 61.2, "—", "-0.098", "—", "-"],
+    ["OmniGuide — augmented", 160, 11.9, 51.2, 63.1, 75.6, 75.6, "—", "-0.097", "—", "-"],
+    ["SafeFlowMatcher — faithful", 160, 6.9, 46.2, 69.4, 78.8, 78.8, "—", "-0.096", "—", "-"],
+    ["SafeFlowMatcher — augmented", 160, 3.8, 34.4, 61.2, 79.4, 79.4, "—", "-0.124", "—", "-"],
+    ["SafeFlow — augmented", 160, 0.0, 3.8, 5.0, 55.0, 53.8, "—", "-0.096", "—", "-"],
+  ]}
+/>
+
+<ResultsTable
+  caption="Table 2. Panda, gold/silver stress set (22 curated poses x 10 seeds, n = 220), built so the frozen generator is forced to penetrate. Same columns as Table 1, minus Ctrl (no separate solo timing pass for this set). Baselines shown in both the faithful and augmented tiers."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Max-slk (mm) ↓", "Worst geom dist (m)", "Dev-pk (m)"]}
+  rows={[
+    ["Filter whole-arm predict · DP", 220, 47.7, 47.7, 67.3, 8.6, 0.0, 25, "+0.000", 0.147],
+    ["Filter whole-arm nopredict · DP", 220, 47.7, 47.7, 67.3, 8.6, 0.0, 25, "+0.000", 0.102],
+    ["Filter whole-arm predict · FM", 220, 47.3, 47.3, 68.2, 4.5, 0.0, 7.4, "+0.000", 0.089],
+    ["Filter whole-arm nopredict · FM", 220, 47.3, 47.3, 68.2, 4.5, 0.0, 7.4, "+0.000", "—"],
+    ["Filter whole-arm predict · DDPM-abs", 220, 40.0, 40.0, 60.9, 5.0, 0.0, 25, "+0.000", 0.105],
+    ["Filter whole-arm predict · FM-abs", 220, 39.5, 39.5, 60.9, 4.5, 0.5, 28, "-0.005", "—"],
+    ["Filter whole-arm predict · DDPM", 220, 29.5, 29.5, 62.7, 0.0, 0.0, 17, "+0.009", 0.117],
+    ["Filter whole-arm nopredict · DDPM", 220, 29.5, 29.5, 62.7, 0.0, 0.0, 17, "+0.009", "—"],
+    ["Filter EE predict · DP", 220, 25.5, 74.1, 77.7, 70.9, 69.5, 0.14, "-0.130", 0.098],
+    ["Filter EE nopredict · DP", 220, 25.5, 74.1, 77.7, 70.9, 69.5, 0.14, "-0.130", "—"],
+    ["Filter EE predict · DDPM", 220, 9.1, 61.4, 84.5, 79.5, 78.6, 32, "-0.139", "—"],
+    ["Filter EE nopredict · DDPM", 220, 9.1, 61.4, 84.5, 79.5, 78.6, 32, "-0.139", "—"],
+    ["Filter EE predict · FM", 220, 5.9, 83.2, 92.7, 90.5, 90.5, 0.10, "-0.138", "—"],
+    ["Filter EE nopredict · FM", 220, 5.9, 83.2, 92.7, 90.5, 90.5, 0.10, "-0.138", "—"],
+    ["Hybrid · FM", 220, 31.8, 31.8, 64.5, 1.8, 0.0, 0.24, "+0.000", 0.091],
+    ["Hybrid · DDPM-abs", 220, 29.5, 29.5, 60.9, 4.1, 0.0, 20, "+0.000", "—"],
+    ["Hybrid · DDPM", 220, 22.3, 22.3, 60.0, 1.4, 0.0, 8.7, "+0.000", 0.116],
+    ["Hybrid · FM-abs", 220, 22.3, 22.3, 58.6, 2.3, 0.0, 107, "+0.000", "—"],
+    ["Hybrid · DP", 220, 13.2, 13.2, 65.0, 3.2, 0.0, 3.2, "+0.000", 0.139],
+    ["Guidance · DDPM-abs", 220, 28.2, 36.8, 68.6, 23.6, 18.6, "—", "-0.099", "—"],
+    ["Guidance · DP", 220, 25.0, 29.1, 66.8, 16.4, 15.0, "—", "-0.098", "—"],
+    ["Guidance · FM-abs", 220, 20.9, 26.4, 65.9, 22.3, 19.1, "—", "-0.099", "—"],
+    ["Guidance · DDPM", 220, 18.2, 39.1, 62.3, 41.4, 40.5, "—", "-0.098", "—"],
+    ["Guidance · FM", 220, 8.6, 44.5, 69.1, 61.8, 61.8, "—", "-0.113", "—"],
+    ["Frozen Generator · DP", 220, 20.0, 78.2, 81.8, 77.7, 76.8, "—", "-0.132", "—"],
+    ["Frozen Generator · DDPM", 220, 7.3, 74.1, "n/a", 83.6, 83.6, "—", "-0.139", "—"],
+    ["Frozen Generator · FM", 220, 6.4, 87.3, "n/a", 92.7, 92.3, "—", "-0.131", "—"],
+    ["CBF-QP / VLSA — augmented", 220, 30.5, 36.4, 70.9, 11.4, 9.5, "—", "-0.050", "—"],
+    ["CBF-QP / VLSA — faithful", 220, 28.6, 67.7, 84.1, 60.9, 60.5, "—", "-0.131", 0.012],
+    ["SafeFlowMatcher-Y2 — faithful", 220, 14.5, 25.9, 68.2, 36.8, 36.4, "—", "-0.108", "—"],
+    ["PACS — faithful", 220, 14.5, 18.6, 63.6, 23.2, 21.8, "—", "-0.124", "—"],
+    ["PACS — augmented", 220, 14.5, 18.6, 63.6, 23.2, 21.8, "—", "-0.124", "—"],
+    ["SafeFlow — faithful", 220, 13.6, 65.9, 81.8, 80.5, 79.5, "—", "-0.131", "—"],
+    ["SafeDiffuser — faithful", 220, 6.8, 45.9, 65.9, 79.5, 79.1, "—", "-0.125", "—"],
+    ["SafeFlowMatcher-Y2 — augmented", 220, 5.0, 5.5, 68.2, 3.2, 2.3, "—", "-0.087", "—"],
+    ["SafeDiffuser — augmented", 220, 4.5, 23.2, 61.4, 75.0, 75.0, "—", "-0.127", "—"],
+    ["OmniGuide — faithful", 220, 3.2, 67.7, 71.8, 96.4, 96.4, "—", "-0.136", "—"],
+    ["SafeFlow — augmented", 220, 0.5, 0.5, 0.9, 26.8, 25.9, "—", "-0.110", "—"],
+    ["SafeFlowMatcher — faithful", 220, 0.0, 34.1, 68.6, 96.4, 96.4, "—", "-0.136", "—"],
+    ["SafeFlowMatcher — augmented", 220, 0.0, 30.0, 68.6, 95.0, 95.0, "—", "-0.144", "—"],
+    ["OmniGuide — augmented", 220, 0.0, 48.2, 57.3, 90.5, 90.5, "—", "-0.147", "—"],
+  ]}
+/>
+
+Among the three configurations the filter performs best and the hybrid does not improve on it. Guidance alone penetrates on 31 to 46% of episodes, inside the baseline band, and adding the filter on the identical generator drops that to zero: generation-time guidance shapes the sample against the obstacle pose available then, but by execution the obstacle has moved and the guided plan is stale, whereas the execution-time filter re-solves against the live state at every tick.
+
+The same per-robot description instantiates four arms with no robot-specific source edit — the whole-arm filter transfers to the retargeted UR5e, KUKA IIWA, and Kinova Gen3 arms. Under a realistic perceived obstacle, recovered from onboard sensing rather than privileged state, the whole-arm filter still holds its safety behavior, losing only 1.9 points of safe-success (63.8 to 61.9) while holding penetration at zero. Wrapped around a frozen pi0.5 vision-language-action policy on LIBERO tasks — bridging the VLA's end-effector action into the filter by differential inverse kinematics — the same filter cuts physical arm-collision roughly six-fold over a faithful end-effector-only CBF reproduction, without retraining the policy.
+
+</Tab>
+
+<Tab id="ablations">
+
+### Ablation: where to enforce safety
+
+The same CBF specification is placed at three points along the generation-to-execution axis: **Guidance** at generation time, the execution-time **Filter** (a model-predictive controller), and **Hybrid**, guidance followed by the filter. Guidance alone shapes the sample against the obstacle pose available at generation time, but by execution the obstacle has moved and the guided plan is stale, so it still penetrates on a third of episodes. The execution-time filter re-solves against the live joint state and the predicted obstacle at every control tick and drops penetration to zero. Hybrid does not improve on the filter alone. The isolated comparison on the headline Diffusion Policy generator is below.
+
+<ResultsTable
+  caption="Ablation. The same CBF specification enforced at three points, on the headline Diffusion Policy generator (designed dynamic set, n = 160)."
+  headers={["Placement", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓"]}
+  rows={[
+    ["Guidance (generation only)", 36.2, 60.6, 36.9],
+    ["Filter (execution MPC) — ours", 63.8, 63.8, 0.0],
+    ["Hybrid (guidance + filter)", 45.6, 45.6, 0.0],
+    ["Frozen generator (no safety)", 36.2, 83.1, 59.4],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_guidance.mp4", label: "Guidance" },
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_mpc_filter.mp4", label: "Filter (ours)" },
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_hybrid.mp4", label: "Hybrid" },
+  ]}
+  caption="dyn_armlink_v2 across the three placements of the same CBF specification."
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_guidance.mp4", label: "Guidance" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_mpc_filter.mp4", label: "Filter (ours)" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_hybrid.mp4", label: "Hybrid" },
+  ]}
+  caption="paper_gold_02 across the three placements of the same CBF specification."
+/>
+
+</Tab>
+
+<Tab id="perception">
+
+### Perception robustness
+
+Rather than assuming privileged state, the safety filter can instead observe the obstacle through a realistic perception simulator: two virtual cameras, occlusion, roughly 5 mm of point-cloud noise, obstacle-radius over-estimation, frame dropout, and sensing latency. Collisions are still scored against ground truth, not against the noisy estimate. Under this perceived-obstacle setting the whole-arm filter loses only 1.9 points of safe task completion, from 63.8% to 61.9%, and holds penetration at zero.
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_filter_perceived.mp4", label: "Filter under perceived obstacle — dyn_armlink_v2" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_perceived.mp4", label: "Filter under perceived obstacle — paper_gold_02" },
+  ]}
+  caption="Same filter, same scenes, run against the noisy perceived-obstacle sensing pipeline rather than privileged state."
+/>
+
+<ResultsTable
+  caption="Table 3. Panda, perception-robustness ablation (noisy/occluded sensing, n = 160). Only the flagship configs were run; no dev/slack extraction for this table."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Worst geom dist (m)"]}
+  rows={[
+    ["Filter (perceived), whole-arm predict · DP", 160, 61.9, 61.9, 78.8, 0.6, 0.0, "+0.000"],
+    ["Hybrid (perceived) · DP", 160, 50.0, 50.0, 73.8, 0.0, 0.0, "+0.011"],
+    ["Guidance (perceived) · DP", 160, 36.9, 64.4, 72.5, 40.6, 40.6, "-0.085"],
+  ]}
+/>
+
+</Tab>
+
+<Tab id="crossembod">
+
+### Cross-embodiment transfer
+
+The same generator-agnostic whole-arm MPC-CBF filter, with no robot-specific edits, transfers to the UR5e (6-DOF), the KUKA IIWA (7-DOF), and the Kinova Gen3 (7-DOF), and it collapses penetration on every arm.
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/crossembod_ur5e_dyn_armlink_v2_seed6_mpc_filter.mp4", label: "UR5e" },
+    { src: "/projects/sgm-preview-7a2f/videos/crossembod_iiwa_dyn_armlink_v2_seed9_mpc_filter.mp4", label: "KUKA IIWA" },
+    { src: "/projects/sgm-preview-7a2f/videos/crossembod_kinova3_dyn_armlink_v1_seed6_mpc_filter.mp4", label: "Kinova Gen3" },
+  ]}
+  caption="The whole-arm filter retargeted to three additional arms with no robot-specific source edit."
+/>
+
+<ResultsTable
+  caption="Table 4a. Cross-embodiment transfer, designed dynamic matrix (n = 160 per arm). Frozen generator vs. the whole-arm filter; same generator-agnostic whole-arm MPC-CBF filter, no robot-specific source edits. Filter checkpoint iteration noted per arm (@Nk)."
+  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑", "Δ Safe vs frozen"]}
+  rows={[
+    ["UR5e", "Frozen Generator", 63.8, 45.6, 36.2, "—"],
+    ["UR5e", "Filter @20k", 32.5, 0.0, 32.5, "-3.7 (edge case)"],
+    ["KUKA IIWA", "Frozen Generator", 57.5, 56.2, 20.0, "—"],
+    ["KUKA IIWA", "Filter @10k", 29.4, 6.9, 25.6, "+5.6 (HOLDS)"],
+    ["Kinova Gen3", "Frozen Generator", 55.6, 48.1, 20.0, "—"],
+    ["Kinova Gen3", "Filter @25k", 26.9, 13.1, 23.8, "+3.8 (HOLDS)"],
+  ]}
+/>
+
+<ResultsTable
+  caption="Table 4b. Cross-embodiment transfer, gold/silver stress set (n = 220 per arm). Static curated poses (no obstacle motion); penetration is the primary axis. A Panda reference row (paper number, n = 220) is included for scale."
+  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑", "Δ Safe vs frozen"]}
+  rows={[
+    ["UR5e", "Frozen Generator", 65.9, 88.6, 4.5, "—"],
+    ["UR5e", "Filter @20k", 5.0, 5.5, 5.0, "+0.5"],
+    ["KUKA IIWA", "Frozen Generator", 71.8, 88.2, 6.4, "—"],
+    ["KUKA IIWA", "Filter @10k", 7.3, 9.1, 7.3, "+0.9"],
+    ["Kinova Gen3", "Frozen Generator", 55.9, 75.5, 8.2, "—"],
+    ["Kinova Gen3", "Filter @25k", 8.6, 15.5, 8.6, "+0.4"],
+    ["Panda (paper ref)", "DP Filter", 47.7, 0.0, 47.7, "—"],
+  ]}
+/>
+
+</Tab>
+
+<Tab id="safelibero">
+
+### SafeLIBERO: safety on a frozen pi0.5 VLA
+
+The same filter also wraps a frozen pi0.5 vision-language-action policy on LIBERO tasks, without retraining the policy. The VLA's end-effector action is bridged into the filter by differential inverse kinematics, and the filter cuts physical arm-collision accordingly. Two metrics are reported per suite: TSR, task success rate, and CAR, collision-avoidance rate, where a higher CAR means fewer collisions.
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_ramekin_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_ramekin_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="SafeLIBERO spatial suite, bowl-on-ramekin — the bare policy clips the scene furniture; the filter reroutes the whole arm."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="SafeLIBERO object suite, milk — the filter is wrapped around the frozen policy with no retraining."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_bowl_on_plate_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_bowl_on_plate_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="SafeLIBERO goal suite, bowl-on-plate — the end-effector action is bridged into the filter by differential inverse kinematics."
+/>
+
+<ResultsTable
+  caption="Table 5a. SafeLIBERO per-suite TSR / CAR (%), frozen pi0.5 VLA, n = 400 per suite per arm. Higher CAR = fewer collisions. AEGIS repro is a faithful single-end-effector-ellipsoid CBF reproduction (a baseline, not one of our path methods); Filter is the whole-arm HOCBF (ours), fixed post-fix run."
+  headers={["Suite", "Frozen Generator (bare) TSR", "Frozen Generator (bare) CAR", "AEGIS repro (ee_cbf_osc) TSR", "AEGIS repro (ee_cbf_osc) CAR", "Filter (whole_arm_mpc, ours) TSR", "Filter (whole_arm_mpc, ours) CAR"]}
+  rows={[
+    ["Object", 49.0, 22.8, 63.2, 70.8, 38.5, 94.0],
+    ["Spatial", 61.8, 26.2, 64.8, 81.8, 42.0, 96.2],
+    ["Goal", 60.5, 17.5, 68.5, 82.5, 34.2, 97.5],
+    ["Long", 27.5, 17.2, 23.8, 79.0, 11.0, 85.8],
+    ["Macro", 49.7, 20.9, 55.1, 78.5, 31.4, 93.4],
+  ]}
+/>
+
+<ResultsTable
+  caption="Table 5b. SafeLIBERO macro physical arm-collision + Safe-Success (%), macro of 4 suites (n = 1600). Physical = actual robot-arm-geom vs. obstacle-box-geom penetration via exact MuJoCo geom-distance, runtime ticks only; non-EE = robot links only, all-arm = plus gripper. This is the source of the paper's headline collision-rate column (all-arm)."
+  headers={["Arm", "TSR %", "CAR %", "Phys armcol non-EE % ↓", "Phys armcol all-arm % ↓", "SafeSucc (phys, non-EE) %", "SafeSucc (phys, all-arm) %"]}
+  rows={[
+    ["Frozen Generator (bare)", 49.7, 20.9, 13.5, 67.2, 42.4, 22.9],
+    ["AEGIS repro (ee_cbf_osc)", 55.1, 78.5, 11.4, 15.7, 51.4, 48.9],
+    ["Filter (whole_arm_mpc, ours)", 31.4, 93.4, 0.6, 2.5, 31.4, 30.8],
+  ]}
+/>
+
+</Tab>
+
+<Tab id="scenes">
+
+### Per-scene placement gallery
+
+Every scene's start/finish placement composite, across three cameras, with swept-motion traces: magenta marks the obstacle path, orange the frozen-generator end-effector trace, and cyan the filter end-effector trace.
+
+#### Designed dynamic scenes (16)
+
+<Gallery scenes={dynamicScenes} />
+
+#### Gold/silver stress scenes (22)
+
+<Gallery scenes={goldSilverScenes} />
+
+</Tab>
+
+</Tabs>
+
+## Closing note
+
+This is an anonymous preview page hosted alongside a paper under double-anonymous review. It shows a curated subset of the supplementary qualitative results and the two headline result tables; it is not indexed and is not linked from the site's public project listing.

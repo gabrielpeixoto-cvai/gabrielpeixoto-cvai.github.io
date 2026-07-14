@@ -3,6 +3,6 @@ interface Props { src: string; alt: string; caption?: string; }
 const { src, alt, caption } = Astro.props;
 ---
 <figure style="margin:1.5rem 0;text-align:center;">
-  <img src={src} alt={alt} style="max-width:100%;height:auto;border-radius:8px;" />
+  <img src={src} alt={alt} data-zoomable style="max-width:100%;height:auto;border-radius:8px;" />
   {caption && <figcaption style="color:var(--muted);font-size:.9rem;margin-top:.5rem;">{caption}</figcaption>}
 </figure>

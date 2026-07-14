@@ -5,6 +5,8 @@ import LinkRow from '../components/project/LinkRow.astro';
 import TeaserVideo from '../components/project/TeaserVideo.astro';
 import Figure from '../components/project/Figure.astro';
 import BibTeX from '../components/project/BibTeX.astro';
+import Lightbox from '../components/project/Lightbox.astro';
+import PasswordGate from '../components/project/PasswordGate.astro';
 
 interface Author { name: string; affiliation?: string; url?: string; }
 interface LinkItem { label: string; href: string; }
@@ -18,13 +20,17 @@ interface ProjectData {
   links?: LinkItem[];
   excerpt?: string;
   bibtex?: string;
+  unlisted?: boolean;
+  passwordHash?: string;
 }
 interface Props { data: ProjectData; locale: string; }
 const { data, locale } = Astro.props;
 const venueLine = [data.venue, data.date.getFullYear()].filter(Boolean).join(' Â· ');
+const gated = Boolean(data.passwordHash);
 ---
-<BaseLayout locale={locale} title={data.title} description={data.excerpt}>
-  <article style="max-width:var(--max-width);margin:0 auto;">
+<BaseLayout locale={locale} title={data.title} description={data.excerpt} noindex={data.unlisted} wide>
+  {gated && <PasswordGate hash={data.passwordHash!} title={data.title} />}
+  <article id="gated-content" style={`margin:0 auto;${gated ? 'visibility:hidden;' : ''}`}>
     <header style="text-align:center;margin-bottom:2rem;">
       <h1 style="margin-bottom:.5rem;">{data.title}</h1>
       <Authors authors={data.authors} />
@@ -42,4 +48,5 @@ const venueLine = [data.venue, data.date.getFullYear()].filter(Boolean).join(' Â
       </section>
     )}
   </article>
+  <Lightbox />
 </BaseLayout>

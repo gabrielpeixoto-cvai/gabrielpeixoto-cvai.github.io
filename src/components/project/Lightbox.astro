@@ -1,0 +1,65 @@
+---
+// Delegated click-to-zoom overlay. Opens any img[data-zoomable] or any
+// element carrying data-zoom-video (a video src). Closes on backdrop click,
+// the close button, or Escape.
+---
+<div id="lightbox" class="lightbox" hidden aria-hidden="true">
+  <button type="button" class="lightbox__close" aria-label="Close">×</button>
+  <div class="lightbox__content"></div>
+</div>
+
+<script>
+  const lb = document.getElementById('lightbox');
+  const content = lb?.querySelector('.lightbox__content');
+  if (lb && content) {
+    const open = () => {
+      lb.hidden = false;
+      lb.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('lightbox-open');
+    };
+    const close = () => {
+      lb.hidden = true;
+      lb.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('lightbox-open');
+      content.replaceChildren(); // stop any playing video
+    };
+    const openImage = (src: string, alt: string) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = alt;
+      content.replaceChildren(img);
+      open();
+    };
+    const openVideo = (src: string) => {
+      const video = document.createElement('video');
+      video.src = src;
+      video.controls = true;
+      video.autoplay = true;
+      video.loop = true;
+      video.playsInline = true;
+      content.replaceChildren(video);
+      open();
+    };
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.lightbox__close') || target === lb) {
+        close();
+        return;
+      }
+      const vbtn = target.closest<HTMLElement>('[data-zoom-video]');
+      if (vbtn) {
+        openVideo(vbtn.dataset.zoomVideo || '');
+        return;
+      }
+      const img = target.closest<HTMLImageElement>('img[data-zoomable]');
+      if (img) {
+        openImage(img.currentSrc || img.src, img.alt);
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !lb.hidden) close();
+    });
+  }
+</script>

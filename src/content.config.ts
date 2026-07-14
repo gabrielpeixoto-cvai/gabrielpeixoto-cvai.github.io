@@ -85,6 +85,11 @@ const projects = defineCollection({
       .optional(),
     excerpt: z.string().optional(),
     bibtex: z.string().optional(),
+    unlisted: z.boolean().optional(),
+    // SHA-256 hex of a passphrase. When set, the page renders behind a
+    // client-side gate. NOTE: this is deterrence only — the content still
+    // ships in the static HTML and is readable via View Source.
+    passwordHash: z.string().optional(),
     translationHash: z.string().optional(),
     translationLocked: z.boolean().optional(),
   }),

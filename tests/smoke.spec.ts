@@ -153,6 +153,23 @@ test('projects render under a non-English locale via fallback', async ({ page })
   await expect(page.getByRole('link', { name: /Example Project/ })).toBeVisible();
 });
 
+test('an unlisted project page is password-gated and absent from the projects index', async ({ page }) => {
+  await page.goto('/en/projects/sgm-preview-7a2f/');
+  // The password gate is shown; the real content is hidden behind it.
+  await expect(page.getByRole('heading', { name: 'Private preview' })).toBeVisible();
+  await expect(page.getByLabel('Password')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Safe Generative Motion/ })).toBeHidden();
+  // Entering the correct password unlocks the page and reveals the content.
+  // NOTE: keep this in sync with `passwordHash` in sgm-preview-7a2f.mdx
+  // (sha256 of this string). If you change the page password, update it here.
+  await page.getByLabel('Password').fill('safe-motion-2026');
+  await page.getByRole('button', { name: 'Unlock' }).click();
+  await expect(page.getByRole('heading', { name: /Safe Generative Motion/ })).toBeVisible();
+  // It stays absent from the public projects index regardless.
+  await page.goto('/en/projects/');
+  await expect(page.getByRole('link', { name: /Safe Generative Motion/ })).toHaveCount(0);
+});
+
 test('an old Jekyll publication URL redirects to the new Astro page', async ({ page }) => {
   await page.goto('/publication/2021-11-22-wvc2021-handarch-gabriel');
   await page.waitForURL(/\/en\/publications\/2021-11-22-wvc-handarch\/?$/);
