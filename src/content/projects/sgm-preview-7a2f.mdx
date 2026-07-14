@@ -1,0 +1,136 @@
+---
+title: "Safe Generative Motion in Dynamic Environments"
+authors:
+  - name: "Anonymous Authors"
+venue: "IEEE Robotics and Automation Letters (under review)"
+date: 2026-07-13
+excerpt: "A safety framework that augments frozen generative motion policies with whole-arm collision avoidance via a unified control barrier function, reaching 63.8% safe task completion at zero penetration on a dynamic-obstacle manipulation benchmark."
+bibtex: |
+  @article{anonymous2026safegenmotion,
+    title   = {Safe Generative Motion in Dynamic Environments: Multi-Link Collision Avoidance with Model Predictive Control and Control Barrier Functions},
+    author  = {Anonymous Authors},
+    journal = {IEEE Robotics and Automation Letters (under review)},
+    year    = {2026}
+  }
+unlisted: true
+---
+
+import VideoCompare from '../../components/project/VideoCompare.astro';
+import Figure from '../../components/project/Figure.astro';
+import ResultsTable from '../../components/project/ResultsTable.astro';
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="Identical scene: the frozen generator drives its elbow into the moving obstacle while the filter reroutes the whole arm and still completes the task."
+/>
+
+## Abstract
+
+Generative motion policies, from diffusion planners to vision-language-action models, enable robots to perform complex manipulation tasks from demonstrations but lack safety guarantees in dynamic environments with novel or moving obstacles. We present a safety framework that augments frozen generative policies with whole-arm collision avoidance through a unified control barrier function formulation. The framework supports both guided sampling during generation and model predictive control filtering during execution. These capabilities avoid moving obstacles without modifying the underlying generative model or assuming a specific robot embodiment. Unlike existing methods that restrict safety to the robot tip or rely on reactive braking, our approach anticipates obstacle motion and reroutes the whole arm while preserving task progress wherever feasible. Experiments with diffusion policies and flow-matching policies across multiple robot platforms show improved safe task completion over representative baselines, with the model predictive control filter the strongest configuration at 63.8% safe task completion.
+
+## Method
+
+<Figure
+  src="/projects/sgm-preview-7a2f/figures/elbow_carry_stress_placement.png"
+  alt="Start/finish placement composite for the elbow_carry_stress scene, showing the obstacle path and the frozen-generator versus filter end-effector traces"
+  caption="Start and finish composite for one scene, across three cameras, with swept-motion traces: magenta marks the obstacle path, orange the frozen-generator end-effector trace, cyan the filter end-effector trace. The paper's exact reroute-vs-collision sequence figure is not included in this preview package; this placement composite is shown instead as an honest stand-in."
+/>
+
+The safety layer wraps a **frozen** generative motion policy and enforces whole-arm collision avoidance at execution time, without retraining. It is **generator-agnostic**: one interface wraps a diffusion planner, a flow-matching model, a Diffusion Policy, and a pi0.5 vision-language-action policy. It is **robot-agnostic**: one parametric forward-kinematics and capsule model instantiates the Franka Panda, UR5e, KUKA IIWA, and Kinova Gen3 from a per-robot description.
+
+The robot and the obstacles are over-approximated by **capsules** (a segment plus a radius). The signed clearance `d(q)` is the exact closest-point capsule-to-capsule distance over all robot-obstacle pairs, and the barrier is the margin-shifted clearance `h(q) = d(q) - r_safe`. A conservative capsule radius makes a positive capsule clearance certify a positive mesh clearance. Because the decision input is the joint velocity and `q_{k+1} = q_k + qdot * dt`, the barrier has relative degree one, so a **first-order discrete control barrier function** is well posed and sufficient.
+
+One CBF specification is applied at three points along the generation-to-execution axis:
+
+- **Guidance** at generation time, shaping the sample against the obstacle by the barrier gradient.
+- **Filter** at execution time, a model-predictive controller that re-solves a hard, state-feedback problem against the live joint state and the predicted (constant-velocity) obstacle at every tick.
+- **Hybrid**, guidance then filter.
+
+Only the execution-time filter repairs the command against the live state and the predicted obstacle, so it is the placement that yields a hard guarantee independent of how the plan was produced.
+
+## Results
+
+We evaluate in Robosuite on the PickPlace-can task. The robot picks a can and places it in a bin while a separate dynamic obstacle, an articulated arm of ten capsule links, moves into the workspace. The obstacle is grasp-triggered and executes one of sixteen curated motions that challenge each link and joint of the arm in turn, so checking only the end effector is structurally insufficient. The headline generator is a Diffusion Policy in absolute joint position, the loop runs at 20 Hz, and the obstacle is crossed with ten seeds.
+
+The filter delivers the guarantee the baselines do not, holding penetration at **zero** across every whole-arm configuration on the designed matrix, while every faithful baseline penetrates the obstacle on a third to three quarters of episodes. The best cell, whole-arm coverage with obstacle prediction on a Diffusion Policy, reaches **63.8% safe task completion at zero penetration**, beating the strongest baseline by roughly 31 points and widening the gap on the harder stress set. The guarantee extends to the carried can through the post-grasp object capsule.
+
+### Whole-arm safe rerouting — designed dynamic scenes
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="dyn_armlink_v2 — the frozen generator collides with the moving obstacle; the filter reroutes and stays clear."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/dyn_carry_deflect_v2_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/dyn_carry_deflect_v2_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="dyn_carry_deflect_v2 — the carried object is also kept clear through the post-grasp object capsule."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/wrist_carry_stress_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/wrist_carry_stress_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="wrist_carry_stress — a wrist-focused stress scene from the designed dynamic matrix."
+/>
+
+### Whole-arm safe rerouting — gold/silver stress scenes
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="paper_gold_02 — one of the curated gold-tier stress poses, built so the frozen generator is forced to penetrate."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_01_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_01_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="paper_silver_01 — a silver-tier stress pose."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_02_frozen_generator.mp4", label: "Frozen generator" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_02_mpc_filter.mp4", label: "Filter (ours)" }}
+  caption="paper_silver_02 — a silver-tier stress pose where the frozen generator completes the task but collides; the filter stays safe even where it must forfeit the place."
+/>
+
+### Headline numbers
+
+<ResultsTable
+  caption="Table 1 (excerpt). Panda, designed dynamic matrix (16 scenes x 10 seeds, n = 160). Safe-Succ. is task completion AND zero penetration; Penetration is exact mesh-to-mesh overlap."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓", "Ctrl (Hz) ↑"]}
+  rows={[
+    ["Filter, whole-arm, predict · DP (ours, best)", 160, 63.8, 63.8, 0.0, 38.0],
+    ["Filter, whole-arm, predict · FM (ours)", 160, 48.8, 48.8, 0.0, 40.7],
+    ["Hybrid · DP (ours)", 160, 45.6, 45.6, 0.0, 31.9],
+    ["Guidance · DP (ours)", 160, 36.2, 60.6, 36.9, 13.0],
+    ["Frozen generator · DP (no safety)", 160, 36.2, 83.1, 59.4, "–"],
+    ["CBF-QP / VLSA (faithful baseline)", 160, 33.1, 76.2, 53.1, 13.9],
+    ["SafeFlow (faithful baseline)", 160, 31.2, 73.1, 55.6, 14.7],
+    ["OmniGuide (faithful baseline)", 160, 18.8, 77.5, 73.1, 12.9],
+  ]}
+/>
+
+<ResultsTable
+  caption="Table 2 (excerpt). Panda, gold/silver stress set (22 curated poses x 10 seeds, n = 220), built so the frozen generator is forced to penetrate."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓"]}
+  rows={[
+    ["Filter, whole-arm, predict · DP (ours, best)", 220, 47.7, 47.7, 0.0],
+    ["Filter, whole-arm, predict · FM (ours)", 220, 47.3, 47.3, 0.0],
+    ["Hybrid · FM (ours)", 220, 31.8, 31.8, 0.0],
+    ["Guidance · DDPM-abs (ours)", 220, 28.2, 36.8, 18.6],
+    ["CBF-QP / VLSA (aug baseline)", 220, 30.5, 36.4, 9.5],
+    ["Frozen generator · DP (no safety)", 220, 20.0, 78.2, 76.8],
+    ["SafeFlow (faithful baseline)", 220, 13.6, 65.9, 79.5],
+    ["OmniGuide (faithful baseline)", 220, 3.2, 67.7, 96.4],
+  ]}
+/>
+
+Among the three configurations the filter performs best and the hybrid does not improve on it. Guidance alone penetrates on 31 to 46% of episodes, inside the baseline band, and adding the filter on the identical generator drops that to zero: generation-time guidance shapes the sample against the obstacle pose available then, but by execution the obstacle has moved and the guided plan is stale, whereas the execution-time filter re-solves against the live state at every tick.
+
+The same per-robot description instantiates four arms with no robot-specific source edit — the whole-arm filter transfers to the retargeted UR5e, KUKA IIWA, and Kinova Gen3 arms. Under a realistic perceived obstacle, recovered from onboard sensing rather than privileged state, the whole-arm filter still holds its safety behavior, losing only 1.9 points of safe-success (63.8 to 61.9) while holding penetration at zero. Wrapped around a frozen pi0.5 vision-language-action policy on LIBERO tasks — bridging the VLA's end-effector action into the filter by differential inverse kinematics — the same filter cuts physical arm-collision roughly six-fold over a faithful end-effector-only CBF reproduction, without retraining the policy.
+
+## Closing note
+
+This is an anonymous preview page hosted alongside a paper under double-anonymous review. It shows a curated subset of the supplementary qualitative results and the two headline result tables; it is not indexed and is not linked from the site's public project listing.

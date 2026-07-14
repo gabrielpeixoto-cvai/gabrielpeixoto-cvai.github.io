@@ -153,6 +153,13 @@ test('projects render under a non-English locale via fallback', async ({ page })
   await expect(page.getByRole('link', { name: /Example Project/ })).toBeVisible();
 });
 
+test('an unlisted project page renders but is absent from the projects index', async ({ page }) => {
+  await page.goto('/en/projects/sgm-preview-7a2f/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Safe Generative Motion in Dynamic Environments');
+  await page.goto('/en/projects/');
+  await expect(page.getByRole('link', { name: /Safe Generative Motion/ })).toHaveCount(0);
+});
+
 test('an old Jekyll publication URL redirects to the new Astro page', async ({ page }) => {
   await page.goto('/publication/2021-11-22-wvc2021-handarch-gabriel');
   await page.waitForURL(/\/en\/publications\/2021-11-22-wvc-handarch\/?$/);
