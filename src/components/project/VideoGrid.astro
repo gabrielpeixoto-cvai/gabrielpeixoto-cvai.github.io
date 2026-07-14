@@ -1,0 +1,18 @@
+---
+interface VideoItem { src: string; label: string; }
+interface Props { items: VideoItem[]; caption?: string; }
+const { items, caption } = Astro.props;
+---
+<figure style="margin:1.5rem 0;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;">
+    {items.map((item) => (
+      <figure style="margin:0;">
+        <p style="color:var(--muted);font-size:.9rem;margin:0 0 .35rem;text-align:center;">{item.label}</p>
+        <video autoplay muted loop playsinline controls preload="metadata" style="width:100%;height:auto;border-radius:8px;background:#000;">
+          <source src={item.src} type="video/mp4" />
+        </video>
+      </figure>
+    ))}
+  </div>
+  {caption && <figcaption style="color:var(--muted);font-size:.9rem;margin-top:.5rem;text-align:center;">{caption}</figcaption>}
+</figure>
