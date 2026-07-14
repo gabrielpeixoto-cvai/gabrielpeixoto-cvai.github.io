@@ -1,9 +1,9 @@
 ---
 title: "HandArch: A deep learning architecture for LIBRAS hand configuration recognition"
 date: 2021-11-22
-venue: "Workshop on Computer Vision (WVC), 17th"
+venue: "Workshop on Computer Vision (WVC), 17th (Best Paper Award)"
 paperurl: "https://sol.sbc.org.br/index.php/wvc/article/view/18883/18713"
-excerpt: "HandArch: a real-time hand-pose recognition architecture, and Libras91, a Brazilian sign language (LIBRAS) dataset with 91 classes and 108,896 samples."
+excerpt: "HandArch: a real-time hand-pose recognition architecture, and Libras91, a Brazilian sign language (LIBRAS) dataset with 91 classes and 108,896 samples. Awarded Best Paper at WVC 2021."
 citation: 'de Carvalho, G. P., Brandão, A. L., & Ferreira, F. T. (2021, November). "HandArch: A deep learning architecture for LIBRAS hand configuration recognition." In Anais do XVII Workshop de Visão Computacional (pp. 19-24). SBC.'
 ---
 

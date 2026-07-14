@@ -1,6 +1,6 @@
 ---
 title: "Data-Driven Motion Planning: A Survey on Deep Neural Networks, Reinforcement Learning, and Large Language Model Approaches"
-date: 2025-03-01
+date: 2025-02-01
 venue: "IEEE Access, vol. 13, pp. 52195–52245"
 paperurl: "https://doi.org/10.1109/ACCESS.2025.3552225"
 excerpt: "A survey of data-driven motion planning across three paradigms — deep neural networks, reinforcement learning, and large language models — covering how they improve sampling efficiency, optimize control policies, and enable task planning from natural-language instructions."
