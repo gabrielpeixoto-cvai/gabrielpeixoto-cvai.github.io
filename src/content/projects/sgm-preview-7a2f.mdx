@@ -99,46 +99,98 @@ The filter delivers the guarantee the baselines do not, holding penetration at *
 ### Headline numbers
 
 <ResultsTable
-  caption="Table 1. Panda, designed dynamic matrix (16 scenes x 10 seeds, n = 160). Safe-Succ. is task completion AND zero penetration; Penetration is exact mesh-to-mesh overlap. Baselines are shown in both the faithful (paper reproduction) and augmented (our geometry + prediction added) tiers."
-  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓"]}
+  caption="Table 1. Panda, designed dynamic matrix (16 scenes x 10 seeds, n = 160). Safe-Succ. is task completion AND zero penetration; Penetration is exact mesh-to-mesh overlap. Max-slk is the worst single-episode CBF slack the MPC filter admitted (our filter/hybrid configs only). Dev-pk is peak trajectory deviation from the frozen plan. Ctrl is median control rate from a contention-free solo timing pass. Baselines are shown in both the faithful (paper reproduction) and augmented (our geometry + prediction added) tiers."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Max-slk (mm) ↓", "Worst geom dist (m)", "Dev-pk (m)", "Ctrl (Hz) ↑"]}
   rows={[
-    ["Filter, whole-arm, predict · DP (ours, best)", 160, 63.8, 63.8, 0.0],
-    ["Filter, whole-arm, predict · FM (ours)", 160, 48.8, 48.8, 0.0],
-    ["Hybrid · DP (ours)", 160, 45.6, 45.6, 0.0],
-    ["Guidance · DP (ours)", 160, 36.2, 60.6, 36.9],
-    ["Frozen generator · DP (no safety)", 160, 36.2, 83.1, 59.4],
-    ["CBF-QP / VLSA — faithful", 160, 33.1, 76.2, 53.1],
-    ["CBF-QP / VLSA — augmented", 160, 22.5, 52.5, 46.9],
-    ["PACS — faithful", 160, 31.9, 48.8, 31.2],
-    ["PACS — augmented", 160, 33.1, 47.5, 31.9],
-    ["SafeFlow — faithful", 160, 31.2, 73.1, 55.6],
-    ["SafeFlow — augmented", 160, 0.0, 3.8, 53.8],
-    ["SafeDiffuser — faithful", 160, 23.1, 61.9, 57.5],
-    ["SafeDiffuser — augmented", 160, 13.1, 41.2, 61.2],
-    ["OmniGuide — faithful", 160, 18.8, 77.5, 73.1],
-    ["OmniGuide — augmented", 160, 11.9, 51.2, 75.6],
+    ["Filter whole-arm predict · DP", 160, 63.8, 63.8, 79.4, 0.6, 0.0, 22, "+0.000", 0.171, 38.0],
+    ["Filter whole-arm nopredict · DP", 160, 59.4, 59.4, 80.0, 0.0, 0.0, 0.34, "+0.005", 0.123, 37.9],
+    ["Filter whole-arm predict · DDPM-abs", 160, 57.5, 57.5, 71.9, 0.6, 0.0, 10, "+0.000", 0.133, 41.7],
+    ["Filter whole-arm predict · FM", 160, 48.8, 48.8, 78.1, 1.9, 0.0, 0.30, "+0.000", 0.107, 40.7],
+    ["Filter whole-arm nopredict · FM", 160, 48.1, 48.1, 76.9, 1.2, 0.6, 0.25, "-0.008", "—", 41.5],
+    ["Filter whole-arm predict · FM-abs", 160, 38.1, 38.1, 48.1, 0.0, 0.0, 10, "+0.011", "—", 37.4],
+    ["Filter whole-arm nopredict · DDPM", 160, 36.9, 36.9, 73.1, 2.5, 0.6, 6.3, "-0.048", "—", 37.4],
+    ["Filter whole-arm predict · DDPM", 160, 35.6, 35.6, 73.1, 1.9, 0.0, 2.8, "+0.000", 0.143, 37.3],
+    ["Filter EE predict · DDPM", 160, 37.5, 73.8, 86.9, 53.1, 53.1, 0.08, "-0.097", "—", 44.5],
+    ["Filter EE predict · FM", 160, 35.6, 79.4, 91.9, 58.1, 58.1, 0.07, "-0.096", "—", 44.9],
+    ["Filter EE nopredict · DDPM", 160, 35.0, 67.5, 86.2, 54.4, 54.4, 0.08, "-0.097", "—", "-"],
+    ["Filter EE predict · DP", 160, 34.4, 76.2, 80.0, 56.9, 56.9, 38, "-0.086", 0.110, 45.6],
+    ["Filter EE nopredict · FM", 160, 34.4, 76.9, 90.0, 58.8, 58.8, 0.07, "-0.096", "—", "-"],
+    ["Filter EE nopredict · DP", 160, 32.5, 74.4, 78.8, 58.1, 58.1, 0.15, "-0.088", "—", 46.2],
+    ["Hybrid · DDPM-abs", 160, 55.0, 55.0, 70.0, 0.0, 0.0, 54, "+0.011", "—", 29.9],
+    ["Hybrid · DP", 160, 45.6, 45.6, 70.0, 0.0, 0.0, 2.1, "+0.011", 0.207, 31.9],
+    ["Hybrid · FM", 160, 36.9, 36.9, 71.2, 1.9, 0.6, 0.48, "-0.016", 0.100, 33.2],
+    ["Hybrid · FM-abs", 160, 29.4, 29.4, 35.0, 0.0, 0.0, 29, "+0.011", "—", 33.0],
+    ["Hybrid · DDPM", 160, 25.6, 25.6, 68.8, 1.2, 1.2, 1.2, "-0.022", 0.144, 29.1],
+    ["Guidance · DP", 160, 36.2, 60.6, 73.8, 36.9, 36.9, "—", "-0.083", "—", 13.0],
+    ["Guidance · DDPM-abs", 160, 35.6, 65.6, 78.1, 44.4, 43.1, "—", "-0.082", "—", 12.9],
+    ["Guidance · FM", 160, 28.8, 65.6, 76.9, 46.2, 45.6, "—", "-0.096", "—", "-"],
+    ["Guidance · DDPM", 160, 28.1, 58.8, 70.6, 46.2, 46.2, "—", "-0.097", "—", "-"],
+    ["Guidance · FM-abs", 160, 26.2, 48.8, 50.6, 31.2, 31.2, "—", "-0.066", "—", 13.0],
+    ["Frozen Generator · DP", 160, 36.2, 83.1, 83.1, 59.4, 59.4, "—", "-0.090", "—", "-"],
+    ["Frozen Generator · FM", 160, 26.9, 84.4, "n/a", 66.9, 66.9, "—", "-0.096", "—", "-"],
+    ["Frozen Generator · DDPM", 160, 26.9, 68.8, "n/a", 63.1, 62.5, "—", "-0.124", "—", "-"],
+    ["CBF-QP / VLSA — faithful", 160, 33.1, 76.2, 85.0, 53.1, 53.1, "—", "-0.096", 0.008, 13.9],
+    ["PACS — augmented", 160, 33.1, 47.5, 80.0, 31.9, 31.9, "—", "-0.094", "—", "-"],
+    ["PACS — faithful", 160, 31.9, 48.8, 78.8, 31.2, 31.2, "—", "-0.092", "—", 4.0],
+    ["SafeFlow — faithful", 160, 31.2, 73.1, 81.9, 55.6, 55.6, "—", "-0.097", "—", 14.7],
+    ["SafeFlowMatcher-Y2 — augmented", 160, 27.5, 30.0, 67.5, 8.1, 8.1, "—", "-0.095", "—", "-"],
+    ["SafeDiffuser — faithful", 160, 23.1, 61.9, 73.1, 57.5, 57.5, "—", "-0.123", "—", 13.6],
+    ["CBF-QP / VLSA — augmented", 160, 22.5, 52.5, 77.5, 46.9, 46.9, "—", "-0.095", "—", "-"],
+    ["OmniGuide — faithful", 160, 18.8, 77.5, 83.8, 73.1, 73.1, "—", "-0.097", "—", 12.9],
+    ["SafeFlowMatcher-Y2 — faithful", 160, 14.4, 45.6, 69.4, 45.0, 45.0, "—", "-0.096", "—", 12.7],
+    ["SafeDiffuser — augmented", 160, 13.1, 41.2, 63.1, 61.2, 61.2, "—", "-0.098", "—", "-"],
+    ["OmniGuide — augmented", 160, 11.9, 51.2, 63.1, 75.6, 75.6, "—", "-0.097", "—", "-"],
+    ["SafeFlowMatcher — faithful", 160, 6.9, 46.2, 69.4, 78.8, 78.8, "—", "-0.096", "—", "-"],
+    ["SafeFlowMatcher — augmented", 160, 3.8, 34.4, 61.2, 79.4, 79.4, "—", "-0.124", "—", "-"],
+    ["SafeFlow — augmented", 160, 0.0, 3.8, 5.0, 55.0, 53.8, "—", "-0.096", "—", "-"],
   ]}
 />
 
 <ResultsTable
-  caption="Table 2. Panda, gold/silver stress set (22 curated poses x 10 seeds, n = 220), built so the frozen generator is forced to penetrate. Baselines shown in both the faithful and augmented tiers."
-  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓"]}
+  caption="Table 2. Panda, gold/silver stress set (22 curated poses x 10 seeds, n = 220), built so the frozen generator is forced to penetrate. Same columns as Table 1, minus Ctrl (no separate solo timing pass for this set). Baselines shown in both the faithful and augmented tiers."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Max-slk (mm) ↓", "Worst geom dist (m)", "Dev-pk (m)"]}
   rows={[
-    ["Filter, whole-arm, predict · DP (ours, best)", 220, 47.7, 47.7, 0.0],
-    ["Filter, whole-arm, predict · FM (ours)", 220, 47.3, 47.3, 0.0],
-    ["Hybrid · FM (ours)", 220, 31.8, 31.8, 0.0],
-    ["Guidance · DDPM-abs (ours)", 220, 28.2, 36.8, 18.6],
-    ["Frozen generator · DP (no safety)", 220, 20.0, 78.2, 76.8],
-    ["CBF-QP / VLSA — faithful", 220, 28.6, 67.7, 60.5],
-    ["CBF-QP / VLSA — augmented", 220, 30.5, 36.4, 9.5],
-    ["PACS — faithful", 220, 14.5, 18.6, 21.8],
-    ["PACS — augmented", 220, 14.5, 18.6, 21.8],
-    ["SafeFlow — faithful", 220, 13.6, 65.9, 79.5],
-    ["SafeFlow — augmented", 220, 0.5, 0.5, 25.9],
-    ["SafeDiffuser — faithful", 220, 6.8, 45.9, 79.1],
-    ["SafeDiffuser — augmented", 220, 4.5, 23.2, 75.0],
-    ["OmniGuide — faithful", 220, 3.2, 67.7, 96.4],
-    ["OmniGuide — augmented", 220, 0.0, 48.2, 90.5],
+    ["Filter whole-arm predict · DP", 220, 47.7, 47.7, 67.3, 8.6, 0.0, 25, "+0.000", 0.147],
+    ["Filter whole-arm nopredict · DP", 220, 47.7, 47.7, 67.3, 8.6, 0.0, 25, "+0.000", 0.102],
+    ["Filter whole-arm predict · FM", 220, 47.3, 47.3, 68.2, 4.5, 0.0, 7.4, "+0.000", 0.089],
+    ["Filter whole-arm nopredict · FM", 220, 47.3, 47.3, 68.2, 4.5, 0.0, 7.4, "+0.000", "—"],
+    ["Filter whole-arm predict · DDPM-abs", 220, 40.0, 40.0, 60.9, 5.0, 0.0, 25, "+0.000", 0.105],
+    ["Filter whole-arm predict · FM-abs", 220, 39.5, 39.5, 60.9, 4.5, 0.5, 28, "-0.005", "—"],
+    ["Filter whole-arm predict · DDPM", 220, 29.5, 29.5, 62.7, 0.0, 0.0, 17, "+0.009", 0.117],
+    ["Filter whole-arm nopredict · DDPM", 220, 29.5, 29.5, 62.7, 0.0, 0.0, 17, "+0.009", "—"],
+    ["Filter EE predict · DP", 220, 25.5, 74.1, 77.7, 70.9, 69.5, 0.14, "-0.130", 0.098],
+    ["Filter EE nopredict · DP", 220, 25.5, 74.1, 77.7, 70.9, 69.5, 0.14, "-0.130", "—"],
+    ["Filter EE predict · DDPM", 220, 9.1, 61.4, 84.5, 79.5, 78.6, 32, "-0.139", "—"],
+    ["Filter EE nopredict · DDPM", 220, 9.1, 61.4, 84.5, 79.5, 78.6, 32, "-0.139", "—"],
+    ["Filter EE predict · FM", 220, 5.9, 83.2, 92.7, 90.5, 90.5, 0.10, "-0.138", "—"],
+    ["Filter EE nopredict · FM", 220, 5.9, 83.2, 92.7, 90.5, 90.5, 0.10, "-0.138", "—"],
+    ["Hybrid · FM", 220, 31.8, 31.8, 64.5, 1.8, 0.0, 0.24, "+0.000", 0.091],
+    ["Hybrid · DDPM-abs", 220, 29.5, 29.5, 60.9, 4.1, 0.0, 20, "+0.000", "—"],
+    ["Hybrid · DDPM", 220, 22.3, 22.3, 60.0, 1.4, 0.0, 8.7, "+0.000", 0.116],
+    ["Hybrid · FM-abs", 220, 22.3, 22.3, 58.6, 2.3, 0.0, 107, "+0.000", "—"],
+    ["Hybrid · DP", 220, 13.2, 13.2, 65.0, 3.2, 0.0, 3.2, "+0.000", 0.139],
+    ["Guidance · DDPM-abs", 220, 28.2, 36.8, 68.6, 23.6, 18.6, "—", "-0.099", "—"],
+    ["Guidance · DP", 220, 25.0, 29.1, 66.8, 16.4, 15.0, "—", "-0.098", "—"],
+    ["Guidance · FM-abs", 220, 20.9, 26.4, 65.9, 22.3, 19.1, "—", "-0.099", "—"],
+    ["Guidance · DDPM", 220, 18.2, 39.1, 62.3, 41.4, 40.5, "—", "-0.098", "—"],
+    ["Guidance · FM", 220, 8.6, 44.5, 69.1, 61.8, 61.8, "—", "-0.113", "—"],
+    ["Frozen Generator · DP", 220, 20.0, 78.2, 81.8, 77.7, 76.8, "—", "-0.132", "—"],
+    ["Frozen Generator · DDPM", 220, 7.3, 74.1, "n/a", 83.6, 83.6, "—", "-0.139", "—"],
+    ["Frozen Generator · FM", 220, 6.4, 87.3, "n/a", 92.7, 92.3, "—", "-0.131", "—"],
+    ["CBF-QP / VLSA — augmented", 220, 30.5, 36.4, 70.9, 11.4, 9.5, "—", "-0.050", "—"],
+    ["CBF-QP / VLSA — faithful", 220, 28.6, 67.7, 84.1, 60.9, 60.5, "—", "-0.131", 0.012],
+    ["SafeFlowMatcher-Y2 — faithful", 220, 14.5, 25.9, 68.2, 36.8, 36.4, "—", "-0.108", "—"],
+    ["PACS — faithful", 220, 14.5, 18.6, 63.6, 23.2, 21.8, "—", "-0.124", "—"],
+    ["PACS — augmented", 220, 14.5, 18.6, 63.6, 23.2, 21.8, "—", "-0.124", "—"],
+    ["SafeFlow — faithful", 220, 13.6, 65.9, 81.8, 80.5, 79.5, "—", "-0.131", "—"],
+    ["SafeDiffuser — faithful", 220, 6.8, 45.9, 65.9, 79.5, 79.1, "—", "-0.125", "—"],
+    ["SafeFlowMatcher-Y2 — augmented", 220, 5.0, 5.5, 68.2, 3.2, 2.3, "—", "-0.087", "—"],
+    ["SafeDiffuser — augmented", 220, 4.5, 23.2, 61.4, 75.0, 75.0, "—", "-0.127", "—"],
+    ["OmniGuide — faithful", 220, 3.2, 67.7, 71.8, 96.4, 96.4, "—", "-0.136", "—"],
+    ["SafeFlow — augmented", 220, 0.5, 0.5, 0.9, 26.8, 25.9, "—", "-0.110", "—"],
+    ["SafeFlowMatcher — faithful", 220, 0.0, 34.1, 68.6, 96.4, 96.4, "—", "-0.136", "—"],
+    ["SafeFlowMatcher — augmented", 220, 0.0, 30.0, 68.6, 95.0, 95.0, "—", "-0.144", "—"],
+    ["OmniGuide — augmented", 220, 0.0, 48.2, 57.3, 90.5, 90.5, "—", "-0.147", "—"],
   ]}
 />
 
@@ -192,12 +244,12 @@ Rather than assuming privileged state, the safety filter can instead observe the
 />
 
 <ResultsTable
-  caption="Table 3. Panda, perception-robustness ablation (noisy/occluded sensing, n = 160)."
-  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓", "Worst geom dist (m)"]}
+  caption="Table 3. Panda, perception-robustness ablation (noisy/occluded sensing, n = 160). Only the flagship configs were run; no dev/slack extraction for this table."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Worst geom dist (m)"]}
   rows={[
-    ["Filter (perceived), whole-arm predict · DP", 160, 61.9, 61.9, 0.0, "+0.000"],
-    ["Hybrid (perceived) · DP", 160, 50.0, 50.0, 0.0, "+0.011"],
-    ["Guidance (perceived) · DP", 160, 36.9, 64.4, 40.6, "-0.085"],
+    ["Filter (perceived), whole-arm predict · DP", 160, 61.9, 61.9, 78.8, 0.6, 0.0, "+0.000"],
+    ["Hybrid (perceived) · DP", 160, 50.0, 50.0, 73.8, 0.0, 0.0, "+0.011"],
+    ["Guidance (perceived) · DP", 160, 36.9, 64.4, 72.5, 40.6, 40.6, "-0.085"],
   ]}
 />
 
@@ -215,15 +267,29 @@ The same generator-agnostic whole-arm MPC-CBF filter, with no robot-specific edi
 />
 
 <ResultsTable
-  caption="Table 4a. Cross-embodiment transfer, designed dynamic matrix (n = 160 per arm). Frozen generator vs. the whole-arm filter."
-  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑"]}
+  caption="Table 4a. Cross-embodiment transfer, designed dynamic matrix (n = 160 per arm). Frozen generator vs. the whole-arm filter; same generator-agnostic whole-arm MPC-CBF filter, no robot-specific source edits. Filter checkpoint iteration noted per arm (@Nk)."
+  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑", "Δ Safe vs frozen"]}
   rows={[
-    ["UR5e", "Frozen generator", 63.8, 45.6, 36.2],
-    ["UR5e", "Filter (ours)", 32.5, 0.0, 32.5],
-    ["KUKA IIWA", "Frozen generator", 57.5, 56.2, 20.0],
-    ["KUKA IIWA", "Filter (ours)", 29.4, 6.9, 25.6],
-    ["Kinova Gen3", "Frozen generator", 55.6, 48.1, 20.0],
-    ["Kinova Gen3", "Filter (ours)", 26.9, 13.1, 23.8],
+    ["UR5e", "Frozen Generator", 63.8, 45.6, 36.2, "—"],
+    ["UR5e", "Filter @20k", 32.5, 0.0, 32.5, "-3.7 (edge case)"],
+    ["KUKA IIWA", "Frozen Generator", 57.5, 56.2, 20.0, "—"],
+    ["KUKA IIWA", "Filter @10k", 29.4, 6.9, 25.6, "+5.6 (HOLDS)"],
+    ["Kinova Gen3", "Frozen Generator", 55.6, 48.1, 20.0, "—"],
+    ["Kinova Gen3", "Filter @25k", 26.9, 13.1, 23.8, "+3.8 (HOLDS)"],
+  ]}
+/>
+
+<ResultsTable
+  caption="Table 4b. Cross-embodiment transfer, gold/silver stress set (n = 220 per arm). Static curated poses (no obstacle motion); penetration is the primary axis. A Panda reference row (paper number, n = 220) is included for scale."
+  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑", "Δ Safe vs frozen"]}
+  rows={[
+    ["UR5e", "Frozen Generator", 65.9, 88.6, 4.5, "—"],
+    ["UR5e", "Filter @20k", 5.0, 5.5, 5.0, "+0.5"],
+    ["KUKA IIWA", "Frozen Generator", 71.8, 88.2, 6.4, "—"],
+    ["KUKA IIWA", "Filter @10k", 7.3, 9.1, 7.3, "+0.9"],
+    ["Kinova Gen3", "Frozen Generator", 55.9, 75.5, 8.2, "—"],
+    ["Kinova Gen3", "Filter @25k", 8.6, 15.5, 8.6, "+0.4"],
+    ["Panda (paper ref)", "DP Filter", 47.7, 0.0, 47.7, "—"],
   ]}
 />
 
@@ -250,14 +316,24 @@ The same filter also wraps a frozen pi0.5 vision-language-action policy on LIBER
 />
 
 <ResultsTable
-  caption="Table 5a. SafeLIBERO per-suite TSR / CAR (%), frozen pi0.5 VLA, n = 400 per suite. Higher CAR = fewer collisions."
-  headers={["Suite", "Frozen (bare) TSR", "Frozen (bare) CAR", "Filter (ours) TSR", "Filter (ours) CAR"]}
+  caption="Table 5a. SafeLIBERO per-suite TSR / CAR (%), frozen pi0.5 VLA, n = 400 per suite per arm. Higher CAR = fewer collisions. AEGIS repro is a faithful single-end-effector-ellipsoid CBF reproduction (a baseline, not one of our path methods); Filter is the whole-arm HOCBF (ours), fixed post-fix run."
+  headers={["Suite", "Frozen Generator (bare) TSR", "Frozen Generator (bare) CAR", "AEGIS repro (ee_cbf_osc) TSR", "AEGIS repro (ee_cbf_osc) CAR", "Filter (whole_arm_mpc, ours) TSR", "Filter (whole_arm_mpc, ours) CAR"]}
   rows={[
-    ["Object", 49.0, 22.8, 38.5, 94.0],
-    ["Spatial", 61.8, 26.2, 42.0, 96.2],
-    ["Goal", 60.5, 17.5, 34.2, 97.5],
-    ["Long", 27.5, 17.2, 11.0, 85.8],
-    ["Macro", 49.7, 20.9, 31.4, 93.4],
+    ["Object", 49.0, 22.8, 63.2, 70.8, 38.5, 94.0],
+    ["Spatial", 61.8, 26.2, 64.8, 81.8, 42.0, 96.2],
+    ["Goal", 60.5, 17.5, 68.5, 82.5, 34.2, 97.5],
+    ["Long", 27.5, 17.2, 23.8, 79.0, 11.0, 85.8],
+    ["Macro", 49.7, 20.9, 55.1, 78.5, 31.4, 93.4],
+  ]}
+/>
+
+<ResultsTable
+  caption="Table 5b. SafeLIBERO macro physical arm-collision + Safe-Success (%), macro of 4 suites (n = 1600). Physical = actual robot-arm-geom vs. obstacle-box-geom penetration via exact MuJoCo geom-distance, runtime ticks only; non-EE = robot links only, all-arm = plus gripper. This is the source of the paper's headline collision-rate column (all-arm)."
+  headers={["Arm", "TSR %", "CAR %", "Phys armcol non-EE % ↓", "Phys armcol all-arm % ↓", "SafeSucc (phys, non-EE) %", "SafeSucc (phys, all-arm) %"]}
+  rows={[
+    ["Frozen Generator (bare)", 49.7, 20.9, 13.5, 67.2, 42.4, 22.9],
+    ["AEGIS repro (ee_cbf_osc)", 55.1, 78.5, 11.4, 15.7, 51.4, 48.9],
+    ["Filter (whole_arm_mpc, ours)", 31.4, 93.4, 0.6, 2.5, 31.4, 30.8],
   ]}
 />
 
