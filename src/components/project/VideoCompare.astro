@@ -2,21 +2,21 @@
 interface VideoItem { src: string; label: string; }
 interface Props { left: VideoItem; right: VideoItem; caption?: string; }
 const { left, right, caption } = Astro.props;
+const items = [left, right];
 ---
 <figure style="margin:1.5rem 0;">
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">
-    <div>
-      <p style="color:var(--muted);font-size:.9rem;margin:0 0 .35rem;text-align:center;">{left.label}</p>
-      <video autoplay muted loop playsinline controls preload="metadata" style="width:100%;height:auto;border-radius:8px;background:#000;">
-        <source src={left.src} type="video/mp4" />
-      </video>
-    </div>
-    <div>
-      <p style="color:var(--muted);font-size:.9rem;margin:0 0 .35rem;text-align:center;">{right.label}</p>
-      <video autoplay muted loop playsinline controls preload="metadata" style="width:100%;height:auto;border-radius:8px;background:#000;">
-        <source src={right.src} type="video/mp4" />
-      </video>
-    </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem;">
+    {items.map((item) => (
+      <div>
+        <p style="color:var(--muted);font-size:.9rem;margin:0 0 .35rem;text-align:center;">{item.label}</p>
+        <div class="zoom-wrap">
+          <video autoplay muted loop playsinline controls preload="metadata" style="width:100%;height:auto;border-radius:8px;background:#000;">
+            <source src={item.src} type="video/mp4" />
+          </video>
+          <button type="button" class="zoom-btn" data-zoom-video={item.src} aria-label="Zoom video">⤢</button>
+        </div>
+      </div>
+    ))}
   </div>
   {caption && <figcaption style="color:var(--muted);font-size:.9rem;margin-top:.5rem;text-align:center;">{caption}</figcaption>}
 </figure>

@@ -1,0 +1,43 @@
+---
+interface TabDef { id: string; label: string; }
+interface Props { tabs: TabDef[]; }
+const { tabs } = Astro.props;
+---
+<div class="tabs">
+  <div class="tab-nav" role="tablist" aria-label="Results sections">
+    {tabs.map((t, i) => (
+      <button
+        type="button"
+        class="tab-btn"
+        role="tab"
+        id={`tab-${t.id}`}
+        data-tab={t.id}
+        aria-controls={`panel-${t.id}`}
+        aria-selected={i === 0 ? 'true' : 'false'}
+      >{t.label}</button>
+    ))}
+  </div>
+  <div class="tab-panels">
+    <slot />
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.tabs').forEach((tabs) => {
+    const btns = Array.from(tabs.querySelectorAll<HTMLButtonElement>('.tab-btn'));
+    const panels = Array.from(tabs.querySelectorAll<HTMLElement>(':scope > .tab-panels > .tabpanel'));
+    const activate = (id: string) => {
+      btns.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
+      panels.forEach((p) => {
+        const active = p.dataset.tab === id;
+        p.hidden = !active;
+        p.querySelectorAll('video').forEach((v) => {
+          if (active) v.play?.().catch(() => {});
+          else v.pause?.();
+        });
+      });
+    };
+    btns.forEach((b) => b.addEventListener('click', () => activate(b.dataset.tab || '')));
+    if (btns[0]) activate(btns[0].dataset.tab || '');
+  });
+</script>

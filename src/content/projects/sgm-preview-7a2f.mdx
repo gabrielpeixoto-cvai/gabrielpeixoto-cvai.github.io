@@ -13,12 +13,30 @@ bibtex: |
     year    = {2026}
   }
 unlisted: true
+passwordHash: "776c70cce5302064413863545d37054368890f88b455354b16eba846e3935b3a"
 ---
 
 import VideoCompare from '../../components/project/VideoCompare.astro';
 import VideoGrid from '../../components/project/VideoGrid.astro';
 import Figure from '../../components/project/Figure.astro';
 import ResultsTable from '../../components/project/ResultsTable.astro';
+import Tabs from '../../components/project/Tabs.astro';
+import Tab from '../../components/project/Tab.astro';
+
+export const dynamicScenes = ["dyn_armlink_v1","dyn_armlink_v1_slow","dyn_armlink_v2","dyn_armlink_v2_slow","dyn_carry_deflect_v2","dyn_carry_deflect_v2_slow","dyn_pregrasp_wait_v2","dyn_pregrasp_wait_v2_slow","elbow_carry_stress","elbow_carry_stress_slow","t8s2_handup_then_away","t8s2_handup_then_away_slow","upper_arm_carry_stress","upper_arm_carry_stress_slow","wrist_carry_stress","wrist_carry_stress_slow"];
+
+export const goldSilverScenes = ["paper_gold_01","paper_gold_02","paper_gold_03","paper_gold_04","paper_gold_05","paper_gold_06","paper_gold_07","paper_gold_08","paper_gold_09","paper_gold_10","paper_gold_11","paper_silver_01","paper_silver_02","paper_silver_03","paper_silver_04","paper_silver_05","paper_silver_06","paper_silver_07","paper_silver_08","paper_silver_09","paper_silver_10","paper_silver_11"];
+
+export const Gallery = ({ scenes }) => (
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr));gap:1.25rem;margin:1.25rem 0;">
+    {scenes.map((s) => (
+      <figure style="margin:0;">
+        <img src={`/projects/sgm-preview-7a2f/figures/${s}_placement.webp`} alt={`Placement composite for the ${s} scene`} loading="lazy" data-zoomable style="width:100%;height:auto;border-radius:8px;border:1px solid var(--border);" />
+        <figcaption style="color:var(--muted);font-size:.8rem;margin-top:.35rem;word-break:break-word;">{s}</figcaption>
+      </figure>
+    ))}
+  </div>
+);
 
 <VideoCompare
   left={{ src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_frozen_generator.mp4", label: "Frozen generator" }}
@@ -50,7 +68,18 @@ One CBF specification is applied at three points along the generation-to-executi
 
 Only the execution-time filter repairs the command against the live state and the predicted obstacle, so it is the placement that yields a hard guarantee independent of how the plan was produced.
 
-## Results
+<Tabs tabs={[
+  { id: "main", label: "Main results" },
+  { id: "ablations", label: "Ablations" },
+  { id: "perception", label: "Perception" },
+  { id: "crossembod", label: "Cross-embodiment" },
+  { id: "safelibero", label: "SafeLIBERO" },
+  { id: "scenes", label: "Scenes" },
+]}>
+
+<Tab id="main">
+
+### Results
 
 We evaluate in Robosuite on the PickPlace-can task. The robot picks a can and places it in a bin while a separate dynamic obstacle, an articulated arm of ten capsule links, moves into the workspace. The obstacle is grasp-triggered and executes one of sixteen curated motions that challenge each link and joint of the arm in turn, so checking only the end effector is structurally insufficient. The headline generator is a Diffusion Policy in absolute joint position, the loop runs at 20 Hz, and the obstacle is crossed with ten seeds.
 
@@ -198,7 +227,11 @@ Among the three configurations the filter performs best and the hybrid does not 
 
 The same per-robot description instantiates four arms with no robot-specific source edit — the whole-arm filter transfers to the retargeted UR5e, KUKA IIWA, and Kinova Gen3 arms. Under a realistic perceived obstacle, recovered from onboard sensing rather than privileged state, the whole-arm filter still holds its safety behavior, losing only 1.9 points of safe-success (63.8 to 61.9) while holding penetration at zero. Wrapped around a frozen pi0.5 vision-language-action policy on LIBERO tasks — bridging the VLA's end-effector action into the filter by differential inverse kinematics — the same filter cuts physical arm-collision roughly six-fold over a faithful end-effector-only CBF reproduction, without retraining the policy.
 
-## Ablation: where to enforce safety
+</Tab>
+
+<Tab id="ablations">
+
+### Ablation: where to enforce safety
 
 The same CBF specification is placed at three points along the generation-to-execution axis: **Guidance** at generation time, the execution-time **Filter** (a model-predictive controller), and **Hybrid**, guidance followed by the filter. Guidance alone shapes the sample against the obstacle pose available at generation time, but by execution the obstacle has moved and the guided plan is stale, so it still penetrates on a third of episodes. The execution-time filter re-solves against the live joint state and the predicted obstacle at every control tick and drops penetration to zero. Hybrid does not improve on the filter alone. The isolated comparison on the headline Diffusion Policy generator is below.
 
@@ -231,7 +264,11 @@ The same CBF specification is placed at three points along the generation-to-exe
   caption="paper_gold_02 across the three placements of the same CBF specification."
 />
 
-## Perception robustness
+</Tab>
+
+<Tab id="perception">
+
+### Perception robustness
 
 Rather than assuming privileged state, the safety filter can instead observe the obstacle through a realistic perception simulator: two virtual cameras, occlusion, roughly 5 mm of point-cloud noise, obstacle-radius over-estimation, frame dropout, and sensing latency. Collisions are still scored against ground truth, not against the noisy estimate. Under this perceived-obstacle setting the whole-arm filter loses only 1.9 points of safe task completion, from 63.8% to 61.9%, and holds penetration at zero.
 
@@ -253,7 +290,11 @@ Rather than assuming privileged state, the safety filter can instead observe the
   ]}
 />
 
-## Cross-embodiment transfer
+</Tab>
+
+<Tab id="crossembod">
+
+### Cross-embodiment transfer
 
 The same generator-agnostic whole-arm MPC-CBF filter, with no robot-specific edits, transfers to the UR5e (6-DOF), the KUKA IIWA (7-DOF), and the Kinova Gen3 (7-DOF), and it collapses penetration on every arm.
 
@@ -293,7 +334,11 @@ The same generator-agnostic whole-arm MPC-CBF filter, with no robot-specific edi
   ]}
 />
 
-## SafeLIBERO: safety on a frozen pi0.5 VLA
+</Tab>
+
+<Tab id="safelibero">
+
+### SafeLIBERO: safety on a frozen pi0.5 VLA
 
 The same filter also wraps a frozen pi0.5 vision-language-action policy on LIBERO tasks, without retraining the policy. The VLA's end-effector action is bridged into the filter by differential inverse kinematics, and the filter cuts physical arm-collision accordingly. Two metrics are reported per suite: TSR, task success rate, and CAR, collision-avoidance rate, where a higher CAR means fewer collisions.
 
@@ -337,32 +382,25 @@ The same filter also wraps a frozen pi0.5 vision-language-action policy on LIBER
   ]}
 />
 
-## Per-scene placement gallery
+</Tab>
+
+<Tab id="scenes">
+
+### Per-scene placement gallery
 
 Every scene's start/finish placement composite, across three cameras, with swept-motion traces: magenta marks the obstacle path, orange the frozen-generator end-effector trace, and cyan the filter end-effector trace.
 
-export const dynamicScenes = ["dyn_armlink_v1","dyn_armlink_v1_slow","dyn_armlink_v2","dyn_armlink_v2_slow","dyn_carry_deflect_v2","dyn_carry_deflect_v2_slow","dyn_pregrasp_wait_v2","dyn_pregrasp_wait_v2_slow","elbow_carry_stress","elbow_carry_stress_slow","t8s2_handup_then_away","t8s2_handup_then_away_slow","upper_arm_carry_stress","upper_arm_carry_stress_slow","wrist_carry_stress","wrist_carry_stress_slow"];
-
-export const goldSilverScenes = ["paper_gold_01","paper_gold_02","paper_gold_03","paper_gold_04","paper_gold_05","paper_gold_06","paper_gold_07","paper_gold_08","paper_gold_09","paper_gold_10","paper_gold_11","paper_silver_01","paper_silver_02","paper_silver_03","paper_silver_04","paper_silver_05","paper_silver_06","paper_silver_07","paper_silver_08","paper_silver_09","paper_silver_10","paper_silver_11"];
-
-export const Gallery = ({ scenes }) => (
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin:1.25rem 0;">
-    {scenes.map((s) => (
-      <figure style="margin:0;">
-        <img src={`/projects/sgm-preview-7a2f/figures/${s}_placement.webp`} alt={`Placement composite for the ${s} scene`} loading="lazy" style="width:100%;height:auto;border-radius:8px;border:1px solid var(--border);" />
-        <figcaption style="color:var(--muted);font-size:.8rem;margin-top:.35rem;word-break:break-word;">{s}</figcaption>
-      </figure>
-    ))}
-  </div>
-);
-
-### Designed dynamic scenes (16)
+#### Designed dynamic scenes (16)
 
 <Gallery scenes={dynamicScenes} />
 
-### Gold/silver stress scenes (22)
+#### Gold/silver stress scenes (22)
 
 <Gallery scenes={goldSilverScenes} />
+
+</Tab>
+
+</Tabs>
 
 ## Closing note
 

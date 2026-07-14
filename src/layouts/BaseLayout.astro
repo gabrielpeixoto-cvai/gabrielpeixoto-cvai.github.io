@@ -4,8 +4,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 
-interface Props { title?: string; description?: string; locale: string; noindex?: boolean; }
-const { title, description, locale, noindex } = Astro.props;
+interface Props { title?: string; description?: string; locale: string; noindex?: boolean; wide?: boolean; }
+const { title, description, locale, noindex, wide } = Astro.props;
 const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
 const desc = description ?? siteConfig.description;
 const htmlLang = locale === 'pt-br' ? 'pt-BR' : locale;
@@ -41,7 +41,7 @@ const xDefaultHref = new URL(`/en${tail || '/'}`, siteConfig.url).href;
   </head>
   <body>
     <Header locale={locale} />
-    <main>
+    <main class={wide ? 'wide' : undefined}>
       <slot />
     </main>
     <Footer />
