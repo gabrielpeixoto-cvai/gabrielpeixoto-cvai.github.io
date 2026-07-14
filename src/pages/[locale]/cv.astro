@@ -10,28 +10,71 @@ const { locale } = Astro.params as { locale: string };
 ---
 <BaseLayout locale={locale} title={t(locale, 'nav.cv')} description={`Curriculum vitae of ${siteConfig.author.name}.`}>
   <h1>{t(locale, 'heading.cv')}</h1>
-  <p style="color:var(--muted);">{t(locale, 'cv.intro')}</p>
 
   <h2>{t(locale, 'cv.education')}</h2>
   <ul>
-    <li>Degree, Institution, Year — <em>replace me</em></li>
+    <li>2022.04–2027.04 (expected) — Ph.D. (Doctor of Philosophy), Osaka University, Toyonaka, Osaka, Japan</li>
+    <li>2017.02–2019.12 — M.Sc., Computer Science, Federal University of ABC (UFABC), Santo André, São Paulo, Brazil</li>
+    <li>2014.04–2015.03 — Sandwich Undergraduate Program, The University of Electro-Communications, Chofu, Tokyo, Japan</li>
+    <li>2011.08–2016.06 — B.Sc., Computer Engineering, Federal University of Pará, Belém, Pará, Brazil</li>
   </ul>
 
   <h2>{t(locale, 'cv.experience')}</h2>
   <ul>
-    <li>Role, Organization, Year–Year — <em>replace me</em></li>
+    <li>
+      2023.02–present — Leader, Robotics AI Research Engineer, Connected Robotics Inc., Koganei, Tokyo.
+      Leads a team of software engineers (requirement decomposition, task assignment, delivery); technical point of
+      contact for perception/planning/control architecture; builds MuJoCo simulation and implements motion planning,
+      inverse kinematics, and velocity-profile generation; trains and evaluates imitation-learning policies (LeRobot)
+      for food picking; multimodal vision and scale-based weight estimation for grasp validation; real-time robot
+      control (EtherCAT, Real-Time Linux); ROS/ROS2 and Docker deployment; custom robotic-arm design (motor torque
+      and gain tuning).
+    </li>
+    <li>
+      2022.04–present (in parallel with full-time employment) — Ph.D. Researcher, Social Robotics Group (Yoshikawa
+      Lab), Graduate School of Engineering Science, Osaka University. Research in AI Motion Planning and AI
+      Task-and-Motion Planning; deep learning (PyTorch, TensorFlow); simulation (Bullet, MuJoCo, Isaac Sim, Genesis).
+    </li>
+    <li>
+      2020.03–2023.01 — Robotics AI Research Engineer, Connected Robotics Inc., Koganei, Tokyo. End-to-end robotic
+      manipulation for factory automation and food handling; learning-based RGB-D perception and manipulation;
+      integrated industrial robots (Mitsubishi, UR, Epson, Techman); designed components (FreeCAD/SolidWorks) with
+      FDM 3D printing.
+    </li>
+    <li>
+      2018.11–2020.01 — Software Development Analyst, Venturus Research Institute, Campinas, São Paulo, Brazil.
+      Low-level/system software for Android OS and embedded Linux; C/C++ within the Android Framework;
+      computational-photography apps; Git-based large-scale projects.
+    </li>
   </ul>
 
   <h2>{t(locale, 'cv.skills')}</h2>
   <ul>
-    <li><em>Add your skills here</em></li>
+    <li><strong>Programming:</strong> Python, C++, C, Java, MATLAB, VHDL, Verilog, Rust</li>
+    <li><strong>Robot Learning:</strong> Reinforcement Learning, Imitation Learning, Policy Gradient Methods, Multimodal Learning</li>
+    <li><strong>Robotics:</strong> Motion Planning, Inverse Kinematics, Real-Time Control, Physics Simulation (MuJoCo, Bullet, Isaac Sim, Genesis), ROS/ROS2, Control Theory, Model Predictive Control</li>
+    <li><strong>Perception:</strong> Computer Vision, Camera Calibration, Hand–Eye Calibration, RGB-D Sensors (RealSense, Orbbec)</li>
+    <li><strong>Systems:</strong> Linux, Real-Time Linux, Docker, ARM Systems</li>
+    <li><strong>Hardware:</strong> FreeCAD, SolidWorks, FDM 3D Printing, EtherCAT, Serial, FPGA</li>
+    <li><strong>ML Frameworks:</strong> PyTorch, TensorFlow</li>
+  </ul>
+
+  <h2>{t(locale, 'cv.courses')}</h2>
+  <ul>
+    <li>2025.12 — Mech-Mind Manufacturing Course, Mech-Mind Robotics Training Center</li>
+    <li>2022.06 — Modern Robotics: Mechanics, Planning, and Control Specialization, Northwestern University (Coursera)</li>
+    <li>2021.12 — Industrial Robot Introductory Training, Seiko Epson Corporation</li>
+    <li>2021.12 — Special Training for Teaching Industrial Robots, Seiko Epson Corporation</li>
+    <li>2021.07 — Reinforcement Learning Specialization, University of Alberta / Alberta Machine Intelligence Institute (Coursera)</li>
+  </ul>
+
+  <h2>{t(locale, 'cv.languages')}</h2>
+  <ul>
+    <li>Portuguese — Native</li>
+    <li>English — Fluent (TOEFL iBT 112/120, 2021)</li>
+    <li>Japanese — Intermediate (JLPT N3, 2021)</li>
   </ul>
 
   <h2>{t(locale, 'cv.publications')}</h2>
   <p>See the <a href={`/${locale}/publications/`}>{t(locale, 'nav.publications')}</a> page.</p>
-
-  <h2>{t(locale, 'cv.service')}</h2>
-  <ul>
-    <li><em>Add service and leadership here</em></li>
-  </ul>
 </BaseLayout>
