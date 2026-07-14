@@ -1,0 +1,22 @@
+---
+import { getCollection, render } from 'astro:content';
+import ProjectPage from '../../../layouts/ProjectPage.astro';
+import { LOCALES } from '../../../i18n/ui.mjs';
+import { findLocalized, englishBaseIds } from '../../../i18n/content.mjs';
+
+export async function getStaticPaths() {
+  const all = await getCollection('projects');
+  const baseIds = englishBaseIds(all);
+  return LOCALES.flatMap((locale) =>
+    baseIds.map((baseId) => ({
+      params: { locale, slug: baseId },
+      props: { entry: findLocalized(all, baseId, locale)!, locale },
+    }))
+  );
+}
+const { entry, locale } = Astro.props;
+const { Content } = await render(entry);
+---
+<ProjectPage data={entry.data} locale={locale}>
+  <Content />
+</ProjectPage>

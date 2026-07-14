@@ -1,0 +1,26 @@
+---
+interface Props { entry: string; }
+const { entry } = Astro.props;
+---
+<div style="position:relative;">
+  <button
+    type="button"
+    class="bibtex-copy"
+    data-bibtex={entry}
+    style="position:absolute;top:.5rem;right:.5rem;padding:.25rem .6rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer;font-size:.8rem;"
+  >Copy</button>
+  <pre style="overflow-x:auto;padding:1rem;border:1px solid var(--border);border-radius:8px;"><code>{entry}</code></pre>
+</div>
+<script>
+  document.querySelectorAll('.bibtex-copy').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const text = btn.getAttribute('data-bibtex') ?? '';
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      } catch { /* clipboard unavailable — the <pre> is still selectable */ }
+    });
+  });
+</script>

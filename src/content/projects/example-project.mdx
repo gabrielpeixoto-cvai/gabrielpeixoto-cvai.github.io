@@ -1,0 +1,60 @@
+---
+title: "Example Project — replace or delete me"
+authors:
+  - name: "Ada Lovelace"
+    affiliation: "Example University"
+    url: "https://example.org/ada"
+  - name: "Alan Turing"
+    affiliation: "Example Institute"
+venue: "Proceedings of the Example Conference (EXCONF 2026)"
+date: 2026-07-13
+teaserImage: "/images/profile.png"
+links:
+  - label: "Paper"
+    href: "https://example.org/paper.pdf"
+  - label: "Code"
+    href: "https://example.org/code"
+excerpt: "A placeholder project page demonstrating every ProjectPage component. Replace or delete it."
+bibtex: |
+  @inproceedings{example2026,
+    title     = {An Example Project},
+    author    = {Lovelace, Ada and Turing, Alan},
+    booktitle = {Proceedings of the Example Conference},
+    year      = {2026},
+  }
+---
+
+import Figure from '../../components/project/Figure.astro';
+import ResultsTable from '../../components/project/ResultsTable.astro';
+import TeaserVideo from '../../components/project/TeaserVideo.astro';
+
+**This is a placeholder project page — replace it with your paper, or delete this file.**
+
+## Abstract
+
+Write your paper's abstract here as a short paragraph. This prose comes from the
+MDX body; the hero above (title, authors, teaser, links) comes from the front
+matter, and the BibTeX block below comes from the `bibtex` field.
+
+## Method
+
+<Figure
+  src="/images/profile.png"
+  alt="Placeholder method diagram"
+  caption="Figure 1. Replace this with a method or architecture figure from your paper."
+/>
+
+## Video
+
+<TeaserVideo src="https://www.youtube.com/watch?v=aqz-KE-bpKQ" />
+
+## Results
+
+<ResultsTable
+  caption="Table 1. Replace these numbers with results from your paper."
+  headers={["Method", "Accuracy", "F1"]}
+  rows={[
+    ["Baseline", 0.812, 0.79],
+    ["Ours", 0.947, 0.93],
+  ]}
+/>

@@ -1,0 +1,30 @@
+---
+interface Author { name: string; affiliation?: string; url?: string; }
+interface Props { authors: Author[]; }
+const { authors } = Astro.props;
+
+// Assign each distinct affiliation a stable superscript number.
+const affiliations: string[] = [];
+for (const a of authors) {
+  if (a.affiliation && !affiliations.includes(a.affiliation)) affiliations.push(a.affiliation);
+}
+const numberOf = (aff?: string) => (aff ? affiliations.indexOf(aff) + 1 : 0);
+---
+<p style="margin:.5rem 0;">
+  {authors.map((a, i) => (
+    <span>
+      {a.url
+        ? <a href={a.url} target="_blank" rel="noopener noreferrer">{a.name}</a>
+        : <span>{a.name}</span>}
+      {a.affiliation && <sup>{numberOf(a.affiliation)}</sup>}
+      {i < authors.length - 1 && <span>, </span>}
+    </span>
+  ))}
+</p>
+{affiliations.length > 0 && (
+  <p style="color:var(--muted);font-size:.9rem;margin:.25rem 0;">
+    {affiliations.map((aff, i) => (
+      <span><sup>{i + 1}</sup>{aff}{i < affiliations.length - 1 && <span>; </span>}</span>
+    ))}
+  </p>
+)}
