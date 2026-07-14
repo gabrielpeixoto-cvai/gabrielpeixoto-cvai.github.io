@@ -16,6 +16,7 @@ unlisted: true
 ---
 
 import VideoCompare from '../../components/project/VideoCompare.astro';
+import VideoGrid from '../../components/project/VideoGrid.astro';
 import Figure from '../../components/project/Figure.astro';
 import ResultsTable from '../../components/project/ResultsTable.astro';
 
@@ -130,6 +131,110 @@ The filter delivers the guarantee the baselines do not, holding penetration at *
 Among the three configurations the filter performs best and the hybrid does not improve on it. Guidance alone penetrates on 31 to 46% of episodes, inside the baseline band, and adding the filter on the identical generator drops that to zero: generation-time guidance shapes the sample against the obstacle pose available then, but by execution the obstacle has moved and the guided plan is stale, whereas the execution-time filter re-solves against the live state at every tick.
 
 The same per-robot description instantiates four arms with no robot-specific source edit — the whole-arm filter transfers to the retargeted UR5e, KUKA IIWA, and Kinova Gen3 arms. Under a realistic perceived obstacle, recovered from onboard sensing rather than privileged state, the whole-arm filter still holds its safety behavior, losing only 1.9 points of safe-success (63.8 to 61.9) while holding penetration at zero. Wrapped around a frozen pi0.5 vision-language-action policy on LIBERO tasks — bridging the VLA's end-effector action into the filter by differential inverse kinematics — the same filter cuts physical arm-collision roughly six-fold over a faithful end-effector-only CBF reproduction, without retraining the policy.
+
+## Ablation: where to enforce safety
+
+The same CBF specification is placed at three points along the generation-to-execution axis: **Guidance** at generation time, the execution-time **Filter** (a model-predictive controller), and **Hybrid**, guidance followed by the filter. Guidance alone shapes the sample against the obstacle pose available at generation time, but by execution the obstacle has moved and the guided plan is stale, so it still penetrates on a third of episodes. The execution-time filter re-solves against the live joint state and the predicted obstacle at every control tick and drops penetration to zero. Hybrid does not improve on the filter alone. The per-configuration numbers are in Table 1 above: Guidance reaches 36.2% safe task completion at 36.9% penetration, the Filter reaches 63.8% safe task completion at 0.0% penetration, and Hybrid reaches 45.6% safe task completion at 0.0% penetration.
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_guidance.mp4", label: "Guidance" },
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_mpc_filter.mp4", label: "Filter (ours)" },
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_hybrid.mp4", label: "Hybrid" },
+  ]}
+  caption="dyn_armlink_v2 across the three placements of the same CBF specification."
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_guidance.mp4", label: "Guidance" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_mpc_filter.mp4", label: "Filter (ours)" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_hybrid.mp4", label: "Hybrid" },
+  ]}
+  caption="paper_gold_02 across the three placements of the same CBF specification."
+/>
+
+## Perception robustness
+
+Rather than assuming privileged state, the safety filter can instead observe the obstacle through a realistic perception simulator: two virtual cameras, occlusion, roughly 5 mm of point-cloud noise, obstacle-radius over-estimation, frame dropout, and sensing latency. Collisions are still scored against ground truth, not against the noisy estimate. Under this perceived-obstacle setting the whole-arm filter loses only 1.9 points of safe task completion, from 63.8% to 61.9%, and holds penetration at zero.
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_filter_perceived.mp4", label: "Filter under perceived obstacle — dyn_armlink_v2" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_perceived.mp4", label: "Filter under perceived obstacle — paper_gold_02" },
+  ]}
+  caption="Same filter, same scenes, run against the noisy perceived-obstacle sensing pipeline rather than privileged state."
+/>
+
+<ResultsTable
+  caption="Table 3. Panda, perception-robustness ablation (noisy/occluded sensing, n = 160)."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓", "Worst geom dist (m)"]}
+  rows={[
+    ["Filter (perceived), whole-arm predict · DP", 160, 61.9, 61.9, 0.0, "+0.000"],
+    ["Hybrid (perceived) · DP", 160, 50.0, 50.0, 0.0, "+0.011"],
+    ["Guidance (perceived) · DP", 160, 36.9, 64.4, 40.6, "-0.085"],
+  ]}
+/>
+
+## Cross-embodiment transfer
+
+The same generator-agnostic whole-arm MPC-CBF filter, with no robot-specific edits, transfers to the UR5e (6-DOF), the KUKA IIWA (7-DOF), and the Kinova Gen3 (7-DOF), and it collapses penetration on every arm.
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/crossembod_ur5e_dyn_armlink_v2_seed6_mpc_filter.mp4", label: "UR5e" },
+    { src: "/projects/sgm-preview-7a2f/videos/crossembod_iiwa_dyn_armlink_v2_seed9_mpc_filter.mp4", label: "KUKA IIWA" },
+    { src: "/projects/sgm-preview-7a2f/videos/crossembod_kinova3_dyn_armlink_v1_seed6_mpc_filter.mp4", label: "Kinova Gen3" },
+  ]}
+  caption="The whole-arm filter retargeted to three additional arms with no robot-specific source edit."
+/>
+
+<ResultsTable
+  caption="Table 4a. Cross-embodiment transfer, designed dynamic matrix (n = 160 per arm). Frozen generator vs. the whole-arm filter."
+  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑"]}
+  rows={[
+    ["UR5e", "Frozen generator", 63.8, 45.6, 36.2],
+    ["UR5e", "Filter (ours)", 32.5, 0.0, 32.5],
+    ["KUKA IIWA", "Frozen generator", 57.5, 56.2, 20.0],
+    ["KUKA IIWA", "Filter (ours)", 29.4, 6.9, 25.6],
+    ["Kinova Gen3", "Frozen generator", 55.6, 48.1, 20.0],
+    ["Kinova Gen3", "Filter (ours)", 26.9, 13.1, 23.8],
+  ]}
+/>
+
+## SafeLIBERO: safety on a frozen pi0.5 VLA
+
+The same filter also wraps a frozen pi0.5 vision-language-action policy on LIBERO tasks, without retraining the policy. The VLA's end-effector action is bridged into the filter by differential inverse kinematics, and the filter cuts physical arm-collision accordingly. Two metrics are reported per suite: TSR, task success rate, and CAR, collision-avoidance rate, where a higher CAR means fewer collisions.
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_ramekin_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_ramekin_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="SafeLIBERO spatial suite, bowl-on-ramekin — the bare policy clips the scene furniture; the filter reroutes the whole arm."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="SafeLIBERO object suite, milk — the filter is wrapped around the frozen policy with no retraining."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_bowl_on_plate_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_bowl_on_plate_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="SafeLIBERO goal suite, bowl-on-plate — the end-effector action is bridged into the filter by differential inverse kinematics."
+/>
+
+<ResultsTable
+  caption="Table 5a. SafeLIBERO per-suite TSR / CAR (%), frozen pi0.5 VLA, n = 400 per suite. Higher CAR = fewer collisions."
+  headers={["Suite", "Frozen (bare) TSR", "Frozen (bare) CAR", "Filter (ours) TSR", "Filter (ours) CAR"]}
+  rows={[
+    ["Object", 49.0, 22.8, 38.5, 94.0],
+    ["Spatial", 61.8, 26.2, 42.0, 96.2],
+    ["Goal", 60.5, 17.5, 34.2, 97.5],
+    ["Long", 27.5, 17.2, 11.0, 85.8],
+    ["Macro", 49.7, 20.9, 31.4, 93.4],
+  ]}
+/>
 
 ## Per-scene placement gallery
 
