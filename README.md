@@ -41,4 +41,3 @@ Author Markdown under `src/content/<collection>/` (e.g. `src/content/publication
 
 - `docs/project-pages.md` — authoring rich project/portfolio pages.
 - `scripts/README.md` — the authoring, BibTeX-import, and translation scripts.
-- `docs/CUTOVER.md` — the one-time Jekyll→Astro cutover checklist.
