@@ -9,7 +9,7 @@ export const siteConfig = {
   author: {
     name: 'Gabriel Peixoto de Carvalho',
     avatar: '/images/profile.png',
-    bio: 'Researcher in computer vision and machine learning.',
+    bio: 'Robotics AI researcher — Ph.D. at Osaka University (Yoshikawa Lab) and Robotics AI Research Lead at Connected Robotics. AI motion planning, task-and-motion planning, robot learning, and computer vision.',
     location: 'Koganei, Tokyo, Japan',
   },
   social: [
