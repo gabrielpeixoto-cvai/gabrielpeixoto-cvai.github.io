@@ -30,6 +30,7 @@ export default defineConfig({
   integrations: [
     mdx(),
     sitemap({
+      filter: (page) => !page.includes('/projects/sgm-preview-7a2f/'),
       i18n: {
         defaultLocale: 'en',
         locales: { en: 'en', ja: 'ja', 'pt-br': 'pt-BR' },

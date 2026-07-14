@@ -10,6 +10,7 @@ export function getStaticPaths() {
 }
 const { locale } = Astro.params as { locale: string };
 const projects = localizedEntries(await getCollection('projects'), locale)
+  .filter((p) => p.data.unlisted !== true)
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 const items = projects.map((p) => ({
   title: p.data.title,

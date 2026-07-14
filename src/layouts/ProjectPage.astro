@@ -18,12 +18,13 @@ interface ProjectData {
   links?: LinkItem[];
   excerpt?: string;
   bibtex?: string;
+  unlisted?: boolean;
 }
 interface Props { data: ProjectData; locale: string; }
 const { data, locale } = Astro.props;
 const venueLine = [data.venue, data.date.getFullYear()].filter(Boolean).join(' · ');
 ---
-<BaseLayout locale={locale} title={data.title} description={data.excerpt}>
+<BaseLayout locale={locale} title={data.title} description={data.excerpt} noindex={data.unlisted}>
   <article style="max-width:var(--max-width);margin:0 auto;">
     <header style="text-align:center;margin-bottom:2rem;">
       <h1 style="margin-bottom:.5rem;">{data.title}</h1>

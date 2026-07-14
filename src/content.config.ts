@@ -85,6 +85,7 @@ const projects = defineCollection({
       .optional(),
     excerpt: z.string().optional(),
     bibtex: z.string().optional(),
+    unlisted: z.boolean().optional(),
     translationHash: z.string().optional(),
     translationLocked: z.boolean().optional(),
   }),
