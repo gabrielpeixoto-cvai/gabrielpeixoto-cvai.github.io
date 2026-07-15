@@ -1,0 +1,243 @@
+---
+// Throwaway style playground — browse personality directions on real content.
+// Standalone page (not using BaseLayout) so its themes are fully isolated from
+// the live site. URL: /style-lab/. Delete once a direction is chosen.
+const styles = [
+  { id: 'editorial', name: 'Editorial / academic serif', blurb: 'Serif display headings, generous whitespace, understated and scholarly.' },
+  { id: 'minimal', name: 'Modern minimal + bold accent', blurb: 'Crisp sans, a strong signature accent, tight cards, sharp and contemporary.' },
+  { id: 'warm', name: 'Warm / personal', blurb: 'Warmer palette, rounded shapes, soft shadows — approachable and human.' },
+  { id: 'technical', name: 'Dark / technical', blurb: 'Dark-first, monospace accents, engineering-forward — fit for robotics.' },
+];
+const nav = ['Publications', 'Talks', 'Projects', 'Blog', 'CV'];
+const pubs = [
+  {
+    title: 'A Survey on Data-Driven Motion Planning: From Classical Sampling to Learned Generative Models',
+    venue: 'IEEE Access', year: '2025', links: [['PDF', '#'], ['DOI', '#']],
+  },
+  {
+    title: 'HandArch: A Deep Learning Architecture for Hand Gesture Recognition',
+    venue: 'Workshop of Computer Vision (WVC)', year: '2021', links: [['PDF', '#'], ['Code', '#']],
+  },
+  {
+    title: 'Human Pose Recognition for Human–Robot Interaction',
+    venue: 'SIBGRAPI', year: '2017', links: [['PDF', '#']],
+  },
+];
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Style Lab · Gabriel Peixoto de Carvalho</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=Nunito+Sans:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0b0d10; font-family: 'Inter', system-ui, sans-serif; }
+
+    /* ---- neutral toolbar (never themed) ---- */
+    .toolbar {
+      position: sticky; top: 0; z-index: 50;
+      background: #14171c; color: #e6e8eb;
+      border-bottom: 1px solid #262b33;
+      padding: .6rem 1rem;
+      display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem;
+    }
+    .toolbar__brand { font-weight: 700; font-size: .9rem; letter-spacing: .02em; }
+    .toolbar__brand span { color: #8b95a1; font-weight: 500; }
+    .seg { display: inline-flex; flex-wrap: wrap; gap: .25rem; background: #0e1116; padding: .25rem; border-radius: 10px; }
+    .seg button {
+      appearance: none; border: none; background: none; color: #aab3bd;
+      font: inherit; font-size: .82rem; font-weight: 600; padding: .4rem .7rem;
+      border-radius: 7px; cursor: pointer; white-space: nowrap;
+    }
+    .seg button:hover { color: #fff; }
+    .seg button[aria-pressed='true'] { background: #2f6feb; color: #fff; }
+    .toolbar__blurb { color: #8b95a1; font-size: .82rem; margin-left: auto; }
+
+    /* ---- themed preview surface ---- */
+    .lab {
+      --font-head: 'Inter', sans-serif; --font-body: 'Inter', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+      --bg: #fff; --surface: #fff; --fg: #111; --muted: #666; --border: #e5e5e5;
+      --accent: #2563eb; --accent-fg: #fff; --radius: 10px; --shadow: none; --hero-ring: var(--accent);
+      background: var(--bg); color: var(--fg); font-family: var(--font-body);
+      min-height: 100vh; line-height: 1.6;
+    }
+    .wrap { max-width: 60rem; margin: 0 auto; padding: 0 1.25rem; }
+
+    .lab h1, .lab h2, .lab h3 { font-family: var(--font-head); line-height: 1.15; }
+
+    /* nav */
+    .nav { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .nav__name { font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; text-decoration: none; color: var(--fg); }
+    .nav__links { margin-left: auto; display: flex; gap: 1.1rem; flex-wrap: wrap; }
+    .nav__links a { color: var(--muted); text-decoration: none; font-size: .92rem; font-weight: 500; }
+    .nav__links a:hover { color: var(--accent); }
+
+    /* hero */
+    .hero { display: flex; gap: 1.5rem; align-items: center; padding: 2.5rem 0; flex-wrap: wrap; }
+    .avatar {
+      width: 96px; height: 96px; border-radius: 50%; flex: none;
+      display: grid; place-items: center; font-family: var(--font-head); font-weight: 700; font-size: 1.8rem;
+      color: var(--accent-fg); background: var(--accent);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--hero-ring) 20%, transparent);
+    }
+    .hero__body { flex: 1; min-width: 260px; }
+    .hero h1 { margin: 0 0 .35rem; font-size: 2rem; }
+    .hero .role { color: var(--accent); font-weight: 600; margin: 0 0 .6rem; font-size: 1rem; }
+    .hero .role.mono { font-family: var(--font-mono); font-size: .9rem; }
+    .hero p { margin: 0 0 1rem; color: var(--muted); max-width: 46rem; }
+    .btns { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-block; padding: .5rem .95rem; border-radius: var(--radius);
+      font-size: .9rem; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid transparent;
+    }
+    .btn--primary { background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow); }
+    .btn--ghost { background: transparent; color: var(--fg); border-color: var(--border); }
+    .btn--ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    section.block { padding: 1.5rem 0 .5rem; }
+    .block h2 { font-size: 1.35rem; margin: 0 0 1rem; display: flex; align-items: baseline; gap: .6rem; }
+    .block h2 .tag { font-family: var(--font-mono); font-size: .7rem; color: var(--muted); font-weight: 500; }
+
+    /* publications */
+    .pub { padding: 1rem 0; border-bottom: 1px solid var(--border); }
+    .pub__title { font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; margin: 0 0 .25rem; }
+    .pub__meta { color: var(--muted); font-size: .9rem; margin: 0 0 .6rem; }
+    .pub__meta em { font-style: italic; }
+    .chip {
+      display: inline-block; margin-right: .4rem; padding: .2rem .6rem; font-size: .78rem; font-weight: 600;
+      text-decoration: none; border-radius: calc(var(--radius) * .7);
+      background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent);
+    }
+    .chip.mono { font-family: var(--font-mono); }
+
+    /* project cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-top: .5rem; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.1rem; box-shadow: var(--shadow);
+    }
+    .card h3 { margin: 0 0 .4rem; font-size: 1.05rem; }
+    .card p { margin: 0; color: var(--muted); font-size: .9rem; }
+    .card .tag { font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+
+    footer.foot { margin-top: 2.5rem; padding: 1.5rem 0; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
+
+    /* ===================== THEMES ===================== */
+    .lab[data-style='editorial'] {
+      --font-head: 'Fraunces', Georgia, serif; --font-body: 'Inter', system-ui, sans-serif;
+      --bg: #faf8f4; --surface: #fffdf9; --fg: #201d18; --muted: #6f665a; --border: #e7e0d3;
+      --accent: #7c2d12; --accent-fg: #fdf6ee; --radius: 4px; --shadow: none; --hero-ring: #7c2d12;
+    }
+    .lab[data-style='minimal'] {
+      --font-head: 'Space Grotesk', sans-serif; --font-body: 'Inter', sans-serif;
+      --bg: #ffffff; --surface: #ffffff; --fg: #0a0a0a; --muted: #6b7280; --border: #ececec;
+      --accent: #4f46e5; --accent-fg: #fff; --radius: 12px; --shadow: 0 1px 3px rgba(0,0,0,.09); --hero-ring: #4f46e5;
+    }
+    .lab[data-style='warm'] {
+      --font-head: 'Fraunces', serif; --font-body: 'Nunito Sans', sans-serif;
+      --bg: #fdf6ee; --surface: #fffdfa; --fg: #3a2c22; --muted: #927a67; --border: #f0e2d1;
+      --accent: #c2611f; --accent-fg: #fff; --radius: 18px; --shadow: 0 8px 24px rgba(150,90,40,.13); --hero-ring: #e08a3c;
+    }
+    .lab[data-style='technical'] {
+      --font-head: 'JetBrains Mono', monospace; --font-body: 'Inter', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+      --bg: #0d1117; --surface: #161b22; --fg: #e6edf3; --muted: #8b949e; --border: #2a313a;
+      --accent: #3fb950; --accent-fg: #06240d; --radius: 6px; --shadow: 0 0 0 1px #2a313a; --hero-ring: #3fb950;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="toolbar__brand">Style Lab <span>— pick a direction</span></span>
+    <div class="seg" id="seg">
+      {styles.map((s) => (
+        <button type="button" data-style={s.id} aria-pressed={s.id === 'editorial' ? 'true' : 'false'}>{s.name}</button>
+      ))}
+    </div>
+    <span class="toolbar__blurb" id="blurb">{styles[0].blurb}</span>
+  </div>
+
+  <div class="lab" id="lab" data-style="editorial">
+    <div class="wrap">
+      <nav class="nav">
+        <a href="#" class="nav__name">Gabriel Peixoto de Carvalho</a>
+        <div class="nav__links">
+          {nav.map((n) => <a href="#">{n}</a>)}
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="avatar">GP</div>
+        <div class="hero__body">
+          <h1>Gabriel Peixoto de Carvalho</h1>
+          <p class="role">Robotics AI Researcher · Ph.D. @ Osaka University</p>
+          <p>I work on AI motion planning, task-and-motion planning, robot learning, and
+             computer vision — currently a Ph.D. candidate at Osaka University (Yoshikawa Lab)
+             and Robotics AI Research Lead at Connected Robotics, based in Koganei, Tokyo.</p>
+          <div class="btns">
+            <a class="btn btn--primary" href="#">Get in touch</a>
+            <a class="btn btn--ghost" href="#">GitHub</a>
+            <a class="btn btn--ghost" href="#">Google Scholar</a>
+          </div>
+        </div>
+      </header>
+
+      <section class="block">
+        <h2>Selected publications <span class="tag">// recent</span></h2>
+        {pubs.map((p) => (
+          <article class="pub">
+            <p class="pub__title">{p.title}</p>
+            <p class="pub__meta"><em>{p.venue}</em>, {p.year}</p>
+            <div>{p.links.map(([label, href]) => <a class="chip" href={href}>{label}</a>)}</div>
+          </article>
+        ))}
+      </section>
+
+      <section class="block">
+        <h2>Projects <span class="tag">// featured</span></h2>
+        <div class="cards">
+          <div class="card">
+            <p class="tag">SAFETY · CBF · MPC</p>
+            <h3>Safe Generative Motion</h3>
+            <p>Whole-arm collision avoidance that wraps frozen generative policies in dynamic scenes.</p>
+          </div>
+          <div class="card">
+            <p class="tag">PERCEPTION · DL</p>
+            <h3>HandArch</h3>
+            <p>A deep architecture for real-time hand gesture recognition.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">© 2026 Gabriel Peixoto de Carvalho · Style Lab preview</footer>
+    </div>
+  </div>
+
+  <script is:inline>
+    const lab = document.getElementById('lab');
+    const blurb = document.getElementById('blurb');
+    const seg = document.getElementById('seg');
+    const BLURBS = {
+      editorial: 'Serif display headings, generous whitespace, understated and scholarly.',
+      minimal: 'Crisp sans, a strong signature accent, tight cards, sharp and contemporary.',
+      warm: 'Warmer palette, rounded shapes, soft shadows — approachable and human.',
+      technical: 'Dark-first, monospace accents, engineering-forward — fit for robotics.',
+    };
+    const apply = (id) => {
+      lab.setAttribute('data-style', id);
+      blurb.textContent = BLURBS[id] || '';
+      seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.style === id)));
+      localStorage.setItem('style-lab', id);
+    };
+    seg.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-style]');
+      if (b) apply(b.dataset.style);
+    });
+    apply(localStorage.getItem('style-lab') || 'editorial');
+  </script>
+</body>
+</html>
