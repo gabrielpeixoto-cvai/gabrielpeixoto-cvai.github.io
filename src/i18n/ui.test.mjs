@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { t, ui, LOCALES, DEFAULT_LOCALE } from './ui.mjs';
 
 test('LOCALES and DEFAULT_LOCALE are set', () => {
-  assert.deepEqual(LOCALES, ['en', 'ja', 'pt-br']);
+  assert.deepEqual(LOCALES, ['en']);
   assert.equal(DEFAULT_LOCALE, 'en');
 });
 

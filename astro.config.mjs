@@ -7,7 +7,7 @@ export default defineConfig({
   // Root user/org page: no base path.
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'ja', 'pt-br'],
+    locales: ['en'],
     routing: { prefixDefaultLocale: true },
   },
   redirects: {
@@ -31,10 +31,6 @@ export default defineConfig({
     mdx(),
     sitemap({
       filter: (page) => !page.includes('/projects/sgm-preview-7a2f/'),
-      i18n: {
-        defaultLocale: 'en',
-        locales: { en: 'en', ja: 'ja', 'pt-br': 'pt-BR' },
-      },
     }),
   ],
   build: { format: 'directory' },
