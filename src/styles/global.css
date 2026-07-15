@@ -1,22 +1,31 @@
 :root {
-  --bg: #ffffff;
-  --fg: #1a1a1a;
-  --muted: #5c5c5c;
-  --accent: #2563eb;
-  --border: #e5e7eb;
+  /* Fonts: Roboto for body/long titles, Fira Code for headings + accents */
+  --font-sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Fira Code', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-head: var(--font-mono);
   --max-width: 46rem;
   --header-width: 64rem;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Dark technical palette (default) */
+  --bg: #0d1117;
+  --surface: #161b22;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: #3fb950;
+  --accent-fg: #06240d;
+  --border: #2a313a;
+  color-scheme: dark;
 }
-:root[data-theme='dark'] {
-  --bg: #0f1115;
-  --fg: #e8e8e8;
-  --muted: #9aa0a6;
-  --accent: #6ea8fe;
-  --border: #262a31;
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --surface: #f6f8fa;
+  --fg: #1a1f24;
+  --muted: #57606a;
+  --accent: #1a7f37;
+  --accent-fg: #ffffff;
+  --border: #d0d7de;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
-html { color-scheme: light dark; }
 body {
   margin: 0;
   background: var(--bg);
@@ -24,6 +33,9 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
 }
+/* Fira Code for headings + technical accents; body/long titles stay Roboto */
+h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 700; letter-spacing: -0.01em; }
+code, pre, kbd, samp { font-family: var(--font-mono); }
 main { max-width: var(--max-width); margin: 0 auto; padding: 2rem 1rem 4rem; }
 /* Wide layout (project pages): fill ~80% of the viewport on large screens,
    but stay a normal readable column on phones/tablets. */
@@ -33,6 +45,10 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 2rem 1rem 4rem; }
 a { color: var(--accent); }
 h1, h2, h3 { line-height: 1.25; }
 img { max-width: 100%; height: auto; }
+
+/* Technical header: monospace site name + nav */
+header nav a { font-family: var(--font-mono); }
+header nav a[style*="font-weight:700"] { letter-spacing: -0.02em; }
 
 /* Click-to-zoom media */
 img[data-zoomable] { cursor: zoom-in; }
