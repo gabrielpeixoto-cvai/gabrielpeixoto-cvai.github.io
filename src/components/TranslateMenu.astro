@@ -32,6 +32,9 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: .35rem; box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
   }
+  /* The `hidden` attribute must win over the display rule above, or the menu
+     is permanently visible (author `display` beats the UA `[hidden]` rule). */
+  .tm__menu[hidden] { display: none; }
   .tm__menu button {
     text-align: left; background: none; border: none; color: var(--fg);
     font: inherit; font-size: .9rem; padding: .45rem .55rem; border-radius: 6px; cursor: pointer;
@@ -114,10 +117,13 @@
         if (!originals) originals = new Map(nodes.map((n) => [n, n.nodeValue as string]));
         restore(); // always translate from the English source
         setStatus('Translating…');
-        await Promise.all(nodes.map(async (n) => {
+        // Sequential: the on-device model serializes anyway, and firing all
+        // nodes at once adds contention and stalls. This also gives top-to-
+        // bottom visible progress.
+        for (const n of nodes) {
           const src = originals!.get(n) ?? (n.nodeValue as string);
           try { n.nodeValue = await translator.translate(src); } catch {}
-        }));
+        }
         mark(lang);
         setStatus('Machine translation · on-device');
       } catch {
