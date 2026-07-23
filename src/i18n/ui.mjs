@@ -1,4 +1,8 @@
-export const LOCALES = ['en', 'ja', 'pt-br'];
+// Single-language site: content is English, and translation to other languages
+// is handled on-demand by the browser's on-device Translator API (see
+// TranslateMenu). The `ui` tables below keep ja/pt-br strings as a harmless
+// fallback resource but no ja/pt-br routes are generated.
+export const LOCALES = ['en'];
 export const DEFAULT_LOCALE = 'en';
 
 /**

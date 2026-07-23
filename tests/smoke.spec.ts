@@ -74,61 +74,9 @@ test('root redirects to the English homepage', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('Gabriel Peixoto de Carvalho');
 });
 
-test('each locale homepage renders', async ({ page }) => {
-  for (const path of ['/en/', '/ja/', '/pt-br/']) {
-    await page.goto(path);
-    await expect(page.locator('h1')).toContainText('Gabriel Peixoto de Carvalho');
-  }
-});
-
-test('a non-English homepage shows a localized nav label', async ({ page }) => {
-  await page.goto('/ja/');
-  await expect(page.getByRole('link', { name: 'ブログ', exact: true })).toBeVisible();
-});
-
-test('the language switcher offers all three locales', async ({ page }) => {
-  await page.goto('/en/');
-  for (const name of ['EN', '日本語', 'PT-BR']) {
-    await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
-  }
-});
-
-test('a non-English list falls back to English content', async ({ page }) => {
-  await page.goto('/ja/publications/');
-  await expect(page.getByRole('heading', { name: '論文', level: 1 })).toBeVisible();
-  await expect(page.getByRole('link', { name: /HandArch/ })).toBeVisible();
-});
-
-test('a publication detail page resolves under a locale', async ({ page }) => {
-  await page.goto('/ja/publications/');
-  await page.getByRole('link', { name: /HandArch/ }).click();
-  await expect(page).toHaveURL(/\/ja\/publications\//);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('HandArch');
-});
-
-test('every section renders under a non-English locale via fallback', async ({ page }) => {
-  const sections: [string, string][] = [
-    ['/ja/publications/', '論文'],
-    ['/ja/talks/', '講演'],
-    ['/ja/teaching/', '教育'],
-    ['/ja/portfolio/', 'ポートフォリオ'],
-    ['/ja/blog/', 'ブログ'],
-    ['/ja/notes/', 'ノート'],
-    ['/ja/cv/', '履歴書'],
-  ];
-  for (const [path, heading] of sections) {
-    await page.goto(path);
-    await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
-  }
-});
-
-test('a page emits hreflang alternates for all three locales plus x-default', async ({ page }) => {
+test('a page emits a canonical link', async ({ page }) => {
   await page.goto('/en/publications/');
-  await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(4);
-  for (const hreflang of ['en', 'ja', 'pt-BR']) {
-    await expect(page.locator(`link[rel="alternate"][hreflang="${hreflang}"]`)).toHaveCount(1);
-  }
-  await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
 });
 
 test('projects list shows the example project', async ({ page }) => {
@@ -145,12 +93,6 @@ test('a project detail page renders its hero, table, and links', async ({ page }
   await expect(page.getByText('Ada Lovelace')).toBeVisible();
   await expect(page.getByText('0.947')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Paper', exact: true })).toBeVisible();
-});
-
-test('projects render under a non-English locale via fallback', async ({ page }) => {
-  await page.goto('/ja/projects/');
-  await expect(page.getByRole('heading', { name: 'プロジェクト', level: 1 })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Example Project/ })).toBeVisible();
 });
 
 test('an unlisted project page is password-gated and absent from the projects index', async ({ page }) => {

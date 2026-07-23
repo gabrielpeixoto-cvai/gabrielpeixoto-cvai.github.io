@@ -1,0 +1,148 @@
+---
+// On-demand translation via the browser's built-in (on-device) Translator API.
+// Chromium-only and experimental — the control hides itself entirely where the
+// API is unavailable, so other browsers just see the English page (and can use
+// their own native "Translate page" feature). Translates text in place and can
+// restore the English originals.
+---
+<div class="tm" id="tm" data-no-translate hidden>
+  <button type="button" id="tm-btn" class="tm__btn" aria-haspopup="true" aria-expanded="false" aria-label="Translate this page">
+    <span aria-hidden="true">🌐</span><span id="tm-label">EN</span>
+  </button>
+  <div class="tm__menu" id="tm-menu" role="menu" hidden>
+    <button type="button" role="menuitem" data-lang="en">Original (English)</button>
+    <button type="button" role="menuitem" data-lang="ja">日本語</button>
+    <button type="button" role="menuitem" data-lang="pt">Português</button>
+    <p class="tm__note" id="tm-status">On-device translation</p>
+  </div>
+</div>
+
+<style>
+  .tm { position: relative; }
+  .tm__btn {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    padding: .25rem .5rem; cursor: pointer; color: var(--fg);
+    font-family: var(--font-mono); font-size: .82rem;
+  }
+  .tm__btn:hover { border-color: var(--accent); }
+  .tm__menu {
+    position: absolute; right: 0; top: calc(100% + .4rem); z-index: 40;
+    min-width: 12rem; display: flex; flex-direction: column; gap: .15rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: .35rem; box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+  }
+  /* The `hidden` attribute must win over the display rule above, or the menu
+     is permanently visible (author `display` beats the UA `[hidden]` rule). */
+  .tm__menu[hidden] { display: none; }
+  .tm__menu button {
+    text-align: left; background: none; border: none; color: var(--fg);
+    font: inherit; font-size: .9rem; padding: .45rem .55rem; border-radius: 6px; cursor: pointer;
+  }
+  .tm__menu button:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+  .tm__menu button[aria-current='true'] { color: var(--accent); font-weight: 600; }
+  .tm__note {
+    margin: .2rem .2rem 0; padding-top: .35rem; border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: .72rem; color: var(--muted);
+  }
+</style>
+
+<script>
+  const root = document.getElementById('tm');
+  // Feature-detect the on-device Translator API; hide the control otherwise.
+  const Api = (self as any).Translator;
+  if (root && Api) {
+    root.hidden = false;
+    const btn = document.getElementById('tm-btn')!;
+    const menu = document.getElementById('tm-menu')!;
+    const label = document.getElementById('tm-label')!;
+    const status = document.getElementById('tm-status')!;
+    const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('button[data-lang]'));
+    const CODES: Record<string, string> = { en: 'EN', ja: 'JA', pt: 'PT' };
+
+    let originals: Map<Node, string> | null = null;
+    let current = 'en';
+    let busy = false;
+
+    const setStatus = (s: string) => { status.textContent = s; };
+    const openMenu = (open: boolean) => {
+      menu.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+    };
+
+    const textNodes = () => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          const p = node.parentElement;
+          if (!p || p.closest('[data-no-translate], script, style, code, pre, noscript')) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+      const out: Node[] = [];
+      let n: Node | null;
+      while ((n = walker.nextNode())) out.push(n);
+      return out;
+    };
+
+    const restore = () => { if (originals) for (const [n, v] of originals) n.nodeValue = v; };
+
+    const mark = (lang: string) => {
+      current = lang;
+      label.textContent = CODES[lang] || 'EN';
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : lang;
+      items.forEach((b) => b.setAttribute('aria-current', String(b.dataset.lang === lang)));
+      try { sessionStorage.setItem('tm-lang', lang); } catch {}
+    };
+
+    const translateTo = async (lang: string) => {
+      if (busy || lang === current) return;
+      busy = true;
+      try {
+        if (lang === 'en') { restore(); mark('en'); setStatus('On-device translation'); return; }
+        const opts = { sourceLanguage: 'en', targetLanguage: lang };
+        const avail = await Api.availability(opts);
+        if (avail === 'unavailable') { setStatus('Not available for this language'); return; }
+        setStatus(avail === 'available' ? 'Translating…' : 'Downloading model…');
+        const translator = await Api.create({
+          ...opts,
+          monitor(m: any) {
+            m.addEventListener('downloadprogress', (e: any) =>
+              setStatus(`Downloading model… ${Math.round((e.loaded || 0) * 100)}%`));
+          },
+        });
+        const nodes = textNodes();
+        if (!originals) originals = new Map(nodes.map((n) => [n, n.nodeValue as string]));
+        restore(); // always translate from the English source
+        setStatus('Translating…');
+        // Sequential: the on-device model serializes anyway, and firing all
+        // nodes at once adds contention and stalls. This also gives top-to-
+        // bottom visible progress.
+        for (const n of nodes) {
+          const src = originals!.get(n) ?? (n.nodeValue as string);
+          try { n.nodeValue = await translator.translate(src); } catch {}
+        }
+        mark(lang);
+        setStatus('Machine translation · on-device');
+      } catch {
+        setStatus('Translation failed');
+      } finally {
+        busy = false;
+      }
+    };
+
+    btn.addEventListener('click', () => openMenu(menu.hidden));
+    items.forEach((b) => b.addEventListener('click', () => { openMenu(false); translateTo(b.dataset.lang!); }));
+    document.addEventListener('click', (e) => {
+      if (!root.contains(e.target as Node)) openMenu(false);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openMenu(false); });
+
+    // Re-apply the chosen language when navigating between pages this session.
+    let saved = 'en';
+    try { saved = sessionStorage.getItem('tm-lang') || 'en'; } catch {}
+    if (saved !== 'en') translateTo(saved);
+  }
+</script>

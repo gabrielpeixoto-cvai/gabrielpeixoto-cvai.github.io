@@ -7,74 +7,196 @@ export function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
 }
 const { locale } = Astro.params as { locale: string };
+
+const education = [
+  { date: '2022.04–2027.04', tag: 'expected', title: 'Ph.D. (Doctor of Philosophy)', org: 'Osaka University', place: 'Toyonaka, Osaka, Japan' },
+  { date: '2017.02–2019.12', title: 'M.Sc., Computer Science', org: 'Federal University of ABC (UFABC)', place: 'Santo André, São Paulo, Brazil' },
+  { date: '2014.04–2015.03', title: 'Sandwich Undergraduate Program', org: 'The University of Electro-Communications', place: 'Chofu, Tokyo, Japan' },
+  { date: '2011.08–2016.06', title: 'B.Sc., Computer Engineering', org: 'Federal University of Pará', place: 'Belém, Pará, Brazil' },
+];
+
+const experience = [
+  {
+    date: '2023.02–present', title: 'Leader, Robotics AI Research Engineer', org: 'Connected Robotics Inc.', place: 'Koganei, Tokyo',
+    desc: 'Leads a team of software engineers (requirement decomposition, task assignment, delivery); technical point of contact for perception/planning/control architecture; builds MuJoCo simulation and implements motion planning, inverse kinematics, and velocity-profile generation; trains and evaluates imitation-learning policies (LeRobot) for food picking; multimodal vision and scale-based weight estimation for grasp validation; real-time robot control (EtherCAT, Real-Time Linux); ROS/ROS2 and Docker deployment; custom robotic-arm design (motor torque and gain tuning).',
+  },
+  {
+    date: '2022.04–present', tag: 'in parallel', title: 'Ph.D. Researcher, Social Robotics Group (Yoshikawa Lab)', org: 'Graduate School of Engineering Science, Osaka University', place: 'Osaka, Japan',
+    desc: 'Research in AI Motion Planning and AI Task-and-Motion Planning; deep learning (PyTorch, TensorFlow); simulation (Bullet, MuJoCo, Isaac Sim, Genesis).',
+  },
+  {
+    date: '2020.03–2023.01', title: 'Robotics AI Research Engineer', org: 'Connected Robotics Inc.', place: 'Koganei, Tokyo',
+    desc: 'End-to-end robotic manipulation for factory automation and food handling; learning-based RGB-D perception and manipulation; integrated industrial robots (Mitsubishi, UR, Epson, Techman); designed components (FreeCAD/SolidWorks) with FDM 3D printing.',
+  },
+  {
+    date: '2018.11–2020.01', title: 'Software Development Analyst', org: 'Venturus Research Institute', place: 'Campinas, São Paulo, Brazil',
+    desc: 'Low-level/system software for Android OS and embedded Linux; C/C++ within the Android Framework; computational-photography apps; Git-based large-scale projects.',
+  },
+];
+
+const skills = [
+  { label: 'Programming', items: ['Python', 'C++', 'C', 'Java', 'MATLAB', 'VHDL', 'Verilog', 'Rust'] },
+  { label: 'Robot Learning', items: ['Reinforcement Learning', 'Imitation Learning', 'Policy Gradient Methods', 'Multimodal Learning'] },
+  { label: 'Robotics', items: ['Motion Planning', 'Inverse Kinematics', 'Real-Time Control', 'Physics Simulation (MuJoCo, Bullet, Isaac Sim, Genesis)', 'ROS/ROS2', 'Control Theory', 'Model Predictive Control'] },
+  { label: 'Perception', items: ['Computer Vision', 'Camera Calibration', 'Hand–Eye Calibration', 'RGB-D Sensors (RealSense, Orbbec)'] },
+  { label: 'Systems', items: ['Linux', 'Real-Time Linux', 'Docker', 'ARM Systems'] },
+  { label: 'Hardware', items: ['FreeCAD', 'SolidWorks', 'FDM 3D Printing', 'EtherCAT', 'Serial', 'FPGA'] },
+  { label: 'ML Frameworks', items: ['PyTorch', 'TensorFlow'] },
+];
+
+const courses = [
+  { date: '2025.12', name: 'Mech-Mind Manufacturing Course', org: 'Mech-Mind Robotics Training Center' },
+  { date: '2022.06', name: 'Modern Robotics: Mechanics, Planning, and Control Specialization', org: 'Northwestern University (Coursera)' },
+  { date: '2021.12', name: 'Industrial Robot Introductory Training', org: 'Seiko Epson Corporation' },
+  { date: '2021.12', name: 'Special Training for Teaching Industrial Robots', org: 'Seiko Epson Corporation' },
+  { date: '2021.07', name: 'Reinforcement Learning Specialization', org: 'University of Alberta / Alberta Machine Intelligence Institute (Coursera)' },
+];
+
+const languages = [
+  { name: 'Portuguese', level: 'Native' },
+  { name: 'English', level: 'Fluent · TOEFL iBT 112/120 (2021)' },
+  { name: 'Japanese', level: 'Intermediate · JLPT N3 (2021)' },
+];
 ---
 <BaseLayout locale={locale} title={t(locale, 'nav.cv')} description={`Curriculum vitae of ${siteConfig.author.name}.`}>
-  <h1>{t(locale, 'heading.cv')}</h1>
+  <div class="cv">
+    <header class="cv-header">
+      <h1 class="cv-kicker">{t(locale, 'heading.cv')}</h1>
+      <div class="cv-name">{siteConfig.author.name}</div>
+      <p class="cv-role">Robotics AI Researcher · Ph.D. @ Osaka University · Research Lead @ Connected Robotics</p>
+      <div class="cv-meta">
+        <span>◈ {siteConfig.author.location}</span>
+        {siteConfig.social.map((s) => <a href={s.href} rel="me noopener">{s.label}</a>)}
+      </div>
+    </header>
 
-  <h2>{t(locale, 'cv.education')}</h2>
-  <ul>
-    <li>2022.04–2027.04 (expected) — Ph.D. (Doctor of Philosophy), Osaka University, Toyonaka, Osaka, Japan</li>
-    <li>2017.02–2019.12 — M.Sc., Computer Science, Federal University of ABC (UFABC), Santo André, São Paulo, Brazil</li>
-    <li>2014.04–2015.03 — Sandwich Undergraduate Program, The University of Electro-Communications, Chofu, Tokyo, Japan</li>
-    <li>2011.08–2016.06 — B.Sc., Computer Engineering, Federal University of Pará, Belém, Pará, Brazil</li>
-  </ul>
+    <section>
+      <h2>{t(locale, 'cv.education')}</h2>
+      <div class="tl">
+        {education.map((e) => (
+          <div class="tl-item">
+            <div class="tl-date">{e.date}{e.tag && <span class="tag"> · {e.tag}</span>}</div>
+            <div class="tl-title">{e.title}</div>
+            <div class="tl-org">{e.org} — {e.place}</div>
+          </div>
+        ))}
+      </div>
+    </section>
 
-  <h2>{t(locale, 'cv.experience')}</h2>
-  <ul>
-    <li>
-      2023.02–present — Leader, Robotics AI Research Engineer, Connected Robotics Inc., Koganei, Tokyo.
-      Leads a team of software engineers (requirement decomposition, task assignment, delivery); technical point of
-      contact for perception/planning/control architecture; builds MuJoCo simulation and implements motion planning,
-      inverse kinematics, and velocity-profile generation; trains and evaluates imitation-learning policies (LeRobot)
-      for food picking; multimodal vision and scale-based weight estimation for grasp validation; real-time robot
-      control (EtherCAT, Real-Time Linux); ROS/ROS2 and Docker deployment; custom robotic-arm design (motor torque
-      and gain tuning).
-    </li>
-    <li>
-      2022.04–present (in parallel with full-time employment) — Ph.D. Researcher, Social Robotics Group (Yoshikawa
-      Lab), Graduate School of Engineering Science, Osaka University. Research in AI Motion Planning and AI
-      Task-and-Motion Planning; deep learning (PyTorch, TensorFlow); simulation (Bullet, MuJoCo, Isaac Sim, Genesis).
-    </li>
-    <li>
-      2020.03–2023.01 — Robotics AI Research Engineer, Connected Robotics Inc., Koganei, Tokyo. End-to-end robotic
-      manipulation for factory automation and food handling; learning-based RGB-D perception and manipulation;
-      integrated industrial robots (Mitsubishi, UR, Epson, Techman); designed components (FreeCAD/SolidWorks) with
-      FDM 3D printing.
-    </li>
-    <li>
-      2018.11–2020.01 — Software Development Analyst, Venturus Research Institute, Campinas, São Paulo, Brazil.
-      Low-level/system software for Android OS and embedded Linux; C/C++ within the Android Framework;
-      computational-photography apps; Git-based large-scale projects.
-    </li>
-  </ul>
+    <section>
+      <h2>{t(locale, 'cv.experience')}</h2>
+      <div class="tl">
+        {experience.map((e) => (
+          <div class="tl-item">
+            <div class="tl-date">{e.date}{e.tag && <span class="tag"> · {e.tag}</span>}</div>
+            <div class="tl-title">{e.title}</div>
+            <div class="tl-org">{e.org} — {e.place}</div>
+            <p class="tl-desc">{e.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
 
-  <h2>{t(locale, 'cv.skills')}</h2>
-  <ul>
-    <li><strong>Programming:</strong> Python, C++, C, Java, MATLAB, VHDL, Verilog, Rust</li>
-    <li><strong>Robot Learning:</strong> Reinforcement Learning, Imitation Learning, Policy Gradient Methods, Multimodal Learning</li>
-    <li><strong>Robotics:</strong> Motion Planning, Inverse Kinematics, Real-Time Control, Physics Simulation (MuJoCo, Bullet, Isaac Sim, Genesis), ROS/ROS2, Control Theory, Model Predictive Control</li>
-    <li><strong>Perception:</strong> Computer Vision, Camera Calibration, Hand–Eye Calibration, RGB-D Sensors (RealSense, Orbbec)</li>
-    <li><strong>Systems:</strong> Linux, Real-Time Linux, Docker, ARM Systems</li>
-    <li><strong>Hardware:</strong> FreeCAD, SolidWorks, FDM 3D Printing, EtherCAT, Serial, FPGA</li>
-    <li><strong>ML Frameworks:</strong> PyTorch, TensorFlow</li>
-  </ul>
+    <section>
+      <h2>{t(locale, 'cv.skills')}</h2>
+      <div class="skills">
+        {skills.map((s) => (
+          <div class="skill-row">
+            <div class="skill-label">{s.label}</div>
+            <div class="chips">{s.items.map((i) => <span class="chip">{i}</span>)}</div>
+          </div>
+        ))}
+      </div>
+    </section>
 
-  <h2>{t(locale, 'cv.courses')}</h2>
-  <ul>
-    <li>2025.12 — Mech-Mind Manufacturing Course, Mech-Mind Robotics Training Center</li>
-    <li>2022.06 — Modern Robotics: Mechanics, Planning, and Control Specialization, Northwestern University (Coursera)</li>
-    <li>2021.12 — Industrial Robot Introductory Training, Seiko Epson Corporation</li>
-    <li>2021.12 — Special Training for Teaching Industrial Robots, Seiko Epson Corporation</li>
-    <li>2021.07 — Reinforcement Learning Specialization, University of Alberta / Alberta Machine Intelligence Institute (Coursera)</li>
-  </ul>
+    <section>
+      <h2>{t(locale, 'cv.courses')}</h2>
+      <div class="rows">
+        {courses.map((c) => (
+          <div class="row">
+            <div class="d">{c.date}</div>
+            <div><strong>{c.name}</strong><br /><span class="muted">{c.org}</span></div>
+          </div>
+        ))}
+      </div>
+    </section>
 
-  <h2>{t(locale, 'cv.languages')}</h2>
-  <ul>
-    <li>Portuguese — Native</li>
-    <li>English — Fluent (TOEFL iBT 112/120, 2021)</li>
-    <li>Japanese — Intermediate (JLPT N3, 2021)</li>
-  </ul>
+    <section>
+      <h2>{t(locale, 'cv.languages')}</h2>
+      <div class="langs">
+        {languages.map((l) => (
+          <div class="lang"><b>{l.name}</b><span>{l.level}</span></div>
+        ))}
+      </div>
+    </section>
 
-  <h2>{t(locale, 'cv.publications')}</h2>
-  <p>See the <a href={`/${locale}/publications/`}>{t(locale, 'nav.publications')}</a> page.</p>
+    <section>
+      <h2>{t(locale, 'cv.publications')}</h2>
+      <p>→ <a href={`/${locale}/publications/`}>{t(locale, 'nav.publications')}</a></p>
+    </section>
+  </div>
 </BaseLayout>
+
+<style>
+  .cv { counter-reset: sec; }
+
+  .cv-header { padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: .5rem; }
+  .cv-header h1.cv-kicker {
+    margin: 0 0 .5rem; font-family: var(--font-mono); font-size: .78rem; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+  }
+  .cv-name { font-family: var(--font-mono); font-weight: 700; font-size: clamp(1.8rem, 4vw, 2.3rem); line-height: 1.1; letter-spacing: -.02em; margin: 0 0 .5rem; }
+  .cv-role { font-family: var(--font-mono); color: var(--accent); font-size: .92rem; margin: 0 0 .7rem; }
+  .cv-meta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+  .cv-meta a { color: var(--muted); text-decoration: none; }
+  .cv-meta a:hover { color: var(--accent); }
+
+  .cv section { margin-top: 2.4rem; }
+  .cv h2 {
+    counter-increment: sec;
+    display: flex; align-items: baseline; gap: .6rem;
+    font-size: 1.15rem; margin: 0 0 .2rem;
+    padding-bottom: .5rem; border-bottom: 1px solid var(--border);
+  }
+  .cv h2::before {
+    content: counter(sec, decimal-leading-zero);
+    color: var(--accent); font-family: var(--font-mono); font-size: .85rem; font-weight: 500;
+  }
+
+  /* timeline */
+  .tl { margin-top: 1.1rem; border-left: 2px solid var(--border); padding-left: 1.4rem; display: flex; flex-direction: column; gap: 1.5rem; }
+  .tl-item { position: relative; }
+  .tl-item::before {
+    content: ''; position: absolute; left: calc(-1.4rem - 6px); top: .3rem;
+    width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 3px var(--bg);
+  }
+  .tl-date { font-family: var(--font-mono); font-size: .8rem; color: var(--accent); }
+  .tl-date .tag { color: var(--muted); }
+  .tl-title { font-weight: 700; margin: .18rem 0 .12rem; }
+  .tl-org { color: var(--muted); font-size: .92rem; }
+  .tl-desc { margin: .55rem 0 0; opacity: .9; font-size: .95rem; }
+
+  /* skills */
+  .skills { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.1rem; }
+  .skill-row { display: grid; grid-template-columns: 9.5rem 1fr; gap: .8rem; align-items: start; }
+  .skill-label { font-family: var(--font-mono); font-size: .82rem; color: var(--muted); padding-top: .32rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chip {
+    font-family: var(--font-mono); font-size: .8rem; padding: .24rem .58rem;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--fg);
+  }
+  @media (max-width: 34rem) { .skill-row { grid-template-columns: 1fr; gap: .35rem; } }
+
+  /* courses */
+  .rows { display: flex; flex-direction: column; gap: .8rem; margin-top: 1.1rem; }
+  .row { display: grid; grid-template-columns: 5rem 1fr; gap: .8rem; }
+  .row .d { font-family: var(--font-mono); font-size: .82rem; color: var(--accent); padding-top: .1rem; }
+  .row .muted { color: var(--muted); font-size: .9rem; }
+
+  /* languages */
+  .langs { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.1rem; }
+  .lang { border: 1px solid var(--border); border-radius: 10px; padding: .55rem .85rem; background: var(--surface); min-width: 8rem; }
+  .lang b { display: block; margin-bottom: .1rem; }
+  .lang span { font-family: var(--font-mono); font-size: .76rem; color: var(--muted); }
+</style>

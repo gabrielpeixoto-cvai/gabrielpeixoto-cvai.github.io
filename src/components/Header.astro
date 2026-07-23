@@ -2,7 +2,7 @@
 import { siteConfig } from '../site.config';
 import { t } from '../i18n/ui.mjs';
 import ThemeToggle from './ThemeToggle.astro';
-import LanguageSwitcher from './LanguageSwitcher.astro';
+import TranslateMenu from './TranslateMenu.astro';
 
 interface Props { locale: string; }
 const { locale } = Astro.props;
@@ -12,7 +12,7 @@ const { locale } = Astro.props;
     <a href={`/${locale}/`} style="font-weight:700;text-decoration:none;color:var(--fg);white-space:nowrap;">{siteConfig.name}</a>
     <div style="margin-left:auto;display:flex;gap:.5rem 1rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
       {siteConfig.nav.map((item) => <a href={`/${locale}${item.href}`} style="white-space:nowrap;">{t(locale, item.key)}</a>)}
-      <LanguageSwitcher locale={locale} />
+      <TranslateMenu />
       <ThemeToggle />
     </div>
   </nav>

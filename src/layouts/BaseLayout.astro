@@ -2,22 +2,19 @@
 import { siteConfig } from '../site.config';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+import '@fontsource/fira-code/400.css';
+import '@fontsource/fira-code/500.css';
+import '@fontsource/fira-code/700.css';
 import '../styles/global.css';
 
 interface Props { title?: string; description?: string; locale: string; noindex?: boolean; wide?: boolean; }
 const { title, description, locale, noindex, wide } = Astro.props;
 const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
 const desc = description ?? siteConfig.description;
-const htmlLang = locale === 'pt-br' ? 'pt-BR' : locale;
-
-// hreflang alternates: swap the leading /<locale>/ segment, same as LanguageSwitcher.
-const HREFLANG = { en: 'en', ja: 'ja', 'pt-br': 'pt-BR' };
-const tail = Astro.url.pathname.replace(/^\/(en|ja|pt-br)(?=\/|$)/, '');
-const alternates = Object.entries(HREFLANG).map(([loc, hreflang]) => ({
-  hreflang,
-  href: new URL(`/${loc}${tail || '/'}`, siteConfig.url).href,
-}));
-const xDefaultHref = new URL(`/en${tail || '/'}`, siteConfig.url).href;
+const htmlLang = locale;
 ---
 <!doctype html>
 <html lang={htmlLang}>
@@ -28,15 +25,10 @@ const xDefaultHref = new URL(`/en${tail || '/'}`, siteConfig.url).href;
     <meta name="description" content={desc} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={new URL(Astro.url.pathname, siteConfig.url)} />
-    {alternates.map((alt) => (
-      <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />
-    ))}
-    <link rel="alternate" hreflang="x-default" href={xDefaultHref} />
     <script is:inline>
+      // Dark is the default; honor an explicit stored choice otherwise.
       const t = localStorage.getItem('theme');
-      if (t) document.documentElement.setAttribute('data-theme', t);
-      else if (matchMedia('(prefers-color-scheme: dark)').matches)
-        document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
     </script>
   </head>
   <body>

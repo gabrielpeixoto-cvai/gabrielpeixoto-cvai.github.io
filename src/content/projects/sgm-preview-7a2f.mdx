@@ -342,22 +342,30 @@ The same generator-agnostic whole-arm MPC-CBF filter, with no robot-specific edi
 
 The same filter also wraps a frozen pi0.5 vision-language-action policy on LIBERO tasks, without retraining the policy. The VLA's end-effector action is bridged into the filter by differential inverse kinematics, and the filter cuts physical arm-collision accordingly. Two metrics are reported per suite: TSR, task success rate, and CAR, collision-avoidance rate, where a higher CAR means fewer collisions.
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_ramekin_bare.mp4", label: "Frozen pi0.5 (bare)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_ramekin_whole_arm_mpc.mp4", label: "Filter (ours)" }}
-  caption="SafeLIBERO spatial suite, bowl-on-ramekin — the bare policy clips the scene furniture; the filter reroutes the whole arm."
-/>
+One representative scenario from each of the four suites is shown below, bare frozen policy versus the same policy under our filter.
 
 <VideoCompare
   left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_bare.mp4", label: "Frozen pi0.5 (bare)" }}
   right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_whole_arm_mpc.mp4", label: "Filter (ours)" }}
-  caption="SafeLIBERO object suite, milk — the filter is wrapped around the frozen policy with no retraining."
+  caption="Object suite, milk — the filter is wrapped around the frozen policy with no retraining."
 />
 
 <VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_bowl_on_plate_bare.mp4", label: "Frozen pi0.5 (bare)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_bowl_on_plate_whole_arm_mpc.mp4", label: "Filter (ours)" }}
-  caption="SafeLIBERO goal suite, bowl-on-plate — the end-effector action is bridged into the filter by differential inverse kinematics."
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_cabinet_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_cabinet_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="Spatial suite, bowl-on-cabinet — the bare policy clips the scene furniture; the filter reroutes the whole arm."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_cream_cheese_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_cream_cheese_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="Goal suite, cream-cheese — the end-effector action is bridged into the filter by differential inverse kinematics."
+/>
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_long_scene6_white_mug_bare.mp4", label: "Frozen pi0.5 (bare)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_long_scene6_white_mug_whole_arm_mpc.mp4", label: "Filter (ours)" }}
+  caption="Long suite, white-mug — a long-horizon task where the filter holds safety across the full sequence."
 />
 
 <ResultsTable
