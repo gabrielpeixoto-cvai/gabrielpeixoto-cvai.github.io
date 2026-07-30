@@ -19,6 +19,7 @@ passwordHash: "776c70cce5302064413863545d37054368890f88b455354b16eba846e3935b3a"
 import VideoCompare from '../../components/project/VideoCompare.astro';
 import VideoGrid from '../../components/project/VideoGrid.astro';
 import Figure from '../../components/project/Figure.astro';
+import FigureCompare from '../../components/project/FigureCompare.astro';
 import ResultsTable from '../../components/project/ResultsTable.astro';
 import Tabs from '../../components/project/Tabs.astro';
 import Tab from '../../components/project/Tab.astro';
@@ -340,7 +341,29 @@ The most revealing result is which scenes break, and why. A scene can be entirel
   ]}
 />
 
+The clearest case is `paper_gold_04`. The two clips below are the same pose, the same seed, the same policy and the same filter. Only the ray grid differs.
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_sparse.mp4", label: "Sparse 40×30 sensing" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_dense.mp4", label: "Dense 160×120 sensing" }}
+  caption="paper_gold_04, seed 8. At the same tick the sparse run is 36 mm inside the obstacle and flashes the red collision indicator, while the dense run clears by 83 mm. The drawn capsules, closest-point markers and safety shell are ground-truth geometry for reference, so these show the true scene and the outcome, not what the filter perceived."
+/>
+
+What the filter actually perceived is the cause behind that outcome. The stills below are a different episode, taken at a tick that sits inside each grid's stable regime.
+
+<FigureCompare
+  left={{ src: "/projects/sgm-preview-7a2f/figures/paper_gold_04_explainer_sparse.webp", alt: "Sparse perception on paper_gold_04: four of ten obstacle capsules fitted, six absent", label: "Sparse: 4 fitted, 6 absent" }}
+  right={{ src: "/projects/sgm-preview-7a2f/figures/paper_gold_04_explainer_dense.webp", alt: "Dense perception on paper_gold_04: all ten obstacle capsules fitted", label: "Dense: 10 fitted, 0 absent" }}
+  caption="What the filter perceives on paper_gold_04. Each panel shows the camera ray hits, the clustered point cloud, and the fitted capsules against a translucent ground-truth ghost. At the sparse grid six obstacle bodies return too few points to fit, so the filter holds no constraint for them at all and drives straight through. At the dense grid every body is resolved and the ghost is covered end to end."
+/>
+
 Three mechanisms sit behind these, and they respond differently to more sensing. First, a body not seen at all, which is recoverable. Some obstacle capsules return zero points, so the filter holds no constraint for them, and four poses behave this way. Density drives all four to zero penetrations. paper_gold_04 is the clean case. Six of its ten obstacle capsules are unobserved at the sparse grid and none at the dense grid, and the outcome flips from every seed penetrating by 17 to 36 mm to every seed clearing by 38 to 58 mm, with task success going from 0% to 90%. Second, a body that is genuinely occluded, which is only partly recoverable. paper_silver_11 keeps four capsules unobserved even at the dense grid, so penetration and depth both halve but do not close, because more rays cannot see through geometry. Third, a scene with no margin to begin with, which is not a perception problem at all. paper_silver_01 has three of ten seeds at exactly 0.0 mm even with the true obstacle.
+
+<FigureCompare
+  left={{ src: "/projects/sgm-preview-7a2f/figures/paper_silver_11_explainer_dense.webp", alt: "Dense perception on paper_silver_11: four obstacle capsules still absent due to occlusion", label: "paper_silver_11, dense: 4 still absent (occlusion)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/figures/paper_silver_01_explainer_dense.webp", alt: "Dense perception on paper_silver_01: well fitted, but the pose has no clearance", label: "paper_silver_01, dense: well fitted, no margin" }}
+  caption="The two poses that density does not fix, both shown at the dense grid, which is what the filter perceives. On paper_silver_11 four capsules have zero ray hits even here, a genuine occlusion that more rays cannot see through. On paper_silver_01 the perception is good, so its failure is not perceptual, the pose simply leaves no clearance to protect."
+/>
 
 Which bodies fail is consistent and explainable. All 30 penetrations land on the obstacle's small distal bodies, the fingers (16 of them), the clavicle (11) and the thumb (3). Those present the least area to the cameras, so they are the first to be lost. The ground-truth control shows the robot approaches the same bodies either way, so the geometry is not the difference. Only under perception do those approaches become overlaps.
 
