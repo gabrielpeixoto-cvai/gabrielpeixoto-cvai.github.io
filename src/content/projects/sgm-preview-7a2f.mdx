@@ -282,9 +282,9 @@ Each explainer replays a single tick of the sensing pipeline. Two virtual depth 
   caption="The perceived obstacle is rebuilt each tick from depth points, not read off the simulator. Denser rays fit every capsule at the cost of compute."
 />
 
-Perception is not free. Safe-success for the whole-arm filter falls from 63.8% with the true obstacle pose to 48.1% with the perceived one, and collisions rise from 0.0% to 2.5%. The mechanism is visible in the solver. The constraint relaxation the filter has to admit rises by roughly two and a half orders of magnitude (QP slack integral 0.0002 to 0.0710), because a noisy obstacle estimate makes the barrier genuinely hard to satisfy. This is why task completion falls while collisions stay low, the filter keeps the arm safe and pays for it in task progress. Denser sensing buys back safety but not the task. Raising the ray grid from 40x30 to 160x120, enough that every obstacle capsule gets fitted, takes worst-case penetration from 12.0 mm to 1.5 mm and collisions from 4 episodes to 1, yet safe-success moves only to 50.6%, which is not a significant change. The cost comes from uncertainty in the estimate itself rather than from too few rays. The ranking of the methods is unchanged, the filter still leads and still collides an order of magnitude less than guidance alone (2.5% against 38.1%). The evaluated runs measure 18.2 Hz, most of which is the simulated ray-cast standing in for a real depth sensor, so on hardware the same loop projects to 29.2 Hz at the headline grid and 26.4 Hz at the dense grid (projections, not hardware measurements).
+Perception is not free. On the designed dynamic scenes, safe-success for the whole-arm filter falls from 63.8% with the true obstacle pose to 48.1% with the perceived one, and penetration rises from 0.0% to 2.5%. Penetration here means strict mesh overlap, the paper's safety definition, and it is scored against ground truth even though the filter plans against the noisy estimate. The mechanism is visible in the solver. The constraint relaxation the filter has to admit rises by roughly two and a half orders of magnitude (QP slack integral 0.0002 to 0.0710), because a noisy obstacle estimate makes the barrier genuinely hard to satisfy. This is why task completion falls while penetration stays low, the filter keeps the arm safe and pays for it in task progress. The ranking of the methods is unchanged, the filter still leads and still penetrates far less than guidance alone (2.5% against 41.2%). The evaluated runs measure 18.2 Hz, most of which is the simulated ray-cast standing in for a real depth sensor, so on hardware the same loop projects to 29.2 Hz at the headline grid and 26.4 Hz at the dense grid (projections, not hardware measurements).
 
-*Revised 2026-07-29. An earlier version of this section claimed the obstacle was recovered from onboard sensing rather than privileged state and reported a 1.9-point cost. That was wrong at the configuration we shipped. Obstacle bodies the simulated sensor failed to fit were silently replaced by their exact ground-truth geometry, and the motion-prediction term read the obstacle's true velocity. Both leaks are closed, the campaign was re-run, and the numbers here are from the de-leaked pipeline.*
+*Revised 2026-07-30. The de-leaked re-run on 2026-07-29 covered only the designed dynamic scenes. The gold/silver stress set has since been run under perception, which widened the picture below. An earlier version of this section also claimed the obstacle was recovered from onboard sensing rather than privileged state and reported a 1.9-point cost, both wrong at the configuration first shipped, where obstacle bodies the sensor failed to fit were silently replaced by their exact ground-truth geometry and the motion-prediction term read the true velocity. Both leaks are closed and the campaign was re-run.*
 
 <VideoGrid
   items={[
@@ -292,19 +292,59 @@ Perception is not free. Safe-success for the whole-arm filter falls from 63.8% w
     { src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_filter_perceived.mp4", label: "Filter, perceived obstacle · elbow_carry_stress" },
     { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_perceived.mp4", label: "Filter, perceived obstacle · paper_gold_02" },
   ]}
-  caption="The filter acting on perceived obstacles across three scenes. The earlier dyn_armlink_v2 clip is replaced by dyn_armlink_v1, because under the de-leaked pipeline dyn_armlink_v2 fails on all ten seeds (it avoids collision but never completes the place)."
+  caption="The filter acting on perceived obstacles across three scenes, rendered at the dense 160x120 grid (so these illustrate the method, not the sparse headline row of the table below). The earlier dyn_armlink_v2 clip is replaced by dyn_armlink_v1, because under the de-leaked pipeline dyn_armlink_v2 fails on all ten seeds (it avoids collision but never completes the place)."
 />
 
 <ResultsTable
-  caption="Table 3. Panda, perception-robustness ablation, de-leaked pipeline (noisy depth sensing, n = 160). Coll % is runtime collision scored against ground truth (we plan against perception, we measure against truth). Clr worst is the worst runtime clearance in mm, negative is penetration. Slack ∫ is the QP constraint relaxation the filter admits, a direct measure of how hard the barrier is to satisfy under a noisy estimate. The dense 160x120 row fits every obstacle capsule. Its 3.1 Hz is a simulated ray-cast cost, not a sensing cost, and the same loop projects to 26.4 Hz on real hardware. The superseded leaky rows (61.9 / 50.0 / 36.9) are retained in the supplementary tables."
-  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Coll % ↓", "Clr worst (mm)", "Slack ∫ ↓", "Ctrl (Hz)"]}
+  caption="Table 3a. Panda designed dynamic scenes, perception-robustness ablation, de-leaked pipeline (noisy depth sensing, n = 160). Penetration % is strict mesh overlap (d<0), the paper's safety definition, scored against ground truth (we plan against perception, we measure against truth). Clr worst is the worst runtime clearance in mm, negative is penetration. Slack ∫ is the QP constraint relaxation the filter admits, a direct measure of how hard the barrier is to satisfy under a noisy estimate. The dense 160x120 row fits every obstacle capsule. Its 3.1 Hz is a simulated ray-cast cost, not a sensing cost, and the same loop projects to 26.4 Hz on real hardware. The superseded leaky rows (61.9 / 50.0 / 36.9) are retained in the supplementary tables."
+  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Penetration % ↓", "Clr worst (mm)", "Slack ∫ ↓", "Ctrl (Hz)"]}
   rows={[
     ["Filter (perceived), whole-arm predict · DP", 160, 48.1, 48.8, 66.9, 2.5, "-12.0", "0.0710", 18.2],
     ["Hybrid (perceived) · DP", 160, 33.8, 35.0, 57.5, 1.9, "-23.4", "0.0738", 16.2],
-    ["Guidance (perceived) · DP", 160, 34.4, 59.4, 74.4, 38.1, "-68.9", "—", 8.7],
+    ["Guidance (perceived) · DP", 160, 32.5, 59.4, 74.4, 41.2, "-68.9", "—", 8.7],
     ["Filter (perceived), dense 160x120 · DP", 160, 50.6, 51.2, 66.2, 0.6, "-1.5", "0.0413", "3.1*"],
   ]}
 />
+
+#### The stress set, and how much sensing matters
+
+The study above covers the 16 designed dynamic scenes. The 22-pose gold/silver stress set, built so the frozen generator is forced to penetrate, had no perceived counterpart until now. Running the filter at both grids on that set tells a different story. Only the filter was run here, so there are no hybrid or guidance rows.
+
+<ResultsTable
+  caption="Table 3b. Gold/silver stress set under perception, filter only (n = 220). On this tight set honest perception takes penetration from 0.0% to 13.6% at the headline sparse grid. Denser sensing nearly restores the set, penetration back to 2.7% and mean clearance to 43.3 mm against ground truth's 43.5 mm. Hybrid and guidance were not run on this set."
+  headers={["Sensor", "n", "Safe-Succ % ↑", "Success %", "Penetration % ↓", "Clr mean (mm)"]}
+  rows={[
+    ["Ground-truth obstacle", 220, 47.7, 47.7, 0.0, 43.5],
+    ["Perceived, sparse 40x30 (headline)", 220, 35.9, 40.9, 13.6, 32.7],
+    ["Perceived, dense 160x120", 220, 43.6, 44.1, 2.7, 43.3],
+  ]}
+/>
+
+This revises a claim. On the open dynamic scenes, denser sensing moves safe-success 48.1 to 50.6, which is not significant. On the tight stress set it moves 35.9 to 43.6, which is significant (paired McNemar z = 2.97, p about 0.003), and it cuts penetration from 13.6% to 2.7% (z = 4.20, p below 0.0001). The reason is the clearance budget. Ground-truth mean clearance is 174.6 mm on the dynamic set and 43.5 mm on the stress set, while the estimate error is the same order in both. At 175 mm there is little damage to undo, so density shows almost nothing. At 43 mm the same error decides between clearing and overlapping. Sensor resolution matters in proportion to how little clearance a scene leaves. In open scenes it is nearly free. In tight ones it is the difference between avoiding the obstacle and hitting it.
+
+#### The pose-geometry artifact
+
+The most revealing result is which scenes break, and why. A scene can be entirely clean under the true obstacle and collapse under perception, and which scenes do that is not predicted by how tight they are. All 30 penetrating episodes in the sparse stress set come from 6 of the 22 poses. The other 16 never penetrate. The per-scene correlation between ground-truth clearance and perceived penetration rate is -0.13, which is nothing. What decides it is whether the sensor can resolve the specific obstacle body the robot approaches in that pose.
+
+<ResultsTable
+  caption="Table 3c. The six poses that penetrate under sparse perception, out of the 22. Values are penetrating episodes out of 10 under ground truth, the sparse 40x30 grid, and the dense 160x120 grid, with the worst overlap or clearance in each perceived arm (negative is penetration, positive is clearance). Density removes 83% of the sparse penetrations, but not the two poses whose failure is not a sensing problem."
+  headers={["Pose", "GT", "Sparse", "Dense", "Worst sparse", "Worst dense", "Mechanism"]}
+  rows={[
+    ["paper_gold_04", "0/10", "10/10", "0/10", "-36.1 mm", "+37.6 mm", "absent capsules, 6 → 0"],
+    ["paper_silver_04", "0/10", "9/10", "0/10", "-19.1 mm", "+11.2 mm", "absent/proxy → all fitted"],
+    ["paper_silver_02", "0/10", "3/10", "0/10", "-33.7 mm", "+12.8 mm", "absent/proxy → all fitted"],
+    ["paper_silver_08", "0/10", "3/10", "0/10", "-5.2 mm", "+28.6 mm", "absent/proxy → all fitted"],
+    ["paper_silver_11", "0/10", "2/10", "1/10", "-49.1 mm", "-21.2 mm", "residual occlusion, 4 absent at dense"],
+    ["paper_silver_01", "0/10", "3/10", "4/10", "-11.1 mm", "-12.7 mm", "no margin even under ground truth"],
+    ["Total, 6 poses", "0/60", "30/60", "5/60", "", "", "-83% of sparse penetrations"],
+  ]}
+/>
+
+Three mechanisms sit behind these, and they respond differently to more sensing. First, a body not seen at all, which is recoverable. Some obstacle capsules return zero points, so the filter holds no constraint for them, and four poses behave this way. Density drives all four to zero penetrations. paper_gold_04 is the clean case. Six of its ten obstacle capsules are unobserved at the sparse grid and none at the dense grid, and the outcome flips from every seed penetrating by 17 to 36 mm to every seed clearing by 38 to 58 mm, with task success going from 0% to 90%. Second, a body that is genuinely occluded, which is only partly recoverable. paper_silver_11 keeps four capsules unobserved even at the dense grid, so penetration and depth both halve but do not close, because more rays cannot see through geometry. Third, a scene with no margin to begin with, which is not a perception problem at all. paper_silver_01 has three of ten seeds at exactly 0.0 mm even with the true obstacle.
+
+Which bodies fail is consistent and explainable. All 30 penetrations land on the obstacle's small distal bodies, the fingers (16 of them), the clavicle (11) and the thumb (3). Those present the least area to the cameras, so they are the first to be lost. The ground-truth control shows the robot approaches the same bodies either way, so the geometry is not the difference. Only under perception do those approaches become overlaps.
+
+One detail inverts a natural intuition and is worth stating plainly. On paper_gold_04 the QP slack the filter admits goes from 0.1 mm at the sparse grid to 67.4 mm at the dense grid. The safe configuration relaxes its constraints far more. At the sparse grid the filter was not straining, because six of its ten obstacle capsules did not exist for it, so it was confidently solving the wrong problem. Low slack is not evidence of safety. It can mean the constraint set is incomplete.
 
 </Tab>
 
