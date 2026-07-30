@@ -323,7 +323,7 @@ The study above covers the 16 designed dynamic scenes. The 22-pose gold/silver s
 
 This revises a claim. On the open dynamic scenes, denser sensing moves safe-success 48.1 to 50.6, which is not significant. On the tight stress set it moves 35.9 to 43.6, which is significant (paired McNemar z = 2.97, p about 0.003), and it cuts penetration from 13.6% to 2.7% (z = 4.20, p below 0.0001). The reason is the clearance budget. Ground-truth mean clearance is 174.6 mm on the dynamic set and 43.5 mm on the stress set, while the estimate error is the same order in both. At 175 mm there is little damage to undo, so density shows almost nothing. At 43 mm the same error decides between clearing and overlapping. Sensor resolution matters in proportion to how little clearance a scene leaves. In open scenes it is nearly free. In tight ones it is the difference between avoiding the obstacle and hitting it.
 
-#### The pose-geometry artifact
+#### Why some scenes collapse under perception
 
 The most revealing result is which scenes break, and why. A scene can be entirely clean under the true obstacle and collapse under perception, and which scenes do that is not predicted by how tight they are. All 30 penetrating episodes in the sparse stress set come from 6 of the 22 poses. The other 16 never penetrate. The per-scene correlation between ground-truth clearance and perceived penetration rate is -0.13, which is nothing. What decides it is whether the sensor can resolve the specific obstacle body the robot approaches in that pose.
 
@@ -344,9 +344,9 @@ The most revealing result is which scenes break, and why. A scene can be entirel
 The clearest case is `paper_gold_04`. The two clips below are the same pose, the same seed, the same policy and the same filter. Only the ray grid differs.
 
 <VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_sparse.mp4", label: "Sparse 40×30 sensing" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_dense.mp4", label: "Dense 160×120 sensing" }}
-  caption="paper_gold_04, seed 8. At the same tick the sparse run is 36 mm inside the obstacle and flashes the red collision indicator, while the dense run clears by 83 mm. The drawn capsules, closest-point markers and safety shell are ground-truth geometry for reference, so these show the true scene and the outcome, not what the filter perceived."
+  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_sparse.mp4", label: "Sparse sensor (40×30)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_dense.mp4", label: "Dense sensor (160×120)" }}
+  caption="paper_gold_04, seed 8. Same pose, same seed, same policy, same safety filter. Only the depth-sensor resolution differs. On the left, six of the obstacle arm's ten bodies return no points at all, so the filter holds no constraint for them and drives into the hand, ending 36 mm inside the obstacle with the red collision flag. On the right the same arm is covered and the robot clears it by 83 mm. Across all ten seeds of this pose the sparse grid penetrates 10/10, the dense grid 0/10, and task success goes from 0% to 90%. The overlay is ground-truth geometry drawn for reference (robot and obstacle capsules, closest-point markers, the safety shell), so it shows the true scene and the outcome. What the filter actually perceived is the still pair below."
 />
 
 What the filter actually perceived is the cause behind that outcome. The stills below are a different episode, taken at a tick that sits inside each grid's stable regime.
