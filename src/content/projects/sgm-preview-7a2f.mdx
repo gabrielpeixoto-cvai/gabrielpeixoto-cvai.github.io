@@ -346,10 +346,10 @@ The clearest case is `paper_gold_04`. The two clips below are the same pose, the
 <VideoCompare
   left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_sparse.mp4", label: "Sparse sensor (40×30)" }}
   right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_dense.mp4", label: "Dense sensor (160×120)" }}
-  caption="paper_gold_04, seed 8. Same pose, same seed, same policy, same safety filter. Only the depth-sensor resolution differs. On the left, six of the obstacle arm's ten bodies return no points at all, so the filter holds no constraint for them and drives into the hand, ending 36 mm inside the obstacle with the red collision flag. On the right the same arm is covered and the robot clears it by 83 mm. Across all ten seeds of this pose the sparse grid penetrates 10/10, the dense grid 0/10, and task success goes from 0% to 90%. The overlay is ground-truth geometry drawn for reference (robot and obstacle capsules, closest-point markers, the safety shell), so it shows the true scene and the outcome. What the filter actually perceived is the still pair below."
+  caption="paper_gold_04, seed 8. Yellow is the perceived point cloud, white is the capsule the controller actually used, red is the true obstacle. The perceived cloud on the left is visibly sparser. Six of the obstacle's ten bodies returned no points at all, so the filter holds no constraint for them and drives into the hand, ending 36 mm inside the obstacle with the red collision flag. On the right the robot clears the same pose by 83 mm. Same pose, same seed, same policy, same filter. Only the sensor resolution differs. Across all ten seeds the sparse grid penetrates 10/10 and the dense grid 0/10, and task success goes from 0% to 90%. The decisive evidence is the still pair below, where the fit status is printed on frame, 4 fitted and 6 absent at the sparse grid against 10 fitted and 0 absent at the dense one. The clips are the consequence, the stills are the cause."
 />
 
-What the filter actually perceived is the cause behind that outcome. The stills below are a different episode, taken at a tick that sits inside each grid's stable regime.
+The stills below are the cause, printed on frame. They are a different episode from the clips, chosen at a tick inside each grid's stable regime.
 
 <FigureCompare
   left={{ src: "/projects/sgm-preview-7a2f/figures/paper_gold_04_explainer_sparse.webp", alt: "Sparse perception on paper_gold_04: four of ten obstacle capsules fitted, six absent", label: "Sparse: 4 fitted, 6 absent" }}
