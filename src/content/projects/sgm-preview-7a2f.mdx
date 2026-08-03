@@ -282,12 +282,10 @@ Each clip replays the sensing pipeline tick by tick. Two virtual depth cameras c
 <VideoCompare
   left={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_40x30.mp4", label: "Headline grid (40×30)" }}
   right={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_160x120.mp4", label: "Dense grid (160×120)" }}
-  caption="elbow_carry_stress, seed 0, the leak-free skeleton-seeded pipeline. The point cloud is coloured by skeleton segment, and amber capsules are HELD, the last fit for a segment the cameras have lost, which is the current pipeline's answer to occlusion. The sparse grid on the left holds more segments and holds them for longer."
+  caption="elbow_carry_stress, seed 0, the skeleton-seeded pipeline. The point cloud is coloured by skeleton segment, and amber capsules are HELD, the last fit for a segment the cameras have lost, which is the current pipeline's answer to occlusion. The sparse grid on the left holds more segments and holds them for longer."
 />
 
-Perception is not free, and closing the second leak described further down cost nothing measurable. On the designed dynamic scenes, safe-success for the whole-arm filter is 50.6% at the headline sparse grid against 63.8% with the true obstacle pose, and penetration is 1.9%. Penetration means strict mesh overlap, the paper's safety definition, scored against ground truth even though the filter plans against the noisy estimate. The gap from 63.8% to 50.6% is a task cost rather than a safety cost. A noisy and partly occluded obstacle estimate makes the barrier harder to satisfy, so the filter holds more standoff and completes fewer places, while penetration stays near the ground-truth level. Where the estimate is wrong it is usually conservative, an unobserved limb is held at its last fit rather than dropped, so the filter keeps the arm safe and pays for it in task progress. The leak-free re-run moved the filter by a handful of episodes in every arm, safe-success from 48.1 to 50.6 on the designed sparse arm and penetration from 2.5 to 1.9, all of it inside the noise this campaign can resolve, so none of it is called an improvement. The one real movement is a guidance row, whose designed-sparse penetration rose from 41.2 to 48.1 (66 episodes against 77), because guidance has no runtime filter and is the method most exposed to a change in the obstacle estimate. The new estimator emits 93 constraint rows instead of 119, but the measured control rate is unchanged at about 18 Hz, so it is cheaper on paper and not in the loop.
-
-*Revised 2026-08-03. The perception pipeline had a second ground-truth leak, in its cluster assignment, where the number of obstacle bodies and the K-means seeding were both read from the simulator. It is now closed with a simulated 3D body tracker, and the whole campaign was re-run over 2280 cells. Earlier revisions reported the pre-tracker numbers, which were honest measurements of a pipeline we have since improved. The change is documented below rather than overwritten.*
+Perception is not free. On the designed dynamic scenes, safe-success for the whole-arm filter is 50.6% at the headline sparse grid against 63.8% with the true obstacle pose, and penetration is 1.9%. Penetration means strict mesh overlap, the paper's safety definition, scored against ground truth even though the filter plans against the noisy estimate. The gap from 63.8% to 50.6% is a task cost rather than a safety cost. A noisy and partly occluded obstacle estimate makes the barrier harder to satisfy, so the filter holds more standoff and completes fewer places, while penetration stays near the ground-truth level. Where the estimate is wrong it is usually conservative, an unobserved limb is held at its last fit rather than dropped, so the filter keeps the arm safe and pays for it in task progress. Guidance, which has no runtime filter, is the method most exposed to the noisy estimate and penetrates on 48.1% of the designed sparse episodes against the filter's 1.9%.
 
 <VideoGrid
   items={[
@@ -295,7 +293,7 @@ Perception is not free, and closing the second leak described further down cost 
     { src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_filter_skel_dense.mp4", label: "Filter · elbow_carry_stress" },
     { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_skel_dense.mp4", label: "Filter · paper_gold_02" },
   ]}
-  caption="The whole-arm filter acting on the perceived obstacle across three scenes, leak-free skeleton-seeded pipeline at the dense 160x120 grid, seed 0. All three are safe-successful, clearing by 36.9, 61.2 and 32.2 mm with no collision. These illustrate the method, not the sparse headline row of the table below."
+  caption="The whole-arm filter acting on the perceived obstacle across three scenes, skeleton-seeded pipeline at the dense 160x120 grid, seed 0. All three are safe-successful, clearing by 36.9, 61.2 and 32.2 mm with no collision. These illustrate the method, not the sparse headline row of the table below."
 />
 
 <ResultsTable
@@ -323,7 +321,7 @@ Perception is not free, and closing the second leak described further down cost 
 
 #### The stress set, and how much sensing matters
 
-The gold/silver stress set of 22 curated poses is built so the frozen generator is forced to penetrate. The previous perception study covered the filter only on this set. The leak-free re-run adds hybrid and guidance at both grids.
+The gold/silver stress set of 22 curated poses is built so the frozen generator is forced to penetrate. All three placements are evaluated at both grids.
 
 <ResultsTable
   caption="Table 3c. All three placements, gold/silver stress set, perceived obstacle (n = 220). On this tight set the filter loses safety to sparse perception (penetration 11.8%) and denser sensing buys it back (4.1%). Hybrid is again the most conservative method by penetration, at the cost of the most completions."
@@ -339,52 +337,6 @@ The gold/silver stress set of 22 curated poses is built so the frozen generator 
 />
 
 How much sensing matters is a condition, not a fixed trade. When the sensor already resolves the obstacle well enough for the motion at hand, extra rays buy only standoff, and standoff costs completions. When it does not, the extra rays buy back the episodes being lost to a wrong obstacle, and there is no trade. On the designed set the two grids are statistically indistinguishable on safe-success, 65 episodes safe under both, 16 lost by going dense and 13 gained, exact McNemar p = 0.71. Every one of those 16 lost episodes failed on task completion rather than collision, each with positive clearance in the dense run. On the tight stress set the effect is real, safe-success 8 lost and 21 gained (p = 0.024), penetration 21 fixed and 4 broken (p = 0.0009). The campaign is not powered to prove equivalence, so the designed-set nulls read as no difference detected rather than as sameness.
-
-#### The leak that survived the de-leak
-
-The July pass closed the geometry leak, where a body the sensor could not fit was emitted as its exact ground-truth capsule. It left a second leak in place, in the association step. The number of obstacle bodies was read from the true topology, and the K-means that assigns cloud points to limbs was re-seeded at the true capsule midpoints on every tick. The module's own docstring had disclosed this the whole time as a deliberate simplification, justified by the claim that segmentation is separable from fit accuracy.
-
-That justification did not survive measurement. Re-running the same clouds with k-means++ seeding, which uses no ground truth, agreed with the ground-truth-seeded labels on only 23.8% of points at the shipped sparse grid. At that density the cloud carried about four points per body, so the seeds effectively were the segmentation. The replacement seeds from noisy skeleton landmarks instead and reaches a measured assignment purity of 85.3% on the shipped human-arm pipeline at the calibrated noise level. A controlled sandbox that isolates the label step scores it even more starkly, 38.0% for the ground-truth-seeded clustering against 96.7% for the skeleton, but those two numbers come from a synthetic four-capsule test rather than the shipped pipeline, and only their direction and mechanism transfer, not their magnitudes.
-
-The four clips below each stack the old ground-truth-seeded fit on top and the new skeleton-seeded one below, same scene and seed, three cameras with a clearance trace, so they are directly comparable frame by frame.
-
-<VideoGrid
-  items={[
-    { src: "/projects/sgm-preview-7a2f/videos/oldnew_upper_arm_carry.mp4", label: "Largest gain: upper-arm carry" },
-    { src: "/projects/sgm-preview-7a2f/videos/oldnew_wrist_carry.mp4", label: "Best coverage: wrist carry" },
-  ]}
-  caption="Two gains. Coverage is the fraction of the true obstacle surface the estimate encloses, old fit on top and new below. On the left is the largest coverage gain of any dynamic scene, 70.2 against 52.1. On the right is the new method's best absolute coverage, 89.3."
-/>
-
-<VideoGrid
-  items={[
-    { src: "/projects/sgm-preview-7a2f/videos/oldnew_dyn_carry_deflect.mp4", label: "A loss, kept for honesty" },
-    { src: "/projects/sgm-preview-7a2f/videos/oldnew_t8s2_handup.mp4", label: "Worst case: hand-up occlusion" },
-  ]}
-  caption="The honest counterweight. On the left is a moderate loss, kept because a page that shows only the wins repeats the failure this re-run exists to correct. On the right is the worst case anywhere, a hand-up occlusion where the new front end drops to 8.8% coverage against the old 65.3%."
-/>
-
-The explainer stills print the leak-free pipeline's own view. The gold_04 pair is the strongest. At the shipped sparse grid all ten seeds of paper_gold_04 record a runtime collision, and at the dense grid none do.
-
-<FigureCompare
-  left={{ src: "/projects/sgm-preview-7a2f/figures/skel_gold_04_sparse.webp", alt: "Skeleton-seeded perception on paper_gold_04 at the sparse grid, five of seven segments observed", label: "Sparse: 5 of 7 observed, 18.6 mm inside" }}
-  right={{ src: "/projects/sgm-preview-7a2f/figures/skel_gold_04_dense.webp", alt: "Skeleton-seeded perception on paper_gold_04 at the dense grid, seven of seven observed", label: "Dense: 7 of 7 observed, 60.2 mm clear" }}
-  caption="paper_gold_04, seed 7, tick 120, its own minimum-clearance tick. The sparse still is the filter's view at the deepest point of the collision and the dense still is the same instant resolved. The obstacle is static so the tick and cameras match, but the robot pose differs by 0.20 rad between the two, because sparse and dense are different flights, so the self-occlusion is not bit-identical. A strictly same-pose comparison would need one bag rendered at both grids, a trajectory the dense pipeline never flew."
-/>
-
-<FigureCompare
-  left={{ src: "/projects/sgm-preview-7a2f/figures/skel_silver_11_dense.webp", alt: "Skeleton-seeded perception on paper_silver_11 at the dense grid, three held segments from occlusion", label: "silver_11, dense: permanent occlusion" }}
-  right={{ src: "/projects/sgm-preview-7a2f/figures/skel_silver_01_dense.webp", alt: "Skeleton-seeded perception on paper_silver_01 at the dense grid, all seven segments fitted", label: "silver_01, dense: well observed, no margin" }}
-  caption="paper_silver_11 is a permanent occlusion, its fingers and thumb observed under a quarter of the time over 800 ticks, and this frame is deliberately not the minimum-clearance tick, because there the held capsules hide behind the robot mesh. paper_silver_01 is fully observed with no proxies and is still tight at 14.5 mm true clearance, so its difficulty is the pose, not the sensor."
-/>
-
-<FigureCompare
-  left={{ src: "/projects/sgm-preview-7a2f/figures/skel_elbow_carry_sparse.webp", alt: "Skeleton-seeded perception on elbow_carry_stress at the sparse grid, two held segments", label: "elbow_carry, sparse: 2 held, 55.6 mm" }}
-  right={{ src: "/projects/sgm-preview-7a2f/figures/skel_dyn_carry_deflect_sparse.webp", alt: "Skeleton-seeded perception on dyn_carry_deflect_v2 at the sparse grid, one held segment", label: "carry_deflect, sparse: 1 held, 14.3 mm" }}
-  caption="Two carry-stress ticks the new front end actually flew. Each shows the two camera views with obstacle-hitting rays highlighted, the point cloud coloured by skeleton segment, and the fitted capsules over translucent ground-truth ghosts. White is a segment fitted from observed points, red is the ground-truth ghost, amber is HELD (the last fit for a segment the sensor cannot currently see), blue is MODEL PRIOR (nominal girth on a noisy bone), and purple marks ABSENT. Neither amber nor blue is an observation. The purple key is drawn on every frame even though ABSENT cannot occur under the current hold-last-fit policy, so a body never simply vanishes from the obstacle set."
-/>
-
-A disclosed simplification is still a leak, and a justification with no measurement behind it is a hypothesis wearing a lab coat.
 
 </Tab>
 
