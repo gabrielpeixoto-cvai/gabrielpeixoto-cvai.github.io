@@ -277,12 +277,12 @@ The headline experiments hand the filter the true obstacle pose. To measure what
 
 #### How perception is created
 
-Each explainer replays a single tick of the sensing pipeline. Two virtual depth cameras cast a ray grid into the scene, the returned points are segmented and clustered, and each cluster is fitted with the capsule that the safety layer then treats as the obstacle. On the left is the headline 40x30 grid, where sparsely sampled bodies are fitted coarsely. On the right is the dense 160x120 grid, where enough rays land that every obstacle capsule gets fitted.
+Each clip replays the sensing pipeline tick by tick. Two virtual depth cameras cast a ray grid into the scene, the returned points are attached to the limbs of the simulated body tracker and coloured by skeleton segment, and each limb is fitted with the capsule the safety layer then treats as the obstacle. When a segment leaves view its capsule is held at its last fit, drawn in amber, rather than dropped. On the left is the headline 40x30 grid, on the right the dense 160x120 grid, the same scene and seed. The denser grid resolves more of the arm and holds fewer segments.
 
 <VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/perception_explainer_40x30.mp4", label: "Headline grid (40×30)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/perception_explainer_160x120.mp4", label: "Dense grid (160×120)" }}
-  caption="The perceived obstacle is rebuilt each tick from depth points, not read off the simulator. Denser rays fit every capsule at the cost of compute."
+  left={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_40x30.mp4", label: "Headline grid (40×30)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_160x120.mp4", label: "Dense grid (160×120)" }}
+  caption="elbow_carry_stress, seed 0, the leak-free skeleton-seeded pipeline. The point cloud is coloured by skeleton segment, and amber capsules are HELD, the last fit for a segment the cameras have lost, which is the current pipeline's answer to occlusion. The sparse grid on the left holds more segments and holds them for longer."
 />
 
 Perception is not free, and closing the second leak described further down cost nothing measurable. On the designed dynamic scenes, safe-success for the whole-arm filter is 50.6% at the headline sparse grid against 63.8% with the true obstacle pose, and penetration is 1.9%. Penetration means strict mesh overlap, the paper's safety definition, scored against ground truth even though the filter plans against the noisy estimate. The leak-free re-run moved the filter by a handful of episodes in every arm, safe-success from 48.1 to 50.6 on the designed sparse arm and penetration from 2.5 to 1.9, all of it inside the noise this campaign can resolve, so none of it is called an improvement. The one real movement is a guidance row, whose designed-sparse penetration rose from 41.2 to 48.1 (66 episodes against 77), because guidance has no runtime filter and is the method most exposed to a change in the obstacle estimate. The new estimator emits 93 constraint rows instead of 119, but the measured control rate is unchanged at about 18 Hz, so it is cheaper on paper and not in the loop.
@@ -291,11 +291,11 @@ Perception is not free, and closing the second leak described further down cost 
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v1_filter_perceived.mp4", label: "Filter, perceived obstacle · dyn_armlink_v1" },
-    { src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_filter_perceived.mp4", label: "Filter, perceived obstacle · elbow_carry_stress" },
-    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_perceived.mp4", label: "Filter, perceived obstacle · paper_gold_02" },
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v1_filter_skel_dense.mp4", label: "Filter · dyn_armlink_v1" },
+    { src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_filter_skel_dense.mp4", label: "Filter · elbow_carry_stress" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_skel_dense.mp4", label: "Filter · paper_gold_02" },
   ]}
-  caption="The filter acting on perceived obstacles across three scenes, rendered at the dense 160x120 grid (so these illustrate the method, not the sparse headline row of the table below). The earlier dyn_armlink_v2 clip is replaced by dyn_armlink_v1, because under the de-leaked pipeline dyn_armlink_v2 fails on all ten seeds (it avoids collision but never completes the place)."
+  caption="The whole-arm filter acting on the perceived obstacle across three scenes, leak-free skeleton-seeded pipeline at the dense 160x120 grid, seed 0. All three are safe-successful, clearing by 36.9, 61.2 and 32.2 mm with no collision. These illustrate the method, not the sparse headline row of the table below."
 />
 
 <ResultsTable
