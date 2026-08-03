@@ -285,7 +285,7 @@ Each clip replays the sensing pipeline tick by tick. Two virtual depth cameras c
   caption="elbow_carry_stress, seed 0, the leak-free skeleton-seeded pipeline. The point cloud is coloured by skeleton segment, and amber capsules are HELD, the last fit for a segment the cameras have lost, which is the current pipeline's answer to occlusion. The sparse grid on the left holds more segments and holds them for longer."
 />
 
-Perception is not free, and closing the second leak described further down cost nothing measurable. On the designed dynamic scenes, safe-success for the whole-arm filter is 50.6% at the headline sparse grid against 63.8% with the true obstacle pose, and penetration is 1.9%. Penetration means strict mesh overlap, the paper's safety definition, scored against ground truth even though the filter plans against the noisy estimate. The leak-free re-run moved the filter by a handful of episodes in every arm, safe-success from 48.1 to 50.6 on the designed sparse arm and penetration from 2.5 to 1.9, all of it inside the noise this campaign can resolve, so none of it is called an improvement. The one real movement is a guidance row, whose designed-sparse penetration rose from 41.2 to 48.1 (66 episodes against 77), because guidance has no runtime filter and is the method most exposed to a change in the obstacle estimate. The new estimator emits 93 constraint rows instead of 119, but the measured control rate is unchanged at about 18 Hz, so it is cheaper on paper and not in the loop.
+Perception is not free, and closing the second leak described further down cost nothing measurable. On the designed dynamic scenes, safe-success for the whole-arm filter is 50.6% at the headline sparse grid against 63.8% with the true obstacle pose, and penetration is 1.9%. Penetration means strict mesh overlap, the paper's safety definition, scored against ground truth even though the filter plans against the noisy estimate. The gap from 63.8% to 50.6% is a task cost rather than a safety cost. A noisy and partly occluded obstacle estimate makes the barrier harder to satisfy, so the filter holds more standoff and completes fewer places, while penetration stays near the ground-truth level. Where the estimate is wrong it is usually conservative, an unobserved limb is held at its last fit rather than dropped, so the filter keeps the arm safe and pays for it in task progress. The leak-free re-run moved the filter by a handful of episodes in every arm, safe-success from 48.1 to 50.6 on the designed sparse arm and penetration from 2.5 to 1.9, all of it inside the noise this campaign can resolve, so none of it is called an improvement. The one real movement is a guidance row, whose designed-sparse penetration rose from 41.2 to 48.1 (66 episodes against 77), because guidance has no runtime filter and is the method most exposed to a change in the obstacle estimate. The new estimator emits 93 constraint rows instead of 119, but the measured control rate is unchanged at about 18 Hz, so it is cheaper on paper and not in the loop.
 
 *Revised 2026-08-03. The perception pipeline had a second ground-truth leak, in its cluster assignment, where the number of obstacle bodies and the K-means seeding were both read from the simulator. It is now closed with a simulated 3D body tracker, and the whole campaign was re-run over 2280 cells. Earlier revisions reported the pre-tracker numbers, which were honest measurements of a pipeline we have since improved. The change is documented below rather than overwritten.*
 
@@ -385,54 +385,6 @@ The explainer stills print the leak-free pipeline's own view. The gold_04 pair i
 />
 
 A disclosed simplification is still a leak, and a justification with no measurement behind it is a hypothesis wearing a lab coat.
-
-#### Why some scenes collapse under perception
-
-*This section describes the pre-tracker pipeline and is kept as history. Its mechanism 1, an obstacle body going absent so the filter holds no constraint for it, cannot occur under the current pipeline, which holds the last successful fit instead. The current failure mode is a held, stale capsule, which trades an obviously missing body for a confidently wrong one if the limb moves while occluded, so the new pipeline is not simply safer.*
-
-The most revealing result is which scenes break, and why. A scene can be entirely clean under the true obstacle and collapse under perception, and which scenes do that is not predicted by how tight they are. All 30 penetrating episodes in the sparse stress set come from 6 of the 22 poses. The other 16 never penetrate. The per-scene correlation between ground-truth clearance and perceived penetration rate is -0.13, which is nothing. What decides it is whether the sensor can resolve the specific obstacle body the robot approaches in that pose.
-
-<ResultsTable
-  caption="Table 3d (history, pre-tracker pipeline). The six poses that penetrate under sparse perception, out of the 22. Values are penetrating episodes out of 10 under ground truth, the sparse 40x30 grid, and the dense 160x120 grid, with the worst overlap or clearance in each perceived arm (negative is penetration, positive is clearance). Density removes 83% of the sparse penetrations, but not the two poses whose failure is not a sensing problem."
-  headers={["Pose", "GT", "Sparse", "Dense", "Worst sparse", "Worst dense", "Mechanism"]}
-  rows={[
-    ["paper_gold_04", "0/10", "10/10", "0/10", "-36.1 mm", "+37.6 mm", "absent capsules, 6 → 0"],
-    ["paper_silver_04", "0/10", "9/10", "0/10", "-19.1 mm", "+11.2 mm", "absent/proxy → all fitted"],
-    ["paper_silver_02", "0/10", "3/10", "0/10", "-33.7 mm", "+12.8 mm", "absent/proxy → all fitted"],
-    ["paper_silver_08", "0/10", "3/10", "0/10", "-5.2 mm", "+28.6 mm", "absent/proxy → all fitted"],
-    ["paper_silver_11", "0/10", "2/10", "1/10", "-49.1 mm", "-21.2 mm", "residual occlusion, 4 absent at dense"],
-    ["paper_silver_01", "0/10", "3/10", "4/10", "-11.1 mm", "-12.7 mm", "no margin even under ground truth"],
-    ["Total, 6 poses", "0/60", "30/60", "5/60", "", "", "-83% of sparse penetrations"],
-  ]}
-/>
-
-The clearest case is `paper_gold_04`. The two clips below are the same pose, the same seed, the same policy and the same filter. Only the ray grid differs.
-
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_sparse.mp4", label: "Sparse sensor (40×30)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_04_seed8_dense.mp4", label: "Dense sensor (160×120)" }}
-  caption="paper_gold_04, seed 8. Yellow is the perceived point cloud, white is the capsule the controller actually used, red is the true obstacle. The perceived cloud on the left is visibly sparser. Six of the obstacle's ten bodies returned no points at all, so the filter holds no constraint for them and drives into the hand, ending 36 mm inside the obstacle with the red collision flag. On the right the robot clears the same pose by 83 mm. Same pose, same seed, same policy, same filter. Only the sensor resolution differs. Across all ten seeds the sparse grid penetrates 10/10 and the dense grid 0/10, and task success goes from 0% to 90%. The decisive evidence is the still pair below, where the fit status is printed on frame, 4 fitted and 6 absent at the sparse grid against 10 fitted and 0 absent at the dense one. The clips are the consequence, the stills are the cause."
-/>
-
-The stills below are the cause, printed on frame. They are a different episode from the clips, chosen at a tick inside each grid's stable regime.
-
-<FigureCompare
-  left={{ src: "/projects/sgm-preview-7a2f/figures/paper_gold_04_explainer_sparse.webp", alt: "Sparse perception on paper_gold_04: four of ten obstacle capsules fitted, six absent", label: "Sparse: 4 fitted, 6 absent" }}
-  right={{ src: "/projects/sgm-preview-7a2f/figures/paper_gold_04_explainer_dense.webp", alt: "Dense perception on paper_gold_04: all ten obstacle capsules fitted", label: "Dense: 10 fitted, 0 absent" }}
-  caption="What the filter perceives on paper_gold_04. Each panel shows the camera ray hits, the clustered point cloud, and the fitted capsules against a translucent ground-truth ghost. At the sparse grid six obstacle bodies return too few points to fit, so the filter holds no constraint for them at all and drives straight through. At the dense grid every body is resolved and the ghost is covered end to end."
-/>
-
-Three mechanisms sit behind these, and they respond differently to more sensing. First, a body not seen at all, which is recoverable. Some obstacle capsules return zero points, so the filter holds no constraint for them, and four poses behave this way. Density drives all four to zero penetrations. paper_gold_04 is the clean case. Six of its ten obstacle capsules are unobserved at the sparse grid and none at the dense grid, and the outcome flips from every seed penetrating by 17 to 36 mm to every seed clearing by 38 to 58 mm, with task success going from 0% to 90%. Second, a body that is genuinely occluded, which is only partly recoverable. paper_silver_11 keeps four capsules unobserved even at the dense grid, so penetration and depth both halve but do not close, because more rays cannot see through geometry. Third, a scene with no margin to begin with, which is not a perception problem at all. paper_silver_01 has three of ten seeds at exactly 0.0 mm even with the true obstacle.
-
-<FigureCompare
-  left={{ src: "/projects/sgm-preview-7a2f/figures/paper_silver_11_explainer_dense.webp", alt: "Dense perception on paper_silver_11: four obstacle capsules still absent due to occlusion", label: "paper_silver_11, dense: 4 still absent (occlusion)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/figures/paper_silver_01_explainer_dense.webp", alt: "Dense perception on paper_silver_01: well fitted, but the pose has no clearance", label: "paper_silver_01, dense: well fitted, no margin" }}
-  caption="The two poses that density does not fix, both shown at the dense grid, which is what the filter perceives. On paper_silver_11 four capsules have zero ray hits even here, a genuine occlusion that more rays cannot see through. On paper_silver_01 the perception is good, so its failure is not perceptual, the pose simply leaves no clearance to protect."
-/>
-
-Which bodies fail is consistent and explainable. All 30 penetrations land on the obstacle's small distal bodies, the fingers (16 of them), the clavicle (11) and the thumb (3). Those present the least area to the cameras, so they are the first to be lost. The ground-truth control shows the robot approaches the same bodies either way, so the geometry is not the difference. Only under perception do those approaches become overlaps.
-
-One detail inverts a natural intuition and is worth stating plainly. On paper_gold_04 the QP slack the filter admits goes from 0.1 mm at the sparse grid to 67.4 mm at the dense grid. The safe configuration relaxes its constraints far more. At the sparse grid the filter was not straining, because six of its ten obstacle capsules did not exist for it, so it was confidently solving the wrong problem. Low slack is not evidence of safety. It can mean the constraint set is incomplete.
 
 </Tab>
 
