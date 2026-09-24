@@ -1,0 +1,17 @@
+---
+interface Item { src: string; alt: string; label: string; }
+interface Props { left: Item; right: Item; caption?: string; }
+const { left, right, caption } = Astro.props;
+const items = [left, right];
+---
+<figure style="margin:1.5rem 0;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem;">
+    {items.map((it) => (
+      <div>
+        <p style="color:var(--muted);font-size:.9rem;margin:0 0 .35rem;text-align:center;">{it.label}</p>
+        <img src={it.src} alt={it.alt} data-zoomable loading="lazy" style="width:100%;height:auto;border-radius:8px;border:1px solid var(--border);" />
+      </div>
+    ))}
+  </div>
+  {caption && <figcaption style="color:var(--muted);font-size:.9rem;margin-top:.5rem;text-align:center;">{caption}</figcaption>}
+</figure>

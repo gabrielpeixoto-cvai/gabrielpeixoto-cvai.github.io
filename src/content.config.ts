@@ -95,4 +95,33 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { publications, blog, notes, talks, teaching, portfolio, projects };
+const cv = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/cv' }),
+  schema: z.object({
+    role: z.string(),
+    education: z.array(
+      z.object({
+        date: z.string(),
+        tag: z.string().optional(),
+        title: z.string(),
+        org: z.string(),
+        place: z.string(),
+      }),
+    ),
+    experience: z.array(
+      z.object({
+        date: z.string(),
+        tag: z.string().optional(),
+        title: z.string(),
+        org: z.string(),
+        place: z.string(),
+        desc: z.string(),
+      }),
+    ),
+    skills: z.array(z.object({ label: z.string(), items: z.array(z.string()) })),
+    courses: z.array(z.object({ date: z.string(), name: z.string(), org: z.string() })),
+    languages: z.array(z.object({ name: z.string(), level: z.string() })),
+  }),
+});
+
+export const collections = { publications, blog, notes, talks, teaching, portfolio, projects, cv };

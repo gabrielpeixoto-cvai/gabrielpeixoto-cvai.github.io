@@ -19,6 +19,7 @@ passwordHash: "776c70cce5302064413863545d37054368890f88b455354b16eba846e3935b3a"
 import VideoCompare from '../../components/project/VideoCompare.astro';
 import VideoGrid from '../../components/project/VideoGrid.astro';
 import Figure from '../../components/project/Figure.astro';
+import FigureCompare from '../../components/project/FigureCompare.astro';
 import ResultsTable from '../../components/project/ResultsTable.astro';
 import Tabs from '../../components/project/Tabs.astro';
 import Tab from '../../components/project/Tab.astro';
@@ -225,7 +226,7 @@ The filter delivers the guarantee the baselines do not, holding penetration at *
 
 Among the three configurations the filter performs best and the hybrid does not improve on it. Guidance alone penetrates on 31 to 46% of episodes, inside the baseline band, and adding the filter on the identical generator drops that to zero: generation-time guidance shapes the sample against the obstacle pose available then, but by execution the obstacle has moved and the guided plan is stale, whereas the execution-time filter re-solves against the live state at every tick.
 
-The same per-robot description instantiates four arms with no robot-specific source edit — the whole-arm filter transfers to the retargeted UR5e, KUKA IIWA, and Kinova Gen3 arms. Under a realistic perceived obstacle, recovered from onboard sensing rather than privileged state, the whole-arm filter still holds its safety behavior, losing only 1.9 points of safe-success (63.8 to 61.9) while holding penetration at zero. Wrapped around a frozen pi0.5 vision-language-action policy on LIBERO tasks — bridging the VLA's end-effector action into the filter by differential inverse kinematics — the same filter cuts physical arm-collision roughly six-fold over a faithful end-effector-only CBF reproduction, without retraining the policy.
+The same per-robot description instantiates four arms with no robot-specific source edit — the whole-arm filter transfers to the retargeted UR5e, KUKA IIWA, and Kinova Gen3 arms. Under a realistic perceived obstacle, where the filter observes the scene through a simulated depth pipeline instead of the true pose, safe-success falls from 63.8% to 48.1% and collisions rise to 2.5%, a real cost that the perception section examines in detail. Wrapped around a frozen pi0.5 vision-language-action policy on LIBERO tasks — bridging the VLA's end-effector action into the filter by differential inverse kinematics — the same filter cuts physical arm-collision roughly six-fold over a faithful end-effector-only CBF reproduction, without retraining the policy.
 
 </Tab>
 
@@ -270,25 +271,72 @@ The same CBF specification is placed at three points along the generation-to-exe
 
 ### Perception robustness
 
-Rather than assuming privileged state, the safety filter can instead observe the obstacle through a realistic perception simulator: two virtual cameras, occlusion, roughly 5 mm of point-cloud noise, obstacle-radius over-estimation, frame dropout, and sensing latency. Collisions are still scored against ground truth, not against the noisy estimate. Under this perceived-obstacle setting the whole-arm filter loses only 1.9 points of safe task completion, from 63.8% to 61.9%, and holds penetration at zero.
+The headline experiments hand the filter the true obstacle pose. To measure what the safety layer is worth without one, we replace that oracle with a simulated depth pipeline. Two virtual depth cameras cast rays into the scene, and the returned points are assigned to the limbs of a simulated 3D body tracker whose per-landmark noise is calibrated against published Azure-Kinect-versus-motion-capture accuracy. We simulate the output of a commodity body tracker rather than one we built, deriving noisy landmarks from the true joint positions, and we fit a capsule per limb from the points assigned to it. One thing is still free and we state it plainly. Ground-truth geometry ids decide which returned points belong to the human at all, which is the same free segmentation the depth-space literature this descends from also assumes, since that literature does not need to know what the obstacle is.
+
+*Four honesty notes travel with every number in this section. The shipped configuration was tuned in-sample, its hyper-parameters were selected on the same perception metric they are then reported on, and the rollout campaign is a fresh measurement those hyper-parameters never saw. Motion prediction is on in every row, and the shipped configuration has the worst measured velocity estimate of the three we tested. Occlusion inflates the landmark error, by about 2.5x on proximal joints and 4x on distal ones, rather than dropping landmarks, because the reference device predicts an occluded joint instead of omitting it. And the pipeline is not finger-accurate, four finger capsules are fused into one segment because no commodity tracker reports finger joints. The 200 ms of latency is adopted and swept rather than calibrated, the rest of the noise model is calibrated.*
+
+#### How perception is created
+
+Each clip replays the sensing pipeline tick by tick. Two virtual depth cameras cast a ray grid into the scene, the returned points are attached to the limbs of the simulated body tracker and coloured by skeleton segment, and each limb is fitted with the capsule the safety layer then treats as the obstacle. When a segment leaves view its capsule is held at its last fit, drawn in amber, rather than dropped. On the left is the headline 40x30 grid, on the right the dense 160x120 grid, the same scene and seed. The denser grid resolves more of the arm and holds fewer segments.
+
+<VideoCompare
+  left={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_40x30.mp4", label: "Headline grid (40×30)" }}
+  right={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_160x120.mp4", label: "Dense grid (160×120)" }}
+  caption="elbow_carry_stress, seed 0, the skeleton-seeded pipeline. The point cloud is coloured by skeleton segment, and amber capsules are HELD, the last fit for a segment the cameras have lost, which is the current pipeline's answer to occlusion. The sparse grid on the left holds more segments and holds them for longer."
+/>
+
+Perception is not free. On the designed dynamic scenes, safe-success for the whole-arm filter is 50.6% at the headline sparse grid against 63.8% with the true obstacle pose, and penetration is 1.9%. Penetration means strict mesh overlap, the paper's safety definition, scored against ground truth even though the filter plans against the noisy estimate. The gap from 63.8% to 50.6% is a task cost rather than a safety cost. A noisy and partly occluded obstacle estimate makes the barrier harder to satisfy, so the filter holds more standoff and completes fewer places, while penetration stays near the ground-truth level. Where the estimate is wrong it is usually conservative, an unobserved limb is held at its last fit rather than dropped, so the filter keeps the arm safe and pays for it in task progress. Guidance, which has no runtime filter, is the method most exposed to the noisy estimate and penetrates on 48.1% of the designed sparse episodes against the filter's 1.9%.
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_filter_perceived.mp4", label: "Filter under perceived obstacle — dyn_armlink_v2" },
-    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_perceived.mp4", label: "Filter under perceived obstacle — paper_gold_02" },
+    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v1_filter_skel_dense.mp4", label: "Filter · dyn_armlink_v1" },
+    { src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_filter_skel_dense.mp4", label: "Filter · elbow_carry_stress" },
+    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_skel_dense.mp4", label: "Filter · paper_gold_02" },
   ]}
-  caption="Same filter, same scenes, run against the noisy perceived-obstacle sensing pipeline rather than privileged state."
+  caption="The whole-arm filter acting on the perceived obstacle across three scenes, skeleton-seeded pipeline at the dense 160x120 grid, seed 0. All three are safe-successful, clearing by 36.9, 61.2 and 32.2 mm with no collision. These illustrate the method, not the sparse headline row of the table below."
 />
 
 <ResultsTable
-  caption="Table 3. Panda, perception-robustness ablation (noisy/occluded sensing, n = 160). Only the flagship configs were run; no dev/slack extraction for this table."
-  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Worst geom dist (m)"]}
+  caption="Table 3a. Perception headline, the multi-link MPC filter driving Diffusion Policy. Safe-success is success and no penetration (d<0), scored against ground truth. Designed is 16 scenes x 10 seeds (n = 160), stress is 22 curated poses x 10 seeds (n = 220). The Ctrl column is a measured rate for the ground-truth row and projections for the perceived rows, formed by replacing the simulated ray-cast with a real camera's cost. The actually measured perceived rates are 18.1 Hz sparse and 3.0 Hz dense, because the simulated ray-casting dominates our compute and a real camera does not."
+  headers={["Sensor", "Designed S-Succ % ↑", "Designed Pen % ↓", "Stress S-Succ % ↑", "Stress Pen % ↓", "Ctrl (Hz)"]}
   rows={[
-    ["Filter (perceived), whole-arm predict · DP", 160, 61.9, 61.9, 78.8, 0.6, 0.0, "+0.000"],
-    ["Hybrid (perceived) · DP", 160, 50.0, 50.0, 73.8, 0.0, 0.0, "+0.011"],
-    ["Guidance (perceived) · DP", 160, 36.9, 64.4, 72.5, 40.6, 40.6, "-0.085"],
+    ["Ground truth", 63.8, 0.0, 47.7, 0.0, "38.0 meas."],
+    ["Perceived, sparse 40x30", 50.6, 1.9, 35.5, 11.8, "29.2 proj."],
+    ["Perceived, dense 160x120", 48.8, 0.6, 41.4, 4.1, "26.4 proj."],
   ]}
 />
+
+<ResultsTable
+  caption="Table 3b. All three placements of the CBF, designed dynamic scenes, perceived obstacle (n = 160). Clr mean is over all 160 cells, Worst is the worst-case clearance in metres, negative is penetration. Hybrid at the dense grid is the only cell in the entire 2280-cell campaign with zero penetration and a positive worst-case clearance. The most conservative method paired with the best sensor is the one configuration that never touches the obstacle."
+  headers={["Method", "Grid", "S-Succ % ↑", "Pen % ↓", "Clr mean (mm)", "Worst (m)"]}
+  rows={[
+    ["Filter", "sparse", 50.6, 1.9, 156.7, "-0.010"],
+    ["Hybrid", "sparse", 34.4, 1.9, 165.7, "-0.015"],
+    ["Guidance", "sparse", 31.2, 48.1, 128.3, "-0.086"],
+    ["Filter", "dense", 48.8, 0.6, 158.3, "-0.008"],
+    ["Hybrid", "dense", 33.1, 0.0, 168.3, "+0.009"],
+    ["Guidance", "dense", 33.8, 41.2, 131.5, "-0.068"],
+  ]}
+/>
+
+#### The stress set, and how much sensing matters
+
+The gold/silver stress set of 22 curated poses is built so the frozen generator is forced to penetrate. All three placements are evaluated at both grids.
+
+<ResultsTable
+  caption="Table 3c. All three placements, gold/silver stress set, perceived obstacle (n = 220). On this tight set the filter loses safety to sparse perception (penetration 11.8%) and denser sensing buys it back (4.1%). Hybrid is again the most conservative method by penetration, at the cost of the most completions."
+  headers={["Method", "Grid", "S-Succ % ↑", "Pen % ↓", "Clr mean (mm)", "Worst (m)"]}
+  rows={[
+    ["Filter", "sparse", 35.5, 11.8, 32.5, "-0.047"],
+    ["Hybrid", "sparse", 19.1, 1.4, 63.6, "-0.009"],
+    ["Guidance", "sparse", 27.3, 26.4, 33.0, "-0.124"],
+    ["Filter", "dense", 41.4, 4.1, 43.7, "-0.031"],
+    ["Hybrid", "dense", 17.3, 0.5, 68.0, "-0.026"],
+    ["Guidance", "dense", 24.1, 23.2, 37.6, "-0.134"],
+  ]}
+/>
+
+How much sensing matters is a condition, not a fixed trade. When the sensor already resolves the obstacle well enough for the motion at hand, extra rays buy only standoff, and standoff costs completions. When it does not, the extra rays buy back the episodes being lost to a wrong obstacle, and there is no trade. On the designed set the two grids are statistically indistinguishable on safe-success, 65 episodes safe under both, 16 lost by going dense and 13 gained, exact McNemar p = 0.71. Every one of those 16 lost episodes failed on task completion rather than collision, each with positive clearance in the dense run. On the tight stress set the effect is real, safe-success 8 lost and 21 gained (p = 0.024), penetration 21 fixed and 4 broken (p = 0.0009). The campaign is not powered to prove equivalence, so the designed-set nulls read as no difference detected rather than as sameness.
 
 </Tab>
 
