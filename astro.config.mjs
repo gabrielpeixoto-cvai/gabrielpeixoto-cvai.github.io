@@ -1,6 +1,8 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 export default defineConfig({
   site: 'https://gabrielpeixoto-cvai.github.io',
@@ -28,7 +30,7 @@ export default defineConfig({
     '/markdown/': '/en/',
   },
   integrations: [
-    mdx(),
+    mdx({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }),
     sitemap({
       filter: (page) => !page.includes('/projects/sgm-preview-7a2f/'),
     }),

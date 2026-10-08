@@ -8,7 +8,7 @@ import BibTeX from '../components/project/BibTeX.astro';
 import Lightbox from '../components/project/Lightbox.astro';
 import PasswordGate from '../components/project/PasswordGate.astro';
 
-interface Author { name: string; affiliation?: string; url?: string; }
+interface Author { name: string; affiliation?: string | string[]; url?: string; }
 interface LinkItem { label: string; href: string; }
 interface ProjectData {
   title: string;
