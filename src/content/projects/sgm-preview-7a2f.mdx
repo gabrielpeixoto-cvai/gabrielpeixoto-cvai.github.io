@@ -49,7 +49,7 @@ We make the following contributions toward the safe deployment of frozen generat
 
 ## Method
 
-The safety layer protects the whole arm of a robot driven by a frozen generative policy from static and moving obstacles by a positive margin. It approximates the robot and the obstacles by capsules, whose pairwise distances are available in closed form. One CBF condition is defined on these distances. We present three configurations that enforce it: guidance at generation time, a predictive safety filter at execution time, and both in sequence, which we call the hybrid. Generation time is when the generative model forms the motion plan, and execution time is when the robot moves under closed-loop control. This section defines the geometry and the barrier first, then the filter, the guidance, and the hybrid, and closes with the interface that connects the filter to each generator.
+The safety layer protects the whole arm of a robot driven by a frozen generative policy from static and moving obstacles by a positive margin. It approximates the robot and the obstacles by capsules, whose pairwise distances are available in closed form. One barrier specification is defined on these distances. We present three configurations that use it: (1) guidance at generation time, (2) a predictive safety filter at execution time, and (3) both in sequence, which we call the hybrid. Generation time is when the generative model forms the motion plan, and execution time is when the robot moves under closed-loop control. This section defines the geometry and the barrier first, then the filter, the guidance, and the hybrid, and closes with the interface that connects the filter to each generator.
 
 <Figure src="/projects/sgm-preview-7a2f/figures/fig_overview.webp" alt="Execution of the safety layer" maxWidth="min(100%, 640px)" caption="Execution of the safety layer. The inference box shows generation, rollout, and execution, with safety enforced as guidance at generation time, as a filter at execution time, or as both. The scene is one episode: the arm (cyan capsules) carrying the can past a multi-link obstacle (red capsules), with the motion plan the filter tracks (blue), the generator rollout (orange), and the obstacle path (green)." />
 
@@ -85,23 +85,23 @@ $$
 \mathcal{C} = \bigcap_{l,m}\{\,q : h_{lm}(q) \ge 0\,\}.
 $$
 
-The layer commands a joint velocity $\dot q_k$ at control tick $k$ and holds it for one control period $\Delta t$, so the next configuration is
+The layer commands a joint velocity $\dot q_k$ at control step $k$ and holds it for one control period $\Delta t$, so the next configuration is
 
 $$
 q_{k+1} = q_k + \dot q_k\,\Delta t.
 $$
 
-Each barrier has relative degree one, so a condition on the next tick is sufficient, and we impose the discrete-time CBF condition on every pair,
+Each barrier has relative degree one, so a condition on the next control step is sufficient, and we impose the discrete-time CBF condition on every pair,
 
 $$
 h_{lm}(q_{k+1}) \ge (1-\gamma)\,h_{lm}(q_k),
 $$
 
-where the barrier gain $\gamma$, with $0<\gamma\le 1$, is the largest fraction of the current barrier value that one tick may remove.
+where the barrier gain $\gamma$, with $0<\gamma\le 1$, is the largest fraction of the current barrier value that one control step may remove.
 
 #### Predictive filter
 
-The filter acts at execution time and corrects each command before the robot executes it. It expresses the first $N$ actions of the motion plan as joint increments $\Delta q_0,\dots,\Delta q_{N-1}$, where $N$ is the horizon, and at every tick adds them to the measured configuration $q_0$,
+The filter acts at execution time and corrects each command before the robot executes it. It expresses the first $N$ actions of the motion plan as joint increments $\Delta q_0,\dots,\Delta q_{N-1}$, where $N$ is the horizon, and at every control step adds them to the measured configuration $q_0$,
 
 $$
 q^{\mathrm{ref}}_0 = q_0, \qquad q^{\mathrm{ref}}_k = q_0 + \sum_{j<k} \Delta q_j, \qquad k = 1,\dots,N.
@@ -149,7 +149,7 @@ $$
 
 #### Hybrid
 
-The hybrid applies both configurations in sequence. Guidance shapes the motion plan at generation time, and the filter then takes the guided motion plan as its reference and imposes the CBF condition at every tick.
+The hybrid applies both configurations in sequence. Guidance shapes the motion plan at generation time, and the filter then takes the guided motion plan as its reference and imposes the CBF condition at every control step.
 
 #### End-effector wrapper
 
@@ -159,13 +159,13 @@ $$
 \Delta q_0 = q^{\mathrm{tgt}}_0 - q_0, \qquad \Delta q_k = q^{\mathrm{tgt}}_k - q^{\mathrm{tgt}}_{k-1}, \quad k \ge 1.
 $$
 
-Some generators, including the two VLA policies, output end-effector displacements. The displacement $a_k$ becomes a twist $\xi_k = c_{\mathrm{cmd}}\,a_k$, where $c_{\mathrm{cmd}}$ converts command units to metres, and the damped least-squares inverse of the Jacobian $J$ maps the twist to a joint increment,
+Some generators, including the two VLA policies, output end-effector displacements. The displacement becomes a twist $\xi_k$ whose translation is the translation of the displacement scaled by a fixed factor $c_{\mathrm{cmd}}$ and whose rotation is zero, and the damped least-squares inverse of the Jacobian $J$ maps the twist to a joint increment,
 
 $$
 \Delta q_k = \operatorname{clip}\bigl(J^{\top}(JJ^{\top}+\lambda^2 I)^{-1}\xi_k,\ \pm\Delta q_{\max}\bigr),
 $$
 
-where the damping $\lambda>0$ keeps the increment bounded near singular configurations and $\Delta q_{\max}$ bounds it.
+where the damping $\lambda>0$ keeps the increment bounded near singular configurations and $\Delta q_{\max}$ bounds it. The Jacobian $J$ of the gripper is evaluated once, at the configuration of the replanning step. On LIBERO-Safety, the converted increments differ from the requested twist by a median of 5.5%.
 
 <Tabs tabs={[
   { id: "setup", label: "Setup" },
