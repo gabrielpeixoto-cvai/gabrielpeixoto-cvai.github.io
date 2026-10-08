@@ -31,9 +31,7 @@ export default defineConfig({
   },
   integrations: [
     mdx({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }),
-    sitemap({
-      filter: (page) => !page.includes('/projects/sgm-preview-7a2f/'),
-    }),
+    sitemap(),
   ],
   build: { format: 'directory' },
 });
