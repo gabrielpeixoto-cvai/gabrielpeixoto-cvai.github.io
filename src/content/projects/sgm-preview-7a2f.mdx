@@ -1015,13 +1015,13 @@ The LIBERO-Safety scenes are described on the [benchmark project page](https://l
 
 ### Real robot
 
-We run the safety layer on a real robot, a Realman RM65-BI arm with six joints. We fit its capsules to its collision meshes in the same way as for the simulated arms, and the filter protects the whole arm. A depth camera above the workspace observes the obstacle, a hand model that an operator moves on a rod, and the filter receives it as one capsule at each tick. In three hold runs, the arm holds a pose while the operator pushes the obstacle at it. In six reach runs, a diffusion planner trained on a reach task moves the arm between two targets while the obstacle is pushed at it.
+We run the safety layer on a real robot, a Realman RM65-BI arm with six joints. We fit its capsules to its collision meshes in the same way as for the simulated arms, and the filter protects the whole arm. A depth camera above the workspace observes the obstacle, a hand model that an operator moves on a rod, and the filter receives it as one capsule at each control step. In three hold runs, the arm holds a pose while the operator pushes the obstacle at it. In six reach runs, a diffusion planner trained on a reach task moves the arm between two targets while the obstacle is pushed at it.
 
 <Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_setup.webp" alt="Hardware setup figure" caption="The hardware setup. A Realman RM65-BI arm moves between two targets, A and B, while an operator pushes an obstacle toward it. The left panel shows the workspace, and the right panel shows the view of the overhead depth camera with the tracked obstacle." />
 
 <ResultsTable
-  caption="The real Realman RM65-BI robot holds a pose (H) or reaches between two targets (P) while an obstacle is pushed at it. Limit, filter velocity limit. Laps, arrivals at a target. Tracked, ticks in which the obstacle is tracked. Solve and Plan, median time of one filter solve and of one motion plan."
-  headers={["Run", "Ticks", "Limit (°/s)", "Laps", "Tracked (%)", "Median (ms)", "p95 (ms)", "Over 50 ms (%)", "Solve (ms)", "Plan (ms)"]}
+  caption="The real Realman RM65-BI robot holds a pose (H) or reaches between two targets (P) while an obstacle is pushed at it. Limit, filter velocity limit. Laps, arrivals at a target. Tracked, control steps in which the obstacle is tracked. Solve and Plan, median time of one filter solve and of one motion plan."
+  headers={["Run", "Control steps", "Limit (°/s)", "Laps", "Tracked (%)", "Median (ms)", "p95 (ms)", "Over 50 ms (%)", "Solve (ms)", "Plan (ms)"]}
   rows={[
     ["H1", "500", "10", "—", "64.6", "35.0", "53.9", "13.0", "6.69", "—"],
     ["H2", "500", "10", "—", "86.8", "35.0", "48.1", "3.2", "6.65", "—"],
@@ -1059,7 +1059,7 @@ We run the safety layer on a real robot, a Realman RM65-BI arm with six joints. 
     ["Obstacle capsule radius, median", "63 mm"],
     ["Tracker coasting limit", "0.5 s"],
     ["Runs", ""],
-    ["Replanning interval of the reach planner", "5 ticks"],
+    ["Replanning interval of the reach planner", "5 control steps"],
     ["Distance between targets", "492 mm"],
     ["Arrival tolerance", "0.05 m"],
     ["Excluded runs", "1"],
@@ -1070,17 +1070,17 @@ Each clip is a panel of four views. The top row shows the workspace camera and t
 
 <VideoGrid
   items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_H3.mp4", label: "Hold run H3" }]}
-  caption="Hold run H3. 500 ticks at a 10°/s filter velocity limit, the obstacle tracked on 65.0% of ticks, a median tick time of 29.7 ms with 2.8% of ticks over the 50 ms budget, and a median filter solve of 6.69 ms."
+  caption="Hold run H3. 500 control steps at a 10°/s filter velocity limit, the obstacle tracked on 65.0% of control steps, a median control-step time of 29.7 ms with 2.8% of control steps over the 50 ms budget, and a median filter solve of 6.69 ms."
 />
 
 <VideoGrid
   items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_P2.mp4", label: "Reach run P2" }]}
-  caption="Reach run P2. 2000 ticks over 4 laps at a 20°/s filter velocity limit, the obstacle tracked on 44.8% of ticks, a median tick time of 31.8 ms with 21.3% of ticks over the 50 ms budget, a median filter solve of 6.52 ms and a median motion plan of 58.7 ms."
+  caption="Reach run P2. 2000 control steps over 4 laps at a 20°/s filter velocity limit, the obstacle tracked on 44.8% of control steps, a median control-step time of 31.8 ms with 21.3% of control steps over the 50 ms budget, a median filter solve of 6.52 ms and a median motion plan of 58.7 ms."
 />
 
 <VideoGrid
   items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_P6.mp4", label: "Reach run P6" }]}
-  caption="Reach run P6. 1000 ticks over 2 laps at a 20°/s filter velocity limit, the obstacle tracked on 74.5% of ticks, a median tick time of 32.4 ms with 20.9% of ticks over the 50 ms budget, a median filter solve of 6.64 ms and a median motion plan of 58.7 ms."
+  caption="Reach run P6. 1000 control steps over 2 laps at a 20°/s filter velocity limit, the obstacle tracked on 74.5% of control steps, a median control-step time of 32.4 ms with 20.9% of control steps over the 50 ms budget, a median filter solve of 6.64 ms and a median motion plan of 58.7 ms."
 />
 
 <Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_hold.webp" alt="Hold run deviation figure" caption="A hold run. The arm moves away from its held pose when the obstacle approaches, by 16.3° at 11.0 s, and returns to it once the obstacle moves away. Each panel reports the time and the deviation from the held pose." />
