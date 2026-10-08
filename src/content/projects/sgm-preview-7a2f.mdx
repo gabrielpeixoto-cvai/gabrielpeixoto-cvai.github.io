@@ -912,7 +912,7 @@ NutAssemblySquare is a second task, in which the robot picks a square nut and pl
 #### Results
 
 <ResultsTable
-  caption="Diffusion Policy places a square nut on a peg while the human arm moves over the task (designed set) or holds a static pose (stress set). Safe-Succ., safe success. Coll., collision rate. Rates in %. Guidance runs with half of its pick-and-place gain, a compromise between the two sets."
+  caption="Diffusion Policy places a square nut on a peg while the human arm moves over the task (designed set) or holds a static pose (stress set). Safe-Succ., safe success. Coll., collision rate. Rates in %. Guidance runs with half of its pick-and-place guidance scale, a compromise between the two sets."
   headers={["Method", "Designed Safe-Succ. (124)", "Designed Success", "Designed Coll.", "Stress Safe-Succ. (208)", "Stress Success", "Stress Coll."]}
   rows={[
     ["Frozen generator", "8.1", "58.1", "83.9", "28.8", "74.5", "61.5"],
@@ -948,7 +948,7 @@ VLA policies output end-effector actions. The interface converts these actions i
 
 #### SafeLIBERO
 
-SafeLIBERO adds static obstacles to 32 scenarios of the LIBERO benchmark, with 50 episodes each. The policy is π0.5, with its public checkpoint for LIBERO, and it acts on the translation of the end effector. The filter does not use the ground-truth obstacle pose. At the start of each episode it detects the obstacle on the rendered camera images, turns the depth inside the detection into points, and fits one capsule around them.
+SafeLIBERO adds static obstacles to 32 scenarios of the LIBERO benchmark, with 50 episodes each. The policy is π0.5, with its public checkpoint for LIBERO, and it acts on the translation of the end effector, as in the evaluation of AEGIS. As in that evaluation, the filter receives the obstacle from perception on the camera images, not from the simulator. At the start of each episode it detects the obstacle on the rendered camera images, turns the depth inside the detection into points, and fits one capsule around them.
 
 <Figure src="/projects/sgm-preview-7a2f/figures/fig_safelibero_setup.webp" alt="SafeLIBERO setup figure" caption="An example of the SafeLIBERO scenario. The robot picks the bowl on the ramekin, and a static red mug is the obstacle. The filter does not use the ground-truth pose of the obstacle. At the start of each episode, it detects the mug on the rendered camera images, turns the depth inside the detection into points (orange), and fits one capsule around them (cyan). The inset shows the camera view with the extent of the detected points." />
 
@@ -979,7 +979,7 @@ The SafeLIBERO scenarios are described on the [benchmark project page](https://v
 
 #### LIBERO-Safety
 
-LIBERO-Safety is a separate benchmark, which we did not build, and whose obstacles can move. The policy is π0.5, fine-tuned on this benchmark. We run its 48 scenes with an obstacle, 13 of them with a moving obstacle, each from the 50 initial states of the benchmark. The filter reads the pose of the obstacle from the simulator and, on the scenes where the obstacle moves, predicts its motion from the velocity the benchmark declares. We also author two scenes in which a human hand moves in over the task and back, so that the moving obstacle reaches the robot.
+LIBERO-Safety is a separate benchmark, which we did not build, and whose obstacles can move. The policy is π0.5, fine-tuned on this benchmark. We run its 48 scenes with an obstacle, 13 of them with a moving obstacle, each from the 50 initial states of the benchmark. The filter reads the pose of the obstacle from the simulator and, on the scenes where the obstacle moves, predicts its motion from the velocity the benchmark declares. On the 13 scenes with a moving obstacle, the frozen policy collides in 15.2% of the episodes, against 39.8% on the static scenes, so the moving obstacles of the benchmark reach the robot less often than the static ones. We therefore author two scenes in which a human hand moves in over the task and back, so that the moving obstacle reaches the robot.
 
 <Figure src="/projects/sgm-preview-7a2f/figures/fig_liberosafety_setup.webp" alt="LIBERO-Safety setup figure" caption="An example of the LIBERO-Safety scenario, in one of the two scenes that we authored. A human hand, the obstacle, moves in over the basket and back along the cyan arrow. The translucent copy shows the hand at its closest point." />
 
