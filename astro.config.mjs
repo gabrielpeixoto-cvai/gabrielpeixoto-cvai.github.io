@@ -28,6 +28,8 @@ export default defineConfig({
     '/cv/': '/en/cv/',
     '/year-archive/': '/en/blog/',
     '/markdown/': '/en/',
+    // PRESAGE project page slug rename: old preview URL → new public URL.
+    '/en/projects/sgm-preview-7a2f/': '/en/projects/presage/',
   },
   integrations: [
     mdx({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }),

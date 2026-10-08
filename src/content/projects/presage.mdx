@@ -50,7 +50,7 @@ We make the following contributions toward the safe deployment of frozen generat
 
 The safety layer protects the whole arm of a robot driven by a frozen generative policy from static and moving obstacles by a positive margin. It approximates the robot and the obstacles by capsules, whose pairwise distances are available in closed form. One barrier specification is defined on these distances. We present three configurations that use it: (1) guidance at generation time, (2) a predictive safety filter at execution time, and (3) both in sequence, which we call the hybrid. Generation time is when the generative model forms the motion plan, and execution time is when the robot moves under closed-loop control. This section defines the geometry and the barrier first, then the filter, the guidance, and the hybrid, and closes with the interface that connects the filter to each generator.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_overview.webp" alt="Execution of the safety layer" maxWidth="min(100%, 640px)" caption="Execution of the safety layer. The inference box shows generation, rollout, and execution, with safety enforced as guidance at generation time, as a filter at execution time, or as both. The scene is one episode: the arm (cyan capsules) carrying the can past a multi-link obstacle (red capsules), with the motion plan the filter tracks (blue), the generator rollout (orange), and the obstacle path (green)." />
+<Figure src="/projects/presage/figures/fig_overview.webp" alt="Execution of the safety layer" maxWidth="min(100%, 640px)" caption="Execution of the safety layer. The inference box shows generation, rollout, and execution, with safety enforced as guidance at generation time, as a filter at execution time, or as both. The scene is one episode: the arm (cyan capsules) carrying the can past a multi-link obstacle (red capsules), with the motion plan the filter tracks (blue), the generator rollout (orange), and the obstacle path (green)." />
 
 #### Capsules
 
@@ -68,7 +68,7 @@ $$
 
 which is negative when the capsules overlap.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_capsules.webp" alt="Capsule geometry" maxWidth="min(100%, 640px)" caption="Capsule geometry. Left, the robot (cyan) and the multi-link obstacle (red) as capsules, with the closest capsule pair joined in yellow. Right, a robot capsule and an obstacle capsule, each a segment between two endpoints inflated by a radius, and the signed distance between their surfaces." />
+<Figure src="/projects/presage/figures/fig_capsules.webp" alt="Capsule geometry" maxWidth="min(100%, 640px)" caption="Capsule geometry. Left, the robot (cyan) and the multi-link obstacle (red) as capsules, with the closest capsule pair joined in yellow. Right, a robot capsule and an obstacle capsule, each a segment between two endpoints inflated by a radius, and the signed distance between their surfaces." />
 
 #### Barrier
 
@@ -351,13 +351,13 @@ The isolation experiments count the approaches or paths on which the obstacle co
 
 In the pick-and-place scenario, the Panda robot picks a can from a box and places it in a bin. The obstacle is a multi-link human arm, a right arm from the CMU humanoid model. These experiments answer Q3, Q4, Q5 and the second part of Q6. Each obstacle scene runs with ten seeds. The designed set is eight motions of the human arm and a slower copy of each, and each motion targets one link of the robot, such as the wrist or the elbow, or one phase of the task, such as the approach to the can or the carry to the bin. The stress set is 22 static poses of the human arm at two levels of difficulty, eleven at each level, selected by a screen in which the frozen generator completed the task but drove the robot into the obstacle.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_setup.webp" alt="Pick-and-place setup figure" caption="The pick-and-place scenario. The robot picks the can from the box and places it in one compartment of the bin on the other side. Once the robot grasps the can, the human arm moves 48 cm across the path of the carry, toward the box, and stays there. The translucent copies show later poses of the arm, and the cyan arrow shows the path of its hand." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_rollout.webp" alt="Pick-and-place rollout clearance figure" caption="The episode of the scene above, with our filter and with the frozen Diffusion Policy. Left, the end-effector paths, the hand path and later poses. Right, the clearance between the collision meshes. Without the safety layer, the carried can collides with the human arm by 41.1 mm. The filter lifts the can over the hand, keeps 46.2 mm or more and places it 15 control steps later." />
+<Figure src="/projects/presage/figures/fig_pickplace_setup.webp" alt="Pick-and-place setup figure" caption="The pick-and-place scenario. The robot picks the can from the box and places it in one compartment of the bin on the other side. Once the robot grasps the can, the human arm moves 48 cm across the path of the carry, toward the box, and stays there. The translucent copies show later poses of the arm, and the cyan arrow shows the path of its hand." />
+<Figure src="/projects/presage/figures/fig_pickplace_rollout.webp" alt="Pick-and-place rollout clearance figure" caption="The episode of the scene above, with our filter and with the frozen Diffusion Policy. Left, the end-effector paths, the hand path and later poses. Right, the clearance between the collision meshes. Without the safety layer, the carried can collides with the human arm by 41.1 mm. The filter lifts the can over the hand, keeps 46.2 mm or more and places it 15 control steps later." />
 
 #### Obstacle scenes
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_pp_designed.webp" alt="Designed-set gallery" caption="The designed set of the pick-and-place scenario. Each panel, (a) to (h), shows one of the eight motions of the human arm at the start of seed 0, with translucent copies of later poses and the path of its hand in cyan. The slower copies follow the same paths and are not shown." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_pp_stress.webp" alt="Stress-set gallery" caption="The stress set of the pick-and-place scenario. Each panel shows one static pose of the human arm at the start of seed 0, with the first level in panels 1a to 1k and the second level in panels 2a to 2k, separated by a line. Panels 2e and 2k show seed 5, because the first seeds of these poses are excluded." />
+<Figure src="/projects/presage/figures/fig_gallery_pp_designed.webp" alt="Designed-set gallery" caption="The designed set of the pick-and-place scenario. Each panel, (a) to (h), shows one of the eight motions of the human arm at the start of seed 0, with translucent copies of later poses and the path of its hand in cyan. The slower copies follow the same paths and are not shown." />
+<Figure src="/projects/presage/figures/fig_gallery_pp_stress.webp" alt="Stress-set gallery" caption="The stress set of the pick-and-place scenario. Each panel shows one static pose of the human arm at the start of seed 0, with the first level in panels 1a to 1k and the second level in panels 2a to 2k, separated by a line. Panels 2e and 2k show seed 5, because the first seeds of these poses are excluded." />
 
 #### Comparison
 
@@ -383,20 +383,20 @@ In the pick-and-place scenario, the Panda robot picks a can from a box and place
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_designed_1.mp4", label: "Designed, motion (a)" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_designed_2.mp4", label: "Designed, motion (b)" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_designed_3.mp4", label: "Designed, motion (c)" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_stress_1.mp4", label: "Stress, pose 1a" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_stress_2.mp4", label: "Stress, pose 1b" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_stress_3.mp4", label: "Stress, pose 1c" },
+    { src: "/projects/presage/videos/pp_cmp_designed_1.mp4", label: "Designed, motion (a)" },
+    { src: "/projects/presage/videos/pp_cmp_designed_2.mp4", label: "Designed, motion (b)" },
+    { src: "/projects/presage/videos/pp_cmp_designed_3.mp4", label: "Designed, motion (c)" },
+    { src: "/projects/presage/videos/pp_cmp_stress_1.mp4", label: "Stress, pose 1a" },
+    { src: "/projects/presage/videos/pp_cmp_stress_2.mp4", label: "Stress, pose 1b" },
+    { src: "/projects/presage/videos/pp_cmp_stress_3.mp4", label: "Stress, pose 1c" },
   ]}
   caption="Pick-and-place comparison. The first three are designed-set motions and the last three are stress-set poses. The frozen generator is on the left and our whole-arm filter is on the right."
 />
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_baseline_designed.mp4", label: "Designed, motion (d)" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_baseline_stress.mp4", label: "Stress, pose 1d" },
+    { src: "/projects/presage/videos/pp_baseline_designed.mp4", label: "Designed, motion (d)" },
+    { src: "/projects/presage/videos/pp_baseline_stress.mp4", label: "Stress, pose 1d" },
   ]}
   caption="Same generator, the published CBF-QP on the left and our filter on the right."
 />
@@ -416,8 +416,8 @@ The stress set was selected by a screen that used the filter, so we also ran a c
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_control_1.mp4", label: "Control set, pose 1" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_control_2.mp4", label: "Control set, pose 2" },
+    { src: "/projects/presage/videos/pp_control_1.mp4", label: "Control set, pose 1" },
+    { src: "/projects/presage/videos/pp_control_2.mp4", label: "Control set, pose 2" },
   ]}
   caption="Control set, frozen generator on the left and our filter on the right."
 />
@@ -437,9 +437,9 @@ The stress set was selected by a screen that used the filter, so we also ran a c
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_ablation_nowhole.mp4", label: "No whole arm, against the full filter" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_ablation_nopred_h8.mp4", label: "No prediction, horizon 8, against the full filter" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_ablation_nopred_h1.mp4", label: "No prediction, horizon 1, against the full filter" },
+    { src: "/projects/presage/videos/pp_ablation_nowhole.mp4", label: "No whole arm, against the full filter" },
+    { src: "/projects/presage/videos/pp_ablation_nopred_h8.mp4", label: "No prediction, horizon 8, against the full filter" },
+    { src: "/projects/presage/videos/pp_ablation_nopred_h1.mp4", label: "No prediction, horizon 1, against the full filter" },
   ]}
   caption="Ablation on designed motion (e). Each clip shows the filter with one component removed on the left and the full filter on the right."
 />
@@ -475,15 +475,15 @@ We add the components of our filter to the published CBF-QP, in the same task, w
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_aug_designed.mp4", label: "Designed, motion (a)" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_aug_stress.mp4", label: "Stress, pose 1a" },
+    { src: "/projects/presage/videos/pp_aug_designed.mp4", label: "Designed, motion (a)" },
+    { src: "/projects/presage/videos/pp_aug_stress.mp4", label: "Stress, pose 1a" },
   ]}
   caption="Our filter on the left and the augmented CBF-QP on the right."
 />
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_knock.mp4", label: "Stress, pose 1a" },
+    { src: "/projects/presage/videos/pp_knock.mp4", label: "Stress, pose 1a" },
   ]}
   caption="A can-knock example. Left, the row Filter (ours), CBF-QP tracking, no effort term of the knock table. Right, the row Filter (ours)."
 />
@@ -492,7 +492,7 @@ We add the components of our filter to the published CBF-QP, in the same task, w
 
 We repeat the comparison with a single convex obstacle in the task, a sphere of 6 cm radius that moves at 0.40 m/s along a straight path of 0.60 m in front of the robot. One obstacle scene tests the pick phase, with the sphere passing next to the can during the descent and the grasp. A second tests the carry phase, with the sphere crossing the path of the robot during the lift and the transport. We run each obstacle scene in 50 task scenes, and 94 of the 100 episodes remain after the exclusion.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_convex_task_setup.webp" alt="Convex-obstacle-in-task setup figure" caption="An example of the convex-obstacle experiment. A sphere of 6 cm radius crosses 0.60 m in front of the robot at 0.40 m/s. In the obstacle scene of the pick phase, it passes at the height of the can during the descent and the grasp. In the obstacle scene of the carry phase, it passes at transport height after the grasp. Solid spheres mark the start of each path and translucent spheres its end." />
+<Figure src="/projects/presage/figures/fig_convex_task_setup.webp" alt="Convex-obstacle-in-task setup figure" caption="An example of the convex-obstacle experiment. A sphere of 6 cm radius crosses 0.60 m in front of the robot at 0.40 m/s. In the obstacle scene of the pick phase, it passes at the height of the can during the descent and the grasp. In the obstacle scene of the carry phase, it passes at transport height after the grasp. Solid spheres mark the start of each path and translucent spheres its end." />
 
 <ResultsTable
   caption="The generators pick and place a can while a single convex obstacle moves in the task space. Gen., generator family, as in the comparison table. Safe-Succ., safe success. Coll., collision rate. Rates in %."
@@ -511,8 +511,8 @@ We repeat the comparison with a single convex obstacle in the task, a sphere of 
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_convex_pick.mp4", label: "Pick phase" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_convex_carry.mp4", label: "Carry phase" },
+    { src: "/projects/presage/videos/pp_convex_pick.mp4", label: "Pick phase" },
+    { src: "/projects/presage/videos/pp_convex_carry.mp4", label: "Carry phase" },
   ]}
   caption="Convex obstacle in the task, four panels each: frozen generator, published CBF-QP, our end-effector filter and our whole-arm filter."
 />
@@ -521,7 +521,7 @@ We repeat the comparison with a single convex obstacle in the task, a sphere of 
 
 Each randomized motion keeps the start and end poses of a designed motion, and with them the task phase it targets, but randomizes the route between them. We keep the 28 randomized motions that pass close to the robot without crossing it at its start pose.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_randpath_setup.webp" alt="Randomized-motion setup figure" caption="One randomized motion in the pick-and-place scenario. The human arm keeps the start and end poses of a designed motion, and its hand follows a random route between them, shown by the cyan line. The translucent copies show later poses of the arm." />
+<Figure src="/projects/presage/figures/fig_randpath_setup.webp" alt="Randomized-motion setup figure" caption="One randomized motion in the pick-and-place scenario. The human arm keeps the start and end poses of a designed motion, and its hand follows a random route between them, shown by the cyan line. The translucent copies show later poses of the arm." />
 
 <ResultsTable
   caption="Diffusion Policy picks and places a can while the human arm executes randomized motions, with the designed motions for reference. Safe-Succ., safe success. Coll., collision rate. Rates in %."
@@ -536,14 +536,14 @@ Each randomized motion keeps the start and end poses of a designed motion, and w
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_randpath_1.mp4", label: "Randomized motion 0" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_randpath_2.mp4", label: "Randomized motion 2" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_randpath_3.mp4", label: "Randomized motion 4" },
+    { src: "/projects/presage/videos/pp_randpath_1.mp4", label: "Randomized motion 0" },
+    { src: "/projects/presage/videos/pp_randpath_2.mp4", label: "Randomized motion 2" },
+    { src: "/projects/presage/videos/pp_randpath_3.mp4", label: "Randomized motion 4" },
   ]}
   caption="Randomized motions, frozen generator on the left and our filter on the right."
 />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_randpath_gallery.webp" alt="Gallery of the 28 randomized motions" caption="The 28 randomized motions, one still of the filter run each, labelled by motion number." />
+<Figure src="/projects/presage/figures/fig_randpath_gallery.webp" alt="Gallery of the 28 randomized motions" caption="The 28 randomized motions, one still of the filter run each, labelled by motion number." />
 
 #### Speed response
 
@@ -564,12 +564,12 @@ The second-arm setup has no generator and no task, so we also test the speed res
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_040.mp4", label: "0.40 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_080.mp4", label: "0.80 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_120.mp4", label: "1.20 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_160.mp4", label: "1.60 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_200a.mp4", label: "2.00 m/s (3.68 m/s²)" },
-    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_200b.mp4", label: "2.00 m/s (7.36 m/s²)" },
+    { src: "/projects/presage/videos/pp_speed_040.mp4", label: "0.40 m/s" },
+    { src: "/projects/presage/videos/pp_speed_080.mp4", label: "0.80 m/s" },
+    { src: "/projects/presage/videos/pp_speed_120.mp4", label: "1.20 m/s" },
+    { src: "/projects/presage/videos/pp_speed_160.mp4", label: "1.60 m/s" },
+    { src: "/projects/presage/videos/pp_speed_200a.mp4", label: "2.00 m/s (3.68 m/s²)" },
+    { src: "/projects/presage/videos/pp_speed_200b.mp4", label: "2.00 m/s (7.36 m/s²)" },
   ]}
   caption="Speed response under the whole-arm filter, one clip per final speed. Constant acceleration on the left and constant speed on the right."
 />
@@ -586,8 +586,8 @@ The isolation experiments evaluate the safety layer without a generator or a tas
 
 A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and advances on one link of the held robot at a time, while the robot holds one of two poses. It aims at points on the axis of the largest capsule of each link, from a set of 128 approach directions, and we keep the approaches in which the obstacle reaches the target link first. The experiment measures, under the whole-arm filter, the collision rate on each link and on an object the robot carries. We then extend it to several convex obstacles of the same size and speed, each aimed at a different link, up to four, arriving together or one after another with 1.55 s between their starts.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_convex_setup.webp" alt="Convex-obstacle setup figure" caption="The top row shows the robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. The convex obstacle (violet) is aimed at the wrist in the held pose. Without the safety layer, it collides with the robot by 92.8 mm. With the filter, the robot moves away and keeps 17.7 mm or more." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_panda_links.webp" alt="Panda link names" caption="Links of the Panda robot in the held pose. The link names match the rows of the convex-obstacle table. The flange receives no approach, because the obstacle reaches the wrist or the gripper first." />
+<Figure src="/projects/presage/figures/fig_convex_setup.webp" alt="Convex-obstacle setup figure" caption="The top row shows the robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. The convex obstacle (violet) is aimed at the wrist in the held pose. Without the safety layer, it collides with the robot by 92.8 mm. With the filter, the robot moves away and keeps 17.7 mm or more." />
+<Figure src="/projects/presage/figures/fig_panda_links.webp" alt="Panda link names" caption="Links of the Panda robot in the held pose. The link names match the rows of the convex-obstacle table. The flange receives no approach, because the obstacle reaches the wrist or the gripper first." />
 
 <ResultsTable
   caption="A convex obstacle advances on one link of the held robot, or on the object it carries, with the whole-arm filter. n, approaches. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
@@ -606,19 +606,19 @@ A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and adva
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_gripper.mp4", label: "Gripper (joint 7)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_wrist.mp4", label: "Wrist (joint 6)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_forearm.mp4", label: "Forearm (joint 5)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_elbow.mp4", label: "Elbow (joint 4)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_distal_upper_arm.mp4", label: "Distal upper arm (joint 3)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_upper_arm.mp4", label: "Upper arm (joint 2)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_shoulder.mp4", label: "Shoulder (joint 1)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_object.mp4", label: "Carried object" },
+    { src: "/projects/presage/videos/iso_convex_gripper.mp4", label: "Gripper (joint 7)" },
+    { src: "/projects/presage/videos/iso_convex_wrist.mp4", label: "Wrist (joint 6)" },
+    { src: "/projects/presage/videos/iso_convex_forearm.mp4", label: "Forearm (joint 5)" },
+    { src: "/projects/presage/videos/iso_convex_elbow.mp4", label: "Elbow (joint 4)" },
+    { src: "/projects/presage/videos/iso_convex_distal_upper_arm.mp4", label: "Distal upper arm (joint 3)" },
+    { src: "/projects/presage/videos/iso_convex_upper_arm.mp4", label: "Upper arm (joint 2)" },
+    { src: "/projects/presage/videos/iso_convex_shoulder.mp4", label: "Shoulder (joint 1)" },
+    { src: "/projects/presage/videos/iso_convex_object.mp4", label: "Carried object" },
   ]}
   caption="A convex obstacle of 60 mm radius moves at 0.40 m/s onto one link at a time, in one held pose. Each clip shows no safety layer on the left and the whole-arm filter on the right. The last clip aims the obstacle at a carried object."
 />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_several_convex_setup.webp" alt="Several-obstacles setup figure" caption="Several convex obstacles on the held robot, from one draw with four obstacles. Each obstacle aims at a different link, and the cyan arrow shows its path. When the obstacles arrive one after another, each starts at the control step in its label. When they arrive together, all four start at control step 20. The link names match the Panda-links figure." />
+<Figure src="/projects/presage/figures/fig_several_convex_setup.webp" alt="Several-obstacles setup figure" caption="Several convex obstacles on the held robot, from one draw with four obstacles. Each obstacle aims at a different link, and the cyan arrow shows its path. When the obstacles arrive one after another, each starts at the control step in its label. When they arrive together, all four start at control step 20. The link names match the Panda-links figure." />
 
 <ResultsTable
   caption="Up to four convex obstacles advance on the held robot, each aimed at a different link, together or one after another. n, obstacles that come within 40 mm of the robot, out of 128 per obstacle and setting. Coll., share of these obstacles that collide, ± the 95% Wilson interval. Rates in %."
@@ -635,24 +635,24 @@ When the four obstacles arrive together, 69.1% of the collisions start when no s
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k2_together.mp4", label: "2 obstacles, together" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k2_after.mp4", label: "2 obstacles, one after another" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k3_together.mp4", label: "3 obstacles, together" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k3_after.mp4", label: "3 obstacles, one after another" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k4_together.mp4", label: "4 obstacles, together" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k4_after.mp4", label: "4 obstacles, one after another" },
+    { src: "/projects/presage/videos/iso_multi_k2_together.mp4", label: "2 obstacles, together" },
+    { src: "/projects/presage/videos/iso_multi_k2_after.mp4", label: "2 obstacles, one after another" },
+    { src: "/projects/presage/videos/iso_multi_k3_together.mp4", label: "3 obstacles, together" },
+    { src: "/projects/presage/videos/iso_multi_k3_after.mp4", label: "3 obstacles, one after another" },
+    { src: "/projects/presage/videos/iso_multi_k4_together.mp4", label: "4 obstacles, together" },
+    { src: "/projects/presage/videos/iso_multi_k4_after.mp4", label: "4 obstacles, one after another" },
   ]}
   caption="Up to four convex obstacles advance on the held robot under the whole-arm filter, each aimed at a different link, arriving together or one after another."
 />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k3_together_allvisible.webp" alt="Three-obstacle together case, all obstacles visible" caption="The three-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k4_together_allvisible.webp" alt="Four-obstacle together case, all obstacles visible" caption="The four-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
+<Figure src="/projects/presage/figures/fig_multi_k3_together_allvisible.webp" alt="Three-obstacle together case, all obstacles visible" caption="The three-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
+<Figure src="/projects/presage/figures/fig_multi_k4_together_allvisible.webp" alt="Four-obstacle together case, all obstacles visible" caption="The four-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
 
 #### Second arm
 
 A second Panda arm, described by 14 capsules, moves through the space of the held robot and can collide with any link. At 0.40 m/s the experiment measures the collision rate and the median clearance for a filter that protects only the end effector and for the whole-arm filter. The same setup at 0.90 m/s, with the prediction on or off and a horizon of 1 or 8 control steps, separates the prediction from the horizon. Raising the speed of the second arm, and separately raising the filter velocity limit at 0.90 m/s up to 2.175 rad/s, measures how the filter responds to the obstacle speed and to its own limit.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_secondarm_setup.webp" alt="Second-arm setup figure" caption="The top row shows the held robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. A second Panda arm (red) moves through the space of the held robot at 0.40 m/s. Without the safety layer, it collides with the robot by 145.4 mm. With the filter, the held robot moves away and keeps 41.6 mm or more." />
+<Figure src="/projects/presage/figures/fig_secondarm_setup.webp" alt="Second-arm setup figure" caption="The top row shows the held robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. A second Panda arm (red) moves through the space of the held robot at 0.40 m/s. Without the safety layer, it collides with the robot by 145.4 mm. With the filter, the held robot moves away and keeps 41.6 mm or more." />
 
 <ResultsTable
   caption="A second arm moves through the space of the held robot at 0.40 m/s. Coll., collision rate, ± the 95% Wilson interval. Clear., median over paths of the smallest distance between the two arms. Rates in %."
@@ -678,7 +678,7 @@ The prediction removes the failures on 67 of the 96 paths, and the same 23 paths
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/iso_prediction.mp4", label: "0.90 m/s: prediction with horizon 8, prediction with horizon 1, no prediction with horizon 1" },
+    { src: "/projects/presage/videos/iso_prediction.mp4", label: "0.90 m/s: prediction with horizon 8, prediction with horizon 1, no prediction with horizon 1" },
   ]}
   caption="A second arm moves through the space of the held robot at 0.90 m/s under the whole-arm filter. The three panels are prediction with horizon 8, prediction with horizon 1, and no prediction with horizon 1."
 />
@@ -698,12 +698,12 @@ The prediction removes the failures on 67 of the 96 paths, and the same 23 paths
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_015.mp4", label: "0.15 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_020.mp4", label: "0.20 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_040.mp4", label: "0.40 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_090.mp4", label: "0.90 m/s" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_160.mp4", label: "1.60 m/s (realised 1.51)" },
-    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_200.mp4", label: "2.00 m/s (realised 1.69)" },
+    { src: "/projects/presage/videos/iso_secondarm_015.mp4", label: "0.15 m/s" },
+    { src: "/projects/presage/videos/iso_secondarm_020.mp4", label: "0.20 m/s" },
+    { src: "/projects/presage/videos/iso_secondarm_040.mp4", label: "0.40 m/s" },
+    { src: "/projects/presage/videos/iso_secondarm_090.mp4", label: "0.90 m/s" },
+    { src: "/projects/presage/videos/iso_secondarm_160.mp4", label: "1.60 m/s (realised 1.51)" },
+    { src: "/projects/presage/videos/iso_secondarm_200.mp4", label: "2.00 m/s (realised 1.69)" },
   ]}
   caption="A second arm moves through the space of the held robot at each commanded speed. Every clip shows three panels: no safety layer, the end-effector filter, and the whole-arm filter. The second arm is red."
 />
@@ -732,10 +732,10 @@ To estimate the obstacle, we simulate a realistic perception pipeline for the mu
 
 From these measurements we build the obstacle that the filter receives. At each control step, the landmarks divide the point cloud among the segments of the arm, such as the upper arm between the shoulder and the elbow, and we fit one capsule to the points of each segment. Each capsule takes its position from the depth points of the current control step, and the landmarks only decide which points belong to which segment. We estimate the velocity of each capsule from the motion of its segment in the tracked landmarks over the last 0.45 s. The segmentation of the arm is perfect, and we run Diffusion Policy with both grids on both sets of obstacle scenes.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_perception_explainer.webp" alt="Perception pipeline example figure" caption="An example of the perception pipeline at one obstacle pose of the stress set, with (a) the sparse grid and (b) the dense grid at the same control step. From left to right, the panels show the ray hits of each depth camera on the human arm, the depth points with the tracked landmarks, and the fitted capsules over the true arm. With the sparse grid, the robot touches the shoulder of the arm while the fitted capsules place it 23 mm away. With the dense grid, the robot stays 62 mm away. The two rows come from separate runs, so the robot is in a different place in each. The inset shows the two cameras from above." />
+<Figure src="/projects/presage/figures/fig_perception_explainer.webp" alt="Perception pipeline example figure" caption="An example of the perception pipeline at one obstacle pose of the stress set, with (a) the sparse grid and (b) the dense grid at the same control step. From left to right, the panels show the ray hits of each depth camera on the human arm, the depth points with the tracked landmarks, and the fitted capsules over the true arm. With the sparse grid, the robot touches the shoulder of the arm while the fitted capsules place it 23 mm away. With the dense grid, the robot stays 62 mm away. The two rows come from separate runs, so the robot is in a different place in each. The inset shows the two cameras from above." />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_perception_sparse.webp" alt="Sparse perception explainer still" caption="Sparse perception (40×30) on the stress pose 2d at one control step. The panel shows the recovered depth cloud of 66 points, the 11 tracked landmarks, and the 7 fitted capsules over the true arm. The plate reads -4.6 mm." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_perception_dense.webp" alt="Dense perception explainer still" caption="Dense perception (160×120) on the same stress pose 2d at the same control step. The panel shows the recovered depth cloud of 1096 points, the 11 tracked landmarks, and the 7 fitted capsules over the true arm. The plate reads 62.0 mm." />
+<Figure src="/projects/presage/figures/fig_perception_sparse.webp" alt="Sparse perception explainer still" caption="Sparse perception (40×30) on the stress pose 2d at one control step. The panel shows the recovered depth cloud of 66 points, the 11 tracked landmarks, and the 7 fitted capsules over the true arm. The plate reads -4.6 mm." />
+<Figure src="/projects/presage/figures/fig_perception_dense.webp" alt="Dense perception explainer still" caption="Dense perception (160×120) on the same stress pose 2d at the same control step. The panel shows the recovered depth cloud of 1096 points, the 11 tracked landmarks, and the 7 fitted capsules over the true arm. The plate reads 62.0 mm." />
 
 <ResultsTable
   caption="Diffusion Policy picks and places a can while our filter receives the human arm from its exact pose or from simulated perception on a sparse (40×30) or dense (160×120) depth grid. Safe-Succ., safe success. Coll., collision rate. Rates in %."
@@ -749,8 +749,8 @@ From these measurements we build the obstacle that the filter receives. At each 
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/percep_designed_c.mp4", label: "Designed, motion (c)" },
-    { src: "/projects/sgm-preview-7a2f/videos/percep_stress_1c.mp4", label: "Stress, pose 1c" },
+    { src: "/projects/presage/videos/percep_designed_c.mp4", label: "Designed, motion (c)" },
+    { src: "/projects/presage/videos/percep_stress_1c.mp4", label: "Stress, pose 1c" },
   ]}
   caption="Simulated perception. Each clip shows three panels: the filter with the exact obstacle pose, with sparse perception, and with dense perception. The translucent capsules are the ones the filter received, recomputed from the recorded run."
 />
@@ -808,9 +808,9 @@ We add one error at a time to the sparse pipeline on the designed set. We take t
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/percep_rob_flying.mp4", label: "Designed, motion (e): flying pixels, 100% of edge pixels" },
-    { src: "/projects/sgm-preview-7a2f/videos/percep_rob_swapped.mp4", label: "Designed, motion (d), slower copy: landmark labels swapped, 8.2% of control steps" },
-    { src: "/projects/sgm-preview-7a2f/videos/percep_rob_dark.mp4", label: "Designed, motion (c), slower copy: dark returns dropped, 50%" },
+    { src: "/projects/presage/videos/percep_rob_flying.mp4", label: "Designed, motion (e): flying pixels, 100% of edge pixels" },
+    { src: "/projects/presage/videos/percep_rob_swapped.mp4", label: "Designed, motion (d), slower copy: landmark labels swapped, 8.2% of control steps" },
+    { src: "/projects/presage/videos/percep_rob_dark.mp4", label: "Designed, motion (c), slower copy: dark returns dropped, 50%" },
   ]}
   caption="Perception robustness. Each clip shows the sparse pipeline with no added error beside the sparse pipeline with one error. The translucent capsules are the ones the filter received, recomputed from the recorded run."
 />
@@ -854,7 +854,7 @@ We add one error at a time to the sparse pipeline on the designed set. We take t
 
 We evaluate the safety layer on three other arms, a UR5e, a KUKA IIWA and a Kinova Gen3. We build the capsule set of each arm in the same way as for the Panda robot. For each arm, we train a Diffusion Policy on 1,000 demonstrations of the pick-and-place task from a scripted policy, 900 for training and 100 for validation, and we evaluate it on the designed and stress sets of the pick-and-place task.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_crossembod_setup.webp" alt="Three other robots in the pick-and-place scenario" caption="The pick-and-place scenario with three other robots: (a) the UR5e, (b) the KUKA IIWA and (c) the Kinova Gen3, each with a Robotiq gripper. The human arm is the obstacle, and its hand moves back and forth along the cyan arrow. The translucent copy shows the other end of the motion." />
+<Figure src="/projects/presage/figures/fig_crossembod_setup.webp" alt="Three other robots in the pick-and-place scenario" caption="The pick-and-place scenario with three other robots: (a) the UR5e, (b) the KUKA IIWA and (c) the Kinova Gen3, each with a Robotiq gripper. The human arm is the obstacle, and its hand moves back and forth along the cyan arrow. The translucent copy shows the other end of the motion." />
 
 #### Obstacle scenes
 
@@ -877,18 +877,18 @@ These arms use the designed and stress sets of the pick-and-place task. The scen
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/cross_ur5e_designed_a.mp4", label: "UR5e, designed, motion (a)" },
-    { src: "/projects/sgm-preview-7a2f/videos/cross_iiwa_designed_b.mp4", label: "KUKA IIWA, designed, motion (b)" },
-    { src: "/projects/sgm-preview-7a2f/videos/cross_kinova_designed_d.mp4", label: "Kinova Gen3, designed, motion (d)" },
+    { src: "/projects/presage/videos/cross_ur5e_designed_a.mp4", label: "UR5e, designed, motion (a)" },
+    { src: "/projects/presage/videos/cross_iiwa_designed_b.mp4", label: "KUKA IIWA, designed, motion (b)" },
+    { src: "/projects/presage/videos/cross_kinova_designed_d.mp4", label: "Kinova Gen3, designed, motion (d)" },
   ]}
   caption="Designed set, frozen generator on the left and our filter on the right."
 />
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/cross_ur5e_stress_1d.mp4", label: "UR5e, stress, pose 1d" },
-    { src: "/projects/sgm-preview-7a2f/videos/cross_iiwa_stress_1j.mp4", label: "KUKA IIWA, stress, pose 1j" },
-    { src: "/projects/sgm-preview-7a2f/videos/cross_kinova_stress_1d.mp4", label: "Kinova Gen3, stress, pose 1d" },
+    { src: "/projects/presage/videos/cross_ur5e_stress_1d.mp4", label: "UR5e, stress, pose 1d" },
+    { src: "/projects/presage/videos/cross_iiwa_stress_1j.mp4", label: "KUKA IIWA, stress, pose 1j" },
+    { src: "/projects/presage/videos/cross_kinova_stress_1d.mp4", label: "Kinova Gen3, stress, pose 1d" },
   ]}
   caption="Stress set, frozen generator on the left and our filter on the right."
 />
@@ -901,12 +901,12 @@ These arms use the designed and stress sets of the pick-and-place task. The scen
 
 NutAssemblySquare is a second task, in which the robot picks a square nut and places it on a peg. We repeat the protocol of the pick-and-place scenario with Diffusion Policy only, trained on the RoboMimic demonstrations of this task. The human arm is the obstacle, and we use two sets of obstacle scenes. The designed set is eight motions of the human arm and a faster copy of six of them, and the stress set is 22 static poses at two levels of difficulty.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_nut_setup.webp" alt="Nut assembly setup figure" caption="The nut assembly scenario. The robot picks the square nut and places it on the square peg. In this scene of the designed set, the human arm starts beside the gripper, and its hand moves across the peg side of the table along the cyan arrow." />
+<Figure src="/projects/presage/figures/fig_nut_setup.webp" alt="Nut assembly setup figure" caption="The nut assembly scenario. The robot picks the square nut and places it on the square peg. In this scene of the designed set, the human arm starts beside the gripper, and its hand moves across the peg side of the table along the cyan arrow." />
 
 #### Obstacle scenes
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_nut_designed.webp" alt="Nut designed-set gallery" caption="The designed set of the nut assembly scenario. Each panel, (a) to (h), shows one of the eight motions of the human arm at the start of seed 0, with translucent copies of later poses and the path of its hand in cyan. The faster copies follow the same paths and are not shown." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_nut_stress.webp" alt="Nut stress-set gallery" caption="The stress set of the nut assembly scenario. Each panel shows one static pose of the human arm at the start of seed 0, with the first level in panels 1a to 1k and the second level in panels 2a to 2j, separated by a line. The eleventh pose of the second level is excluded at every seed and is not shown." />
+<Figure src="/projects/presage/figures/fig_gallery_nut_designed.webp" alt="Nut designed-set gallery" caption="The designed set of the nut assembly scenario. Each panel, (a) to (h), shows one of the eight motions of the human arm at the start of seed 0, with translucent copies of later poses and the path of its hand in cyan. The faster copies follow the same paths and are not shown." />
+<Figure src="/projects/presage/figures/fig_gallery_nut_stress.webp" alt="Nut stress-set gallery" caption="The stress set of the nut assembly scenario. Each panel shows one static pose of the human arm at the start of seed 0, with the first level in panels 1a to 1k and the second level in panels 2a to 2j, separated by a line. The eleventh pose of the second level is excluded at every seed and is not shown." />
 
 #### Results
 
@@ -924,16 +924,16 @@ NutAssemblySquare is a second task, in which the robot picks a square nut and pl
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/nut_designed_a.mp4", label: "Designed, motion (a)" },
-    { src: "/projects/sgm-preview-7a2f/videos/nut_designed_d.mp4", label: "Designed, motion (d)" },
-    { src: "/projects/sgm-preview-7a2f/videos/nut_stress_2e.mp4", label: "Stress, pose 2e" },
-    { src: "/projects/sgm-preview-7a2f/videos/nut_stress_1g.mp4", label: "Stress, pose 1g" },
+    { src: "/projects/presage/videos/nut_designed_a.mp4", label: "Designed, motion (a)" },
+    { src: "/projects/presage/videos/nut_designed_d.mp4", label: "Designed, motion (d)" },
+    { src: "/projects/presage/videos/nut_stress_2e.mp4", label: "Stress, pose 2e" },
+    { src: "/projects/presage/videos/nut_stress_1g.mp4", label: "Stress, pose 1g" },
   ]}
   caption="Nut assembly, frozen generator on the left and our filter on the right."
 />
 
 <VideoGrid
-  items={[{ src: "/projects/sgm-preview-7a2f/videos/nut_fivepanel_c.mp4", label: "Designed, motion (c)" }]}
+  items={[{ src: "/projects/presage/videos/nut_fivepanel_c.mp4", label: "Designed, motion (c)" }]}
   caption="Nut assembly, designed motion (c). Five panels: frozen generator, the published CBF-QP, Guidance (ours), Hybrid (ours) and Filter (ours)."
 />
 
@@ -949,7 +949,7 @@ VLA policies output end-effector actions. The interface converts these actions i
 
 SafeLIBERO adds static obstacles to 32 scenarios of the LIBERO benchmark, with 50 episodes each. The policy is π0.5, with its public checkpoint for LIBERO, and it acts on the translation of the end effector, as in the evaluation of AEGIS. As in that evaluation, the filter receives the obstacle from perception on the camera images, not from the simulator. At the start of each episode it detects the obstacle on the rendered camera images, turns the depth inside the detection into points, and fits one capsule around them.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_safelibero_setup.webp" alt="SafeLIBERO setup figure" caption="An example of the SafeLIBERO scenario. The robot picks the bowl on the ramekin, and a static red mug is the obstacle. The filter does not use the ground-truth pose of the obstacle. At the start of each episode, it detects the mug on the rendered camera images, turns the depth inside the detection into points (orange), and fits one capsule around them (cyan). The inset shows the camera view with the extent of the detected points." />
+<Figure src="/projects/presage/figures/fig_safelibero_setup.webp" alt="SafeLIBERO setup figure" caption="An example of the SafeLIBERO scenario. The robot picks the bowl on the ramekin, and a static red mug is the obstacle. The filter does not use the ground-truth pose of the obstacle. At the start of each episode, it detects the mug on the rendered camera images, turns the depth inside the detection into points (orange), and fits one capsule around them (cyan). The inset shows the camera view with the extent of the detected points." />
 
 The SafeLIBERO scenarios are described on the [benchmark project page](https://vlsa-aegis.github.io/).
 
@@ -969,9 +969,9 @@ The SafeLIBERO scenarios are described on the [benchmark project page](https://v
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/vla_sl_goal.mp4", label: "Goal suite: open the top drawer and put the bowl inside" },
-    { src: "/projects/sgm-preview-7a2f/videos/vla_sl_long.mp4", label: "Long suite: put both the alphabet soup and the cream cheese box in the basket" },
-    { src: "/projects/sgm-preview-7a2f/videos/vla_sl_object.mp4", label: "Object suite: pick up the bbq sauce and place it in the basket" },
+    { src: "/projects/presage/videos/vla_sl_goal.mp4", label: "Goal suite: open the top drawer and put the bowl inside" },
+    { src: "/projects/presage/videos/vla_sl_long.mp4", label: "Long suite: put both the alphabet soup and the cream cheese box in the basket" },
+    { src: "/projects/presage/videos/vla_sl_object.mp4", label: "Object suite: pick up the bbq sauce and place it in the basket" },
   ]}
   caption="SafeLIBERO, three panels: Frozen π0.5, AEGIS our reproduction, and Filter (ours). Only the filter panel shows the perceived capsule, because the AEGIS run perceived the obstacle live and did not record it."
 />
@@ -980,9 +980,9 @@ The SafeLIBERO scenarios are described on the [benchmark project page](https://v
 
 LIBERO-Safety is a separate benchmark, which we did not build, and whose obstacles can move. The policy is π0.5, fine-tuned on this benchmark. We run its 48 scenes with an obstacle, 13 of them with a moving obstacle, each from the 50 initial states of the benchmark. The filter reads the pose of the obstacle from the simulator and, on the scenes where the obstacle moves, predicts its motion from the velocity the benchmark declares. On the 13 scenes with a moving obstacle, the frozen policy collides in 15.2% of the episodes, against 39.8% on the static scenes, so the moving obstacles of the benchmark reach the robot less often than the static ones. We therefore author two scenes in which a human hand moves in over the task and back, so that the moving obstacle reaches the robot.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_liberosafety_setup.webp" alt="LIBERO-Safety setup figure" caption="An example of the LIBERO-Safety scenario, in one of the two scenes that we authored. A human hand, the obstacle, moves in over the basket and back along the cyan arrow. The translucent copy shows the hand at its closest point." />
+<Figure src="/projects/presage/figures/fig_liberosafety_setup.webp" alt="LIBERO-Safety setup figure" caption="An example of the LIBERO-Safety scenario, in one of the two scenes that we authored. A human hand, the obstacle, moves in over the basket and back along the cyan arrow. The translucent copy shows the hand at its closest point." />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_liberosafety.webp" alt="Authored LIBERO-Safety scenes gallery" caption="The two LIBERO-Safety scenes that we authored, (a) the soup scene and (b) the bowl scene. In each, a human hand moves in over the task along the cyan arrow and back." />
+<Figure src="/projects/presage/figures/fig_gallery_liberosafety.webp" alt="Authored LIBERO-Safety scenes gallery" caption="The two LIBERO-Safety scenes that we authored, (a) the soup scene and (b) the bowl scene. In each, a human hand moves in over the task along the cyan arrow and back." />
 
 The LIBERO-Safety scenes are described on the [benchmark project page](https://libero-safety.github.io/).
 
@@ -999,11 +999,11 @@ The LIBERO-Safety scenes are described on the [benchmark project page](https://l
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_authored_bowl.mp4", label: "Authored bowl scene" },
-    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_authored_soup.mp4", label: "Authored soup scene" },
-    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_bench_banana.mp4", label: "Benchmark, moving obstacle: pick up the banana and put it on the plate in my hand" },
-    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_bench_hammer.mp4", label: "Benchmark, static obstacle: pass me the hammer" },
-    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_bench_soda.mp4", label: "Benchmark, static obstacle: pick up the can of soda and put it on the plate in my hand" },
+    { src: "/projects/presage/videos/vla_ls_authored_bowl.mp4", label: "Authored bowl scene" },
+    { src: "/projects/presage/videos/vla_ls_authored_soup.mp4", label: "Authored soup scene" },
+    { src: "/projects/presage/videos/vla_ls_bench_banana.mp4", label: "Benchmark, moving obstacle: pick up the banana and put it on the plate in my hand" },
+    { src: "/projects/presage/videos/vla_ls_bench_hammer.mp4", label: "Benchmark, static obstacle: pass me the hammer" },
+    { src: "/projects/presage/videos/vla_ls_bench_soda.mp4", label: "Benchmark, static obstacle: pick up the can of soda and put it on the plate in my hand" },
   ]}
   caption="LIBERO-Safety, frozen π0.5 on the left and our filter on the right. The two authored scenes, one benchmark scene with a moving obstacle, and two benchmark scenes with a static obstacle."
 />
@@ -1016,7 +1016,7 @@ The LIBERO-Safety scenes are described on the [benchmark project page](https://l
 
 We run the safety layer on a real robot, a Realman RM65-BI arm with six joints. We fit its capsules to its collision meshes in the same way as for the simulated arms, and the filter protects the whole arm. A depth camera above the workspace observes the obstacle, a hand model that an operator moves on a rod, and the filter receives it as one capsule at each control step. In three hold runs, the arm holds a pose while the operator pushes the obstacle at it. In six reach runs, a diffusion planner trained on a reach task moves the arm between two targets while the obstacle is pushed at it.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_setup.webp" alt="Hardware setup figure" caption="The hardware setup. A Realman RM65-BI arm moves between two targets, A and B, while an operator pushes an obstacle toward it. The left panel shows the workspace, and the right panel shows the view of the overhead depth camera with the tracked obstacle." />
+<Figure src="/projects/presage/figures/fig_hardware_setup.webp" alt="Hardware setup figure" caption="The hardware setup. A Realman RM65-BI arm moves between two targets, A and B, while an operator pushes an obstacle toward it. The left panel shows the workspace, and the right panel shows the view of the overhead depth camera with the tracked obstacle." />
 
 <ResultsTable
   caption="The real Realman RM65-BI robot holds a pose (H) or reaches between two targets (P) while an obstacle is pushed at it. Limit, filter velocity limit. Laps, arrivals at a target. Tracked, control steps in which the obstacle is tracked. Solve and Plan, median time of one filter solve and of one motion plan."
@@ -1068,22 +1068,22 @@ We run the safety layer on a real robot, a Realman RM65-BI arm with six joints. 
 Each clip is a panel of four views. The top row shows the workspace camera and the overhead camera with the perceived obstacle points. The bottom row shows two simulation views of the arm at its recorded joint angles with the perceived points and capsule, which is what the controller receives.
 
 <VideoGrid
-  items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_H3.mp4", label: "Hold run H3" }]}
+  items={[{ src: "/projects/presage/videos/hw_H3.mp4", label: "Hold run H3" }]}
   caption="Hold run H3. 500 control steps at a 10°/s filter velocity limit, the obstacle tracked on 65.0% of control steps, a median control-step time of 29.7 ms with 2.8% of control steps over the 50 ms budget, and a median filter solve of 6.69 ms."
 />
 
 <VideoGrid
-  items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_P2.mp4", label: "Reach run P2" }]}
+  items={[{ src: "/projects/presage/videos/hw_P2.mp4", label: "Reach run P2" }]}
   caption="Reach run P2. 2000 control steps over 4 laps at a 20°/s filter velocity limit, the obstacle tracked on 44.8% of control steps, a median control-step time of 31.8 ms with 21.3% of control steps over the 50 ms budget, a median filter solve of 6.52 ms and a median motion plan of 58.7 ms."
 />
 
 <VideoGrid
-  items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_P6.mp4", label: "Reach run P6" }]}
+  items={[{ src: "/projects/presage/videos/hw_P6.mp4", label: "Reach run P6" }]}
   caption="Reach run P6. 1000 control steps over 2 laps at a 20°/s filter velocity limit, the obstacle tracked on 74.5% of control steps, a median control-step time of 32.4 ms with 20.9% of control steps over the 50 ms budget, a median filter solve of 6.64 ms and a median motion plan of 58.7 ms."
 />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_hold.webp" alt="Hold run deviation figure" caption="A hold run. The arm moves away from its held pose when the obstacle approaches, by 16.3° at 11.0 s, and returns to it once the obstacle moves away. Each panel reports the time and the deviation from the held pose." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_reach.webp" alt="Reach run overhead figure" caption="A reach run, seen from the overhead camera. The diffusion planner drives the arm from target A to target B, 492 mm apart, while the obstacle is pushed at it. The arm arrives within 49 mm of target B at 17.5 s." />
+<Figure src="/projects/presage/figures/fig_hardware_hold.webp" alt="Hold run deviation figure" caption="A hold run. The arm moves away from its held pose when the obstacle approaches, by 16.3° at 11.0 s, and returns to it once the obstacle moves away. Each panel reports the time and the deviation from the held pose." />
+<Figure src="/projects/presage/figures/fig_hardware_reach.webp" alt="Reach run overhead figure" caption="A reach run, seen from the overhead camera. The diffusion planner drives the arm from target A to target B, 492 mm apart, while the obstacle is pushed at it. The arm arrives within 49 mm of target B at 17.5 s." />
 
 **Full clip inventory** (external archive, link coming soon).
 
