@@ -587,7 +587,7 @@ The isolation experiments evaluate the safety layer without a generator or a tas
 
 A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and advances on one link of the held robot at a time, while the robot holds one of two poses. It aims at points on the axis of the largest capsule of each link, from a set of 128 approach directions, and we keep the approaches in which the obstacle reaches the target link first. The experiment measures, under the whole-arm filter, the collision rate on each link and on an object the robot carries. We then extend it to several convex obstacles of the same size and speed, each aimed at a different link, up to four, arriving together or one after another with 1.55 s between their starts.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_convex_setup.webp" alt="Convex-obstacle setup figure" caption="The top row shows the robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. The convex obstacle (violet) is aimed at the wrist in the held pose. Without the safety layer, it penetrates the robot by 92.8 mm. With the filter, the robot moves away and keeps 20.3 mm." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_convex_setup.webp" alt="Convex-obstacle setup figure" caption="The top row shows the robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. The convex obstacle (violet) is aimed at the wrist in the held pose. Without the safety layer, it collides with the robot by 92.8 mm. With the filter, the robot moves away and keeps 17.7 mm or more." />
 <Figure src="/projects/sgm-preview-7a2f/figures/fig_panda_links.webp" alt="Panda link names" caption="Links of the Panda robot in the held pose. The link names match the rows of the convex-obstacle table. The flange receives no approach, because the obstacle reaches the wrist or the gripper first." />
 
 <ResultsTable
@@ -619,7 +619,7 @@ A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and adva
   caption="A convex obstacle of 60 mm radius moves at 0.40 m/s onto one link at a time, in one held pose. Each clip shows no safety layer on the left and the whole-arm filter on the right. The last clip aims the obstacle at a carried object."
 />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_several_convex_setup.webp" alt="Several-obstacles setup figure" caption="Several convex obstacles on the held robot, from one draw with four obstacles. Each obstacle aims at a different link, and the cyan arrow shows its path. When the obstacles arrive one after another, each starts at the tick in its label. When they arrive together, all four start at tick 20. The link names match the Panda-links figure." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_several_convex_setup.webp" alt="Several-obstacles setup figure" caption="Several convex obstacles on the held robot, from one draw with four obstacles. Each obstacle aims at a different link, and the cyan arrow shows its path. When the obstacles arrive one after another, each starts at the control step in its label. When they arrive together, all four start at control step 20. The link names match the Panda-links figure." />
 
 <ResultsTable
   caption="Up to four convex obstacles advance on the held robot, each aimed at a different link, together or one after another. n, obstacles that come within 40 mm of the robot, out of 128 per obstacle and setting. Coll., share of these obstacles that collide, ± the 95% Wilson interval. Rates in %."
@@ -631,6 +631,8 @@ A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and adva
     ["4", "380", "57.1 ± 5.0", "412", "25.5 ± 4.4"],
   ]}
 />
+
+When the four obstacles arrive together, 69.1% of the collisions start when no single command meets the conditions of all obstacles at once, although one exists for each obstacle alone. When they arrive one after another, this share is 14.3%. These collisions are failures of the filter, not of the joint limits.
 
 <VideoGrid
   items={[
@@ -644,14 +646,14 @@ A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and adva
   caption="Up to four convex obstacles advance on the held robot under the whole-arm filter, each aimed at a different link, arriving together or one after another."
 />
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k3_together_allvisible.webp" alt="Three-obstacle together case, all obstacles visible" caption="The three-obstacle together case at one tick, chosen so every obstacle is visible, because at some ticks an obstacle is hidden behind the robot." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k4_together_allvisible.webp" alt="Four-obstacle together case, all obstacles visible" caption="The four-obstacle together case at one tick, chosen so every obstacle is visible, because at some ticks an obstacle is hidden behind the robot." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k3_together_allvisible.webp" alt="Three-obstacle together case, all obstacles visible" caption="The three-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k4_together_allvisible.webp" alt="Four-obstacle together case, all obstacles visible" caption="The four-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
 
 #### Second arm
 
-A second Panda arm, described by 14 capsules, moves through the space of the held robot and can strike any link. At 0.40 m/s the experiment measures the collision rate and the median clearance for a filter that protects only the end effector and for the whole-arm filter. The same setup at 0.90 m/s, with the prediction on or off and a horizon of 1 or 8 ticks, separates the prediction from the horizon. Raising the speed of the second arm, and separately raising the filter velocity limit at 0.90 m/s up to 2.175 rad/s, measures how the filter responds to the obstacle speed and to its own limit.
+A second Panda arm, described by 14 capsules, moves through the space of the held robot and can collide with any link. At 0.40 m/s the experiment measures the collision rate and the median clearance for a filter that protects only the end effector and for the whole-arm filter. The same setup at 0.90 m/s, with the prediction on or off and a horizon of 1 or 8 control steps, separates the prediction from the horizon. Raising the speed of the second arm, and separately raising the filter velocity limit at 0.90 m/s up to 2.175 rad/s, measures how the filter responds to the obstacle speed and to its own limit.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_secondarm_setup.webp" alt="Second-arm setup figure" caption="The top row shows the held robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. A second Panda arm (red) moves through the space of the held robot at 0.40 m/s. Without the safety layer, it penetrates the robot by 145.4 mm. With the filter, the held robot moves away and keeps 51.8 mm." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_secondarm_setup.webp" alt="Second-arm setup figure" caption="The top row shows the held robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. A second Panda arm (red) moves through the space of the held robot at 0.40 m/s. Without the safety layer, it collides with the robot by 145.4 mm. With the filter, the held robot moves away and keeps 41.6 mm or more." />
 
 <ResultsTable
   caption="A second arm moves through the space of the held robot at 0.40 m/s. Coll., collision rate, ± the 95% Wilson interval. Clear., median over paths of the smallest distance between the two arms. Rates in %."
@@ -665,13 +667,15 @@ A second Panda arm, described by 14 capsules, moves through the space of the hel
 
 <ResultsTable
   caption="A second arm moves through the space of the held robot at 0.90 m/s, with the whole-arm filter. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
-  headers={["Prediction", "Horizon (ticks)", "Coll. (Paths 96)"]}
+  headers={["Prediction", "Horizon (control steps)", "Coll. (Paths 96)"]}
   rows={[
     ["✓", "8", "20.8 ± 9.2"],
     ["✓", "1", "24.0 ± 9.4"],
     ["✗", "1", "93.8 ± 6.7"],
   ]}
 />
+
+The prediction removes the failures on 67 of the 96 paths, and the same 23 paths fail in both configurations. The prediction carries most of the gain against a moving obstacle, and the longer horizon of 8 control steps adds a smaller gain of 3 paths.
 
 <VideoGrid
   items={[
@@ -706,7 +710,7 @@ A second Panda arm, described by 14 capsules, moves through the space of the hel
 />
 
 <ResultsTable
-  caption="(b) The whole-arm filter at 0.90 m/s, in one held pose, with each filter velocity limit. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
+  caption="(b) The whole-arm filter at 0.90 m/s, in one held pose, with a tracking weight of 10 and each filter velocity limit. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
   headers={["Filter velocity limit (rad/s)", "Coll. (Paths 96)"]}
   rows={[
     ["1.50", "16.7 ± 8.7"],
