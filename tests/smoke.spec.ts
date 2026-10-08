@@ -96,7 +96,7 @@ test('a project detail page renders its hero, table, and links', async ({ page }
 });
 
 test('the PRESAGE project page is reachable without a gate and listed in the projects index', async ({ page }) => {
-  await page.goto('/en/projects/sgm-preview-7a2f/');
+  await page.goto('/en/projects/presage/');
   // No password gate: the real content is visible directly.
   await expect(page.getByRole('heading', { name: /PRESAGE/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Private preview' })).toHaveCount(0);
