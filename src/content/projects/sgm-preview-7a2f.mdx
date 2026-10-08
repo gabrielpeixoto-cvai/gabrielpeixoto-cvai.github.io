@@ -350,10 +350,10 @@ The isolation experiments count the approaches or paths on which the obstacle co
 
 ### Pick-and-place task
 
-In the pick-and-place scenario, the Panda robot picks a can from a box and places it in a bin. The obstacle is a multi-link human arm, a right arm from the CMU humanoid model. Each obstacle scene runs with ten seeds. The designed set is eight motions of the human arm and a slower copy of each, and each motion targets one link of the robot, such as the wrist or the elbow, or one phase of the task, such as the approach to the can or the carry to the bin. The stress set is 22 static poses of the human arm at two levels of difficulty, eleven at each level, selected by a screen in which the frozen generator completed the task but drove the robot into the obstacle.
+In the pick-and-place scenario, the Panda robot picks a can from a box and places it in a bin. The obstacle is a multi-link human arm, a right arm from the CMU humanoid model. These experiments answer Q3, Q4, Q5 and the second part of Q6. Each obstacle scene runs with ten seeds. The designed set is eight motions of the human arm and a slower copy of each, and each motion targets one link of the robot, such as the wrist or the elbow, or one phase of the task, such as the approach to the can or the carry to the bin. The stress set is 22 static poses of the human arm at two levels of difficulty, eleven at each level, selected by a screen in which the frozen generator completed the task but drove the robot into the obstacle.
 
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_setup.webp" alt="Pick-and-place setup figure" caption="The pick-and-place scenario. The robot picks the can from the box and places it in one compartment of the bin on the other side. The obstacle targets the robot wrist during the carry. The human arm stays in the path of the robot for 0.5 s, and then moves back to let the robot pass. The translucent copies show later poses of the arm, and the cyan arrow shows the path of its hand." />
-<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_rollout.webp" alt="Pick-and-place rollout clearance figure" caption="One episode of the designed set with our filter and with the frozen Diffusion Policy. Left, the end-effector paths, the hand path and later poses. Right, the clearance between the collision meshes. Without the safety layer, the carried can collides with the human arm by 41.1 mm. The filter lifts the can over the hand, keeps 46.2 mm or more and places it 15 ticks later." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_setup.webp" alt="Pick-and-place setup figure" caption="The pick-and-place scenario. The robot picks the can from the box and places it in one compartment of the bin on the other side. Once the robot grasps the can, the human arm moves 48 cm across the path of the carry, toward the box, and stays there. The translucent copies show later poses of the arm, and the cyan arrow shows the path of its hand." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_rollout.webp" alt="Pick-and-place rollout clearance figure" caption="The episode of the scene above, with our filter and with the frozen Diffusion Policy. Left, the end-effector paths, the hand path and later poses. Right, the clearance between the collision meshes. Without the safety layer, the carried can collides with the human arm by 41.1 mm. The filter lifts the can over the hand, keeps 46.2 mm or more and places it 15 control steps later." />
 
 #### Obstacle scenes
 
@@ -427,7 +427,7 @@ The stress set was selected by a screen that used the filter, so we also ran a c
 
 <ResultsTable
   caption="Ablation of our filter in the pick-and-place scenario with Diffusion Policy. A cross marks a removed component. Safe-Succ., safe success. Coll., collision rate. Rates in %."
-  headers={["Whole arm", "Prediction", "Horizon (ticks)", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll.", "Stress Safe-Succ. (205)", "Stress Success", "Stress Coll."]}
+  headers={["Whole arm", "Prediction", "Horizon (control steps)", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll.", "Stress Safe-Succ. (205)", "Stress Success", "Stress Coll."]}
   rows={[
     ["✓", "✓", "8", "61.5", "61.5", "0.0", "47.8", "47.8", "0.0"],
     ["✗", "✓", "8", "39.7", "68.6", "43.6", "42.9", "56.1", "32.7"],
@@ -548,7 +548,7 @@ Each randomized motion keeps the start and end poses of a designed motion, and w
 
 #### Speed response
 
-We also test the speed response in this task. We take six of the eight designed motions of the human arm and raise their final speed from 0.40 to 2.00 m/s, with Diffusion Policy and the whole-arm filter. We evaluate each final speed in two settings, one in which the arm reaches the final speed with a constant acceleration, and one in which it moves at the final speed from the start.
+The second-arm setup has no generator and no task, so we also test the speed response in this task. We take six of the eight designed motions of the human arm and raise their final speed from 0.40 to 2.00 m/s, with Diffusion Policy and the whole-arm filter. We evaluate each final speed in two settings, one in which the arm reaches the final speed with a constant acceleration, and one in which it moves at constant speed, so its speed jumps to the final value at the start of the motion.
 
 <ResultsTable
   caption="Diffusion Policy picks and places a can while the human arm executes six designed motions at increasing final speeds, with the whole-arm filter. Safe-Succ., safe success. Coll., collision rate. Rates in %. A range covers episodes whose collision is not resolved."
