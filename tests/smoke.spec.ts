@@ -95,15 +95,15 @@ test('a project detail page renders its hero, table, and links', async ({ page }
   await expect(page.getByRole('link', { name: 'Paper', exact: true })).toBeVisible();
 });
 
-test('an unlisted project page is reachable without a gate and absent from the projects index', async ({ page }) => {
+test('the PRESAGE project page is reachable without a gate and listed in the projects index', async ({ page }) => {
   await page.goto('/en/projects/sgm-preview-7a2f/');
   // No password gate: the real content is visible directly.
   await expect(page.getByRole('heading', { name: /PRESAGE/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Private preview' })).toHaveCount(0);
   await expect(page.getByLabel('Password')).toHaveCount(0);
-  // It stays absent from the public projects index because it is unlisted.
+  // It is listed in the public projects index now that it is published.
   await page.goto('/en/projects/');
-  await expect(page.getByRole('link', { name: /PRESAGE/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /PRESAGE/ }).first()).toBeVisible();
 });
 
 test('an old Jekyll publication URL redirects to the new Astro page', async ({ page }) => {
