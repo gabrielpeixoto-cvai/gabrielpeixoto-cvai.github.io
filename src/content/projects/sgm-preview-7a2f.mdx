@@ -190,17 +190,17 @@ The experiments answer the following questions.
 - **Q4.** How much task success does safety cost?
 - **Q5.** Which components give our filter its advantage?
 - **Q6.** When does the filter stop working, and does the limit come from the robot kinematics or from the formulation?
-- **Q7.** Is the layer generic, or tailored to one robot, task or policy?
+- **Q7.** Is the layer generic, or tailored to one robot, task, policy or obstacle motion?
 - **Q8.** Can the layer be deployed under real-world conditions?
 
 We evaluate every method with the metrics below.
 
-- **Safe success rate (Safe-Succ., %):** the percentage of episodes that complete the task without any collision with the obstacle. It is the primary metric, because a policy can be safe by failing the task, so task success and safety are counted together.
-- **Task success rate (Success, %):** the percentage of episodes that complete the task.
-- **Collision rate (Coll., %):** the percentage of episodes in which the robot or the object it holds overlaps the obstacle. It is measured between the collision meshes of the simulator, not between the capsules of the layer, so the margin of the capsules cannot hide a contact.
-- **Maximum slack (Max-slk, mm):** the largest slack that the soft barrier rows need at any step of the horizon. It shows how far the filter falls short of the barrier condition.
-- **Peak deviation (Dev-pk, mm):** the largest distance of the end effector from the motion plan, until the task succeeds or the episode ends, taken as the median over episodes. The generator replans from the configuration that the robot reached, so the distance at each tick is measured to the motion plan in force at that tick.
-- **Control rate (Ctrl, Hz):** the number of control ticks per second, averaged over episodes that run one at a time, measured end to end.
+- **Safe success rate (Safe-Succ.↑, %):** percentage of episodes that complete the task without any collision with the obstacle. It is the primary metric, because a policy can be safe by failing the task, so task success and safety are counted together.
+- **Task success rate (Success↑, %):** percentage of episodes that complete the task.
+- **Collision rate (Coll.↓, %):** percentage of episodes in which the robot or the object it holds overlaps the obstacle. It is measured between the collision meshes of the simulator, not between the capsules of the layer, so the safety margin cannot hide a contact.
+- **Maximum slack (Max-slk↓, mm):** largest slack that the soft barrier rows need at any step of the horizon. It shows how far the filter falls short of the barrier condition.
+- **Peak deviation (Dev-pk↓, mm):** largest distance of the end effector from the motion plan, until the task succeeds or the episode ends, taken as the median over episodes. The generator replans from the configuration that the robot reached, so the distance at each control step is measured to the motion plan in force at that control step.
+- **Control rate (Ctrl, Hz):** number of control steps per second, averaged over episodes that run one at a time, measured end to end.
 
 In the isolation experiments, each collision rate carries ± the larger distance to the bounds of its 95% Wilson interval.
 
@@ -223,8 +223,8 @@ In the isolation experiments, each collision rate carries ± the larger distance
 #### Baselines
 
 <ResultsTable
-  caption="Training-free safety methods for generative motion policies. Stage, where the method acts. Guar., whether the method states a formal invariance claim when its program is feasible. Gen., the generator family. Moving, whether it models obstacle motion by design. Arm, whole-arm coverage. Strategy, how it answers an obstacle advancing on the robot."
-  headers={["Method", "Stage", "Guar.", "Gen.", "Moving", "Arm", "Strategy"]}
+  caption="Training-free safety methods for generative motion policies. Stage, where the method acts, at generation time (Gen.), at execution time (Exec.) or both. Guar., whether the method states a formal invariance claim when its program is feasible. Architecture, the generator family that the method targets, diffusion, flow matching (FM), VLA or any (Agnostic). Moving, whether it models obstacle motion. Arm, whether it protects the whole arm. Strategy, how it answers an obstacle advancing on the robot, by a constraint in the sampling (shaping), by a soft gradient in the sampling (guidance), by a correction of the current command (reactive), by braking along the motion plan (braking) or by a new route around the obstacle (reroute). For PRESAGE, the row lists properties by design."
+  headers={["Method", "Stage", "Guar.", "Architecture", "Moving", "Arm", "Strategy"]}
   rows={[
     ["SafeDiffuser", "Gen.", "✓", "Diffusion", "✗", "✗", "shaping"],
     ["SafeFlow", "Gen.", "✓", "FM", "✗", "✗", "shaping"],
@@ -232,26 +232,26 @@ In the isolation experiments, each collision rate carries ± the larger distance
     ["OmniGuide", "Gen.", "✗", "FM", "✗", "✗", "guidance"],
     ["AEGIS", "Exec.", "✓", "Agnostic", "✗", "✗", "reactive"],
     ["Knows", "Exec.", "✗", "VLA", "✗", "✗", "reactive"],
-    ["RAIL", "Exec.", "✓", "Agnostic", "✗", "✓", "failsafe stop"],
+    ["RAIL", "Exec.", "✓", "Agnostic", "✗", "✓", "braking"],
     ["PACS", "Exec.", "✓", "Agnostic", "✓", "✓", "braking"],
-    ["Ours", "Both", "✓", "Agnostic", "✓", "✓", "reroute"],
+    ["PRESAGE (ours)", "Both", "✓", "Agnostic", "✓", "✓", "reroute"],
   ]}
 />
 
-The baselines run as their papers or released code describe them, with the adaptations that our task needs. Each one runs on our generators with ten sampling steps, against the moving human arm, which it reads again at each motion plan or control tick. PACS runs its separation-monitoring variant, which its paper presents as its own, because our code does not model contact energy. Our reproduction of AEGIS skips its barrier while the obstacle is more than 0.50 m from the end effector, a gate that AEGIS does not have. When the solver of a baseline finds no solution, the generated command passes unchanged. The published code contains every setting.
+The baselines run as their papers or released code describe them, with the adaptations that our task needs. Each one runs on our generators with ten sampling steps, against the moving human arm, which it reads again at each motion plan or control step. PACS runs its separation-monitoring variant, which its paper presents as its own, because our code does not model contact energy. Our reproduction of AEGIS skips its barrier while the obstacle is more than 0.50 m from the end effector, a gate that AEGIS does not have. When the solver of a baseline finds no solution, the generated command passes unchanged. The published code contains every setting.
 
 #### Parameters
 
 In the pick-and-place and nut assembly tasks, we ran a grid search with Diffusion Policy to find the best-performing parameters.
 
 <ResultsTable
-  caption="Parameters of the safety layer. A dash marks a value set without a search."
+  caption="Parameters of the safety layer, grouped by the part of the layer that uses them. Value, the value used in the experiments. Grid search, the range of values evaluated in the grid search of the pick-and-place and nut assembly tasks. A dash marks a value set without a search."
   headers={["Parameter", "Value", "Grid search"]}
   rows={[
     ["Filter", "", ""],
     ["Barrier gain γ", "0.5", "0.25 to 1"],
     ["Safety margin r_safe", "0.04 m", "0.02 to 0.08 m"],
-    ["Horizon N", "8 ticks", "—"],
+    ["Horizon N", "8 control steps", "—"],
     ["Control period Δt", "0.05 s", "—"],
     ["Filter velocity limit", "1.5 rad/s", "1.5 to 12 rad/s"],
     ["Tracking weight w_track", "100", "100 to 1,000"],
@@ -273,7 +273,7 @@ In the pick-and-place and nut assembly tasks, we ran a grid search with Diffusio
     ["Hand capsule scale", "0.7", "—"],
     ["Damping λ", "0.05", "—"],
     ["Increment bound Δq_max", "0.2 rad", "—"],
-    ["Replanning interval", "5 ticks", "—"],
+    ["Replanning interval", "5 control steps", "—"],
     ["Command scale c_cmd, SafeLIBERO", "0.05", "—"],
     ["Command scale c_cmd, LIBERO-Safety", "3.96", "—"],
     ["Solvers and episodes", "", ""],
@@ -282,22 +282,25 @@ In the pick-and-place and nut assembly tasks, we ran a grid search with Diffusio
     ["QP iteration limit", "200", "—"],
     ["Fallback solver", "SLSQP", "—"],
     ["Fallback iteration limit", "15", "—"],
-    ["Replanning interval", "8 ticks", "—"],
-    ["Episode limit", "800 ticks", "—"],
+    ["Replanning interval", "8 control steps", "—"],
+    ["Episode limit", "800 control steps", "—"],
   ]}
 />
 
 #### Evaluation protocol
 
-- **Seeds.** Every obstacle scene of a task runs with the seeds 0 to 9 of the task scene, or 0 to 49 in the convex-obstacle task experiment. On the Panda robot, the seed controls a joint noise of 0.02 rad on the start configuration and the position and rotation of the can in its box. On the other arms, the seed controls only the can. Every method runs from the same start state of each seed. We exclude a seed when, after the reset and before the first action, the robot or the payload overlaps the obstacle, and the excluded seed leaves every method of its table. The robot is scored on every step of a kept episode, and the payload from the second step on.
-- **Payload.** The can or the nut counts as part of the robot while it is held, that is, while its centre lies within 0.06 m of the end effector and the gripper is closed. A collision of a released object does not count.
-- **VLA benchmarks.** On SafeLIBERO and LIBERO-Safety, the robot receives no command for 20 steps after the reset while the objects settle. We exclude a start state when the robot overlaps the obstacle at any of these steps.
-- **Isolation experiments.** They count the approaches or paths on which the obstacle collides with the robot without the layer, and they exclude no seed.
+Every obstacle scene of a task runs with the seeds 0 to 9 of the task scene, or 0 to 49 in the convex-obstacle task experiment. On the Panda robot, the seed controls a joint noise of 0.02 rad on the start configuration and the position and rotation of the can in its box. On the other arms, the seed controls only the can. Every method runs from the same start state of each seed. We exclude a seed when, after the reset and before the first action, the robot or the payload overlaps the obstacle, and the excluded seed leaves every method of its table. The robot is scored on every step of a kept episode, and the payload from the second step on.
+
+The can or the nut counts as part of the robot while it is held, that is, while its centre lies within 0.06 m of the end effector and the gripper is closed. A collision of a released object does not count.
+
+On SafeLIBERO and LIBERO-Safety, the robot receives no command for 20 steps after the reset while the objects settle. We exclude a start state when the robot overlaps the obstacle at any of these steps.
+
+The isolation experiments count the approaches or paths on which the obstacle collides with the robot without the layer, and they exclude no seed.
 
 #### Obstacle scenes
 
 <ResultsTable
-  caption="Sets of obstacle scenes, on the Panda unless the row names another robot. The episodes are counted after the exclusion."
+  caption="Sets of obstacle scenes, grouped by experiment, on the Panda unless the row names another robot. Obstacle, whether the obstacle of the set moves (moving), stays still (static) or does both in different scenes (both). # obstacles, the number of obstacles in one scene. Scenes, the number of obstacle scenes. Episodes, the number of episodes after the exclusion."
   headers={["Set", "Obstacle", "# obstacles", "Scenes", "Episodes"]}
   rows={[
     ["Isolation, held pose", "", "", "", ""],
@@ -327,7 +330,7 @@ In the pick-and-place and nut assembly tasks, we ran a grid search with Diffusio
 #### Summary
 
 <ResultsTable
-  caption="Summary of the experiments. Each row is a question."
+  caption="Main findings of the experiments, one row per question. Answer, the answer that our experiments give. Experiments, the experiments whose results support the answer."
   headers={["Q", "Question", "Answer", "Experiments"]}
   rows={[
     ["Q1", "Is protecting the end effector enough, or must the whole arm be protected?", "The whole arm must be protected.", "Convex obstacles, Second arm, Ablation, Convex in the task"],
@@ -335,8 +338,8 @@ In the pick-and-place and nut assembly tasks, we ran a grid search with Diffusio
     ["Q3", "Should safety be enforced at generation time, at execution time, or both?", "At execution time.", "Pick-and-place"],
     ["Q4", "How much task success does safety cost?", "27.3 and 40.2% of the completed tasks with Diffusion Policy, on the designed and stress sets.", "Pick-and-place"],
     ["Q5", "Which components give our filter its advantage?", "The whole-arm geometry and the horizon.", "Ablation, Augmentation, Convex in the task"],
-    ["Q6", "When does the filter stop working, and does the limit come from the robot kinematics or from the formulation?", "The actuation of the robot, beyond 0.40 m/s or with several obstacles at once.", "Second arm, Speed response, Several obstacles"],
-    ["Q7", "Is the layer generic, or tailored to one robot, task or policy?", "Generic. It lowers the collision rate on every task, robot and policy that we evaluate.", "Nut assembly, Randomized motions, Other robots, SafeLIBERO, LIBERO-Safety"],
+    ["Q6", "When does the filter stop working, and does the limit come from the robot kinematics or from the formulation?", "The actuation of the robot beyond 0.40 m/s, and the combined conditions of several obstacles at once.", "Second arm, Speed response, Several obstacles"],
+    ["Q7", "Is the layer generic, or tailored to one robot, task, policy or obstacle motion?", "Generic. It lowers the collision rate on every task, robot, policy and set of obstacle motions that we evaluate.", "Nut assembly, Randomized motions, Other robots, SafeLIBERO, LIBERO-Safety"],
     ["Q8", "Can the layer be deployed under real-world conditions?", "Yes, when the perceived obstacle encloses the true one.", "Simulated perception, Robustness, Real robot"],
   ]}
 />
