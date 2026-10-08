@@ -17,7 +17,7 @@ date: 2026-09-24
 links:
   - label: "Email (corresponding author)"
     href: "mailto:g.peixoto@rlg.sys.es.osaka-u.ac.jp"
-excerpt: "A training-free safety layer that reroutes the whole arm of a frozen generative policy around a moving obstacle, raising the safe success rate from 20.5 per cent for the frozen policy and 32.7 per cent for the best baseline to 61.5 per cent with no collision."
+excerpt: "A training-free safety layer that reroutes the whole arm of a robot driven by a frozen generative policy around a moving obstacle, raising the safe success rate from 20.5 per cent for the frozen policy and 32.7 per cent for the best baseline to 61.5 per cent with no collision."
 bibtex: |
   @misc{peixotodecarvalho2026presage,
     title  = {{PRESAGE}: Predictive {RE}routing for Safe Action {GE}neration},
@@ -37,13 +37,15 @@ import 'katex/dist/katex.min.css';
 
 ## Abstract
 
-Generative motion policies, from diffusion planners to vision-language-action models, learn complex manipulation from demonstrations. However, they have no mechanism to avoid collisions with a previously unseen or moving obstacle. We present a training-free safety layer that uses a single control barrier function specification to protect the whole arm of a frozen generative policy from collisions. The specification is enforced as soft guidance at generation time, as a model predictive control filter at execution time, or as both. The layer anticipates obstacle motion and reroutes every arm link and the carried object around the obstacle, instead of restricting the constraint to the end effector or braking along the motion plan. The layer is generator-agnostic and embodiment-agnostic by construction. We evaluate it on diffusion and flow-matching policies, across two manipulation tasks, four simulated robot arms and a real robot, with a human arm model as the moving obstacle. The filter is the strongest configuration, raising the safe success rate from 20.5% for the frozen policy and 32.7% for the best baseline to 61.5% with no collision. The same layer lowers the collision rate of two frozen vision-language-action policies without retraining. To the best of our knowledge this is the first training-free safety layer that reroutes the whole arm of a frozen generative policy in anticipation of a moving obstacle, as in shared human-robot workspaces.
+From diffusion planners to vision-language-action models, generative motion policies learn complex manipulation from demonstrations. However, they have no mechanism to avoid collisions with a previously unseen or moving obstacle. We present PRESAGE, a training-free safety layer that uses a single control barrier function specification to protect the whole arm of a robot driven by a frozen generative policy against collisions. The specification is enforced as soft guidance at generation time, as a model predictive control filter at execution time, or as both. The layer anticipates obstacle motion and reroutes every arm link and the carried object around the obstacle, instead of restricting the constraint to the end effector or braking along the motion plan. The layer is generator-agnostic and embodiment-agnostic by construction. We evaluate it on diffusion and flow-matching policies, across two manipulation tasks, four simulated robot arms and a real robot, with a human arm model as the moving obstacle. The filter is the strongest configuration, raising the safe success rate from 20.5% for the frozen policy and 32.7% for the best baseline to 61.5% with no collision. The same layer lowers the collision rate of two frozen vision-language-action policies without retraining. To the best of our knowledge this is the first training-free safety layer that reroutes the whole arm of a robot driven by a frozen generative policy in anticipation of a moving obstacle, as is common in shared human-robot workspaces.
 
 ## Contributions
 
-- **The safety layer.** We integrate capsule distances, control barrier functions, obstacle motion prediction and model predictive control into one training-free safety layer that protects the whole arm of a frozen generative policy.
-- **An evaluation protocol.** The evaluation runs in three tiers. Isolation experiments test the layer without a generator, in-task experiments add it to the generator on two manipulation tasks and two VLA policies, and deployment experiments use estimated obstacle geometry and a real robot.
-- **Where safety must be enforced.** Only the execution loop acts at every control tick and can correct the robot between two motion plans. On the pick-and-place task, the filter raises the safe success rate from 20.5 % for the frozen policy and 32.7 % for the best baseline to 61.5 % with no collision.
+We make the following contributions toward the safe deployment of frozen generative policies in workspaces shared with people.
+
+- We integrate capsule distances, control barrier functions, obstacle motion prediction and model predictive control into one training-free safety layer that protects the whole arm of a robot driven by a frozen generative policy.
+- We evaluate the layer in three tiers of experiments. Isolation experiments test it without a generator, in-task experiments add it to the generator on two manipulation tasks and two VLA policies, and deployment experiments use estimated obstacle geometry and a real robot.
+- We show that safety must be enforced at execution time, the only stage that acts at every control step and can correct the robot between two motion plans. On the pick-and-place task, the filter raises the safe success rate from 20.5% for the frozen policy and 32.7% for the best baseline to 61.5% with no collision.
 
 ## Method
 
