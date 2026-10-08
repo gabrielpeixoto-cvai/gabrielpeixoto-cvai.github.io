@@ -72,7 +72,7 @@ const projects = defineCollection({
     authors: z.array(
       z.object({
         name: z.string(),
-        affiliation: z.string().optional(),
+        affiliation: z.union([z.string(), z.array(z.string())]).optional(),
         url: z.string().url().optional(),
       }),
     ),

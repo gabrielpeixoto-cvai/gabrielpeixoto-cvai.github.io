@@ -1,458 +1,1092 @@
 ---
-title: "Safe Generative Motion in Dynamic Environments"
+title: "PRESAGE: Predictive RErouting for Safe Action GEneration"
 authors:
-  - name: "Anonymous Authors"
-venue: "IEEE Robotics and Automation Letters (under review)"
-date: 2026-07-13
-excerpt: "A safety framework that augments frozen generative motion policies with whole-arm collision avoidance via a unified control barrier function, reaching 63.8% safe task completion at zero penetration on a dynamic-obstacle manipulation benchmark."
+  - name: "Gabriel Peixoto de Carvalho"
+    affiliation:
+      - "Graduate School of Engineering Science, Osaka University"
+      - "Connected Robotics Inc."
+  - name: "Fernanda Miyuki Yamada"
+    affiliation: "Graduate School of Informatics and Engineering, The University of Electro-Communications"
+  - name: "Hiroki Takahashi"
+    affiliation: "Graduate School of Informatics and Engineering, The University of Electro-Communications"
+  - name: "Tetsuya Sawanobori"
+    affiliation: "Connected Robotics Inc."
+  - name: "Takato Horii"
+    affiliation: "Graduate School of Engineering Science, Osaka University"
+date: 2026-09-24
+links:
+  - label: "Email (corresponding author)"
+    href: "mailto:g.peixoto@rlg.sys.es.osaka-u.ac.jp"
+excerpt: "A training-free safety layer that reroutes the whole arm of a robot driven by a frozen generative policy around a moving obstacle, raising the safe success rate from 20.5 per cent for the frozen policy and 32.7 per cent for the best baseline to 61.5 per cent with no collision."
 bibtex: |
-  @article{anonymous2026safegenmotion,
-    title   = {Safe Generative Motion in Dynamic Environments: Multi-Link Collision Avoidance with Model Predictive Control and Control Barrier Functions},
-    author  = {Anonymous Authors},
-    journal = {IEEE Robotics and Automation Letters (under review)},
-    year    = {2026}
+  @misc{peixotodecarvalho2026presage,
+    title  = {{PRESAGE}: Predictive {RE}routing for Safe Action {GE}neration},
+    author = {Peixoto de Carvalho, Gabriel and Yamada, Fernanda Miyuki and Takahashi, Hiroki and Sawanobori, Tetsuya and Horii, Takato},
+    year   = {2026}
   }
 unlisted: true
-passwordHash: "776c70cce5302064413863545d37054368890f88b455354b16eba846e3935b3a"
 ---
 
 import VideoCompare from '../../components/project/VideoCompare.astro';
 import VideoGrid from '../../components/project/VideoGrid.astro';
 import Figure from '../../components/project/Figure.astro';
-import FigureCompare from '../../components/project/FigureCompare.astro';
 import ResultsTable from '../../components/project/ResultsTable.astro';
 import Tabs from '../../components/project/Tabs.astro';
 import Tab from '../../components/project/Tab.astro';
-
-export const dynamicScenes = ["dyn_armlink_v1","dyn_armlink_v1_slow","dyn_armlink_v2","dyn_armlink_v2_slow","dyn_carry_deflect_v2","dyn_carry_deflect_v2_slow","dyn_pregrasp_wait_v2","dyn_pregrasp_wait_v2_slow","elbow_carry_stress","elbow_carry_stress_slow","t8s2_handup_then_away","t8s2_handup_then_away_slow","upper_arm_carry_stress","upper_arm_carry_stress_slow","wrist_carry_stress","wrist_carry_stress_slow"];
-
-export const goldSilverScenes = ["paper_gold_01","paper_gold_02","paper_gold_03","paper_gold_04","paper_gold_05","paper_gold_06","paper_gold_07","paper_gold_08","paper_gold_09","paper_gold_10","paper_gold_11","paper_silver_01","paper_silver_02","paper_silver_03","paper_silver_04","paper_silver_05","paper_silver_06","paper_silver_07","paper_silver_08","paper_silver_09","paper_silver_10","paper_silver_11"];
-
-export const Gallery = ({ scenes }) => (
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr));gap:1.25rem;margin:1.25rem 0;">
-    {scenes.map((s) => (
-      <figure style="margin:0;">
-        <img src={`/projects/sgm-preview-7a2f/figures/${s}_placement.webp`} alt={`Placement composite for the ${s} scene`} loading="lazy" data-zoomable style="width:100%;height:auto;border-radius:8px;border:1px solid var(--border);" />
-        <figcaption style="color:var(--muted);font-size:.8rem;margin-top:.35rem;word-break:break-word;">{s}</figcaption>
-      </figure>
-    ))}
-  </div>
-);
-
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_frozen_generator.mp4", label: "Frozen generator" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_mpc_filter.mp4", label: "Filter (ours)" }}
-  caption="Identical scene: the frozen generator drives its elbow into the moving obstacle while the filter reroutes the whole arm and still completes the task."
-/>
+import 'katex/dist/katex.min.css';
 
 ## Abstract
 
-Generative motion policies, from diffusion planners to vision-language-action models, enable robots to perform complex manipulation tasks from demonstrations but lack safety guarantees in dynamic environments with novel or moving obstacles. We present a safety framework that augments frozen generative policies with whole-arm collision avoidance through a unified control barrier function formulation. The framework supports both guided sampling during generation and model predictive control filtering during execution. These capabilities avoid moving obstacles without modifying the underlying generative model or assuming a specific robot embodiment. Unlike existing methods that restrict safety to the robot tip or rely on reactive braking, our approach anticipates obstacle motion and reroutes the whole arm while preserving task progress wherever feasible. Experiments with diffusion policies and flow-matching policies across multiple robot platforms show improved safe task completion over representative baselines, with the model predictive control filter the strongest configuration at 63.8% safe task completion.
+From diffusion planners to vision-language-action models, generative motion policies learn complex manipulation from demonstrations. However, they have no mechanism to avoid collisions with a previously unseen or moving obstacle. We present PRESAGE, a training-free safety layer that uses a single control barrier function specification to protect the whole arm of a robot driven by a frozen generative policy against collisions. The specification is enforced as soft guidance at generation time, as a model predictive control filter at execution time, or as both. The layer anticipates obstacle motion and reroutes every arm link and the carried object around the obstacle, instead of restricting the constraint to the end effector or braking along the motion plan. The layer is generator-agnostic and embodiment-agnostic by construction. We evaluate it on diffusion and flow-matching policies, across two manipulation tasks, four simulated robot arms and a real robot, with a human arm model as the moving obstacle. The filter is the strongest configuration, raising the safe success rate from 20.5% for the frozen policy and 32.7% for the best baseline to 61.5% with no collision. The same layer lowers the collision rate of two frozen vision-language-action policies without retraining. To the best of our knowledge this is the first training-free safety layer that reroutes the whole arm of a robot driven by a frozen generative policy in anticipation of a moving obstacle, as is common in shared human-robot workspaces.
+
+## Contributions
+
+We make the following contributions toward the safe deployment of frozen generative policies in workspaces shared with people.
+
+- We integrate capsule distances, control barrier functions, obstacle motion prediction and model predictive control into one training-free safety layer that protects the whole arm of a robot driven by a frozen generative policy.
+- We evaluate the layer in three tiers of experiments. Isolation experiments test it without a generator, in-task experiments add it to the generator on two manipulation tasks and two VLA policies, and deployment experiments use estimated obstacle geometry and a real robot.
+- We show that safety must be enforced at execution time, the only stage that acts at every control step and can correct the robot between two motion plans. On the pick-and-place task, the filter raises the safe success rate from 20.5% for the frozen policy and 32.7% for the best baseline to 61.5% with no collision.
 
 ## Method
 
-<Figure
-  src="/projects/sgm-preview-7a2f/figures/elbow_carry_stress_placement.webp"
-  alt="Start/finish placement composite for the elbow_carry_stress scene, showing the obstacle path and the frozen-generator versus filter end-effector traces"
-  caption="Start and finish composite for one scene, across three cameras, with swept-motion traces: magenta marks the obstacle path, orange the frozen-generator end-effector trace, cyan the filter end-effector trace. The paper's exact reroute-vs-collision sequence figure is not included in this preview package; this placement composite is shown instead as an honest stand-in."
-/>
+The safety layer protects the whole arm of a robot driven by a frozen generative policy from static and moving obstacles by a positive margin. It approximates the robot and the obstacles by capsules, whose pairwise distances are available in closed form. One barrier specification is defined on these distances. We present three configurations that use it: (1) guidance at generation time, (2) a predictive safety filter at execution time, and (3) both in sequence, which we call the hybrid. Generation time is when the generative model forms the motion plan, and execution time is when the robot moves under closed-loop control. This section defines the geometry and the barrier first, then the filter, the guidance, and the hybrid, and closes with the interface that connects the filter to each generator.
 
-The safety layer wraps a **frozen** generative motion policy and enforces whole-arm collision avoidance at execution time, without retraining. It is **generator-agnostic**: one interface wraps a diffusion planner, a flow-matching model, a Diffusion Policy, and a pi0.5 vision-language-action policy. It is **robot-agnostic**: one parametric forward-kinematics and capsule model instantiates the Franka Panda, UR5e, KUKA IIWA, and Kinova Gen3 from a per-robot description.
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_overview.webp" alt="Execution of the safety layer" maxWidth="min(100%, 640px)" caption="Execution of the safety layer. The inference box shows generation, rollout, and execution, with safety enforced as guidance at generation time, as a filter at execution time, or as both. The scene is one episode: the arm (cyan capsules) carrying the can past a multi-link obstacle (red capsules), with the motion plan the filter tracks (blue), the generator rollout (orange), and the obstacle path (green)." />
 
-The robot and the obstacles are over-approximated by **capsules** (a segment plus a radius). The signed clearance `d(q)` is the exact closest-point capsule-to-capsule distance over all robot-obstacle pairs, and the barrier is the margin-shifted clearance `h(q) = d(q) - r_safe`. A conservative capsule radius makes a positive capsule clearance certify a positive mesh clearance. Because the decision input is the joint velocity and `q_{k+1} = q_k + qdot * dt`, the barrier has relative degree one, so a **first-order discrete control barrier function** is well posed and sufficient.
+#### Capsules
 
-One CBF specification is applied at three points along the generation-to-execution axis:
+We approximate the robot and every obstacle by capsules. A capsule is a line segment with a radius. Obstacle capsule $m$ has endpoints $o^{(1)}_m$ and $o^{(2)}_m$ and radius $r_m$, and robot capsule $l$ has endpoints $p^{(1)}_l(q)$ and $p^{(2)}_l(q)$ and radius $r_l$. Points on the two segments are
 
-- **Guidance** at generation time, shaping the sample against the obstacle by the barrier gradient.
-- **Filter** at execution time, a model-predictive controller that re-solves a hard, state-feedback problem against the live joint state and the predicted (constant-velocity) obstacle at every tick.
-- **Hybrid**, guidance then filter.
+$$
+a(s) = p^{(1)}_l + s\,\bigl(p^{(2)}_l - p^{(1)}_l\bigr), \qquad b(t) = o^{(1)}_m + t\,\bigl(o^{(2)}_m - o^{(1)}_m\bigr), \qquad s, t \in [0, 1].
+$$
 
-Only the execution-time filter repairs the command against the live state and the predicted obstacle, so it is the placement that yields a hard guarantee independent of how the plan was produced.
+The closest pair $(s^*, t^*)$ minimizes $\lVert a(s) - b(t) \rVert$, and the signed distance between the two capsules is
+
+$$
+d_{lm}(q) = \lVert a(s^*) - b(t^*) \rVert - (r_l + r_m),
+$$
+
+which is negative when the capsules overlap.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_capsules.webp" alt="Capsule geometry" maxWidth="min(100%, 640px)" caption="Capsule geometry. Left, the robot (cyan) and the multi-link obstacle (red) as capsules, with the closest capsule pair joined in yellow. Right, a robot capsule and an obstacle capsule, each a segment between two endpoints inflated by a radius, and the signed distance between their surfaces." />
+
+#### Barrier
+
+We define one barrier for each pair of a robot capsule and an obstacle capsule, as its signed distance reduced by the margin $r_{\mathrm{safe}}$,
+
+$$
+h_{lm}(q) = d_{lm}(q) - r_{\mathrm{safe}}.
+$$
+
+The safe set $\mathcal{C}$ is the set of configurations at which every barrier is nonnegative,
+
+$$
+\mathcal{C} = \bigcap_{l,m}\{\,q : h_{lm}(q) \ge 0\,\}.
+$$
+
+The layer commands a joint velocity $\dot q_k$ at control step $k$ and holds it for one control period $\Delta t$, so the next configuration is
+
+$$
+q_{k+1} = q_k + \dot q_k\,\Delta t.
+$$
+
+Each barrier has relative degree one, so a condition on the next control step is sufficient, and we impose the discrete-time CBF condition on every pair,
+
+$$
+h_{lm}(q_{k+1}) \ge (1-\gamma)\,h_{lm}(q_k),
+$$
+
+where the barrier gain $\gamma$, with $0<\gamma\le 1$, is the largest fraction of the current barrier value that one control step may remove.
+
+#### Predictive filter
+
+The filter acts at execution time and corrects each command before the robot executes it. It expresses the first $N$ actions of the motion plan as joint increments $\Delta q_0,\dots,\Delta q_{N-1}$, where $N$ is the horizon, and at every control step adds them to the measured configuration $q_0$,
+
+$$
+q^{\mathrm{ref}}_0 = q_0, \qquad q^{\mathrm{ref}}_k = q_0 + \sum_{j<k} \Delta q_j, \qquad k = 1,\dots,N.
+$$
+
+It chooses the joint velocities $\dot q_0,\dots,\dot q_{N-1}$, which move the robot through the integrator above, and minimizes a cost that keeps the configurations close to the reference and penalizes large velocities,
+
+$$
+J = \sum_{k=1}^{N} w_{\mathrm{track}}\,\lVert q_k - q^{\mathrm{ref}}_k\rVert^2 + \sum_{k=0}^{N-1} w_{\mathrm{eff}}\,\lVert \dot q_k\rVert^2,
+$$
+
+with weights $w_{\mathrm{track}}$ and $w_{\mathrm{eff}}$, subject to the CBF condition at every step. The obstacle may move during the horizon, so each obstacle endpoint keeps its current velocity $V^{(i)}_m$,
+
+$$
+o^{(i)}_{m,k} = o^{(i)}_m + V^{(i)}_m\,k\,\Delta t, \qquad i = 1, 2.
+$$
+
+When no command satisfies every condition, each CBF condition is relaxed with a nonnegative slack $s$, penalized by
+
+$$
+\rho \sum s^2 + \nu \sum s,
+$$
+
+with weights $\rho,\nu>0$ summed over every relaxed condition.
+
+#### Guidance
+
+Guidance acts at generation time. It adds to the clean prediction the gradient of a repulsion potential on the capsule distances of every pair,
+
+$$
+U = \sum_{k=1}^{H}\sum_{l,m} \exp\bigl(-\alpha\,h_{lm}(q_k)\bigr),
+$$
+
+where $q_k$ is the configuration at step $k$ of the clean prediction, $H$ is the number of steps of the motion plan, and the sharpness $\alpha>0$ sets the range of the repulsion. Diffusion Policy and the diffusion planner predict the clean motion plan $\hat x_0$ directly, and guidance updates it as
+
+$$
+\hat x_0 \leftarrow \hat x_0 - s\,w_i\,P\,\nabla U,
+$$
+
+where $s$ is the guidance scale, $w_i$ the weight of sampling step $i$, and $P$ a proximity factor that grows as the closest pair approaches. Flow matching predicts a velocity $v$ from the noisy sample $x_\tau$, and guidance updates the clean prediction with the sampling time $\tau$,
+
+$$
+\hat x_0 = x_\tau - \tau\,v, \qquad \hat x_0 \leftarrow \hat x_0 - s\,w_i\,P\,\tau\,\nabla U.
+$$
+
+#### Hybrid
+
+The hybrid applies both configurations in sequence. Guidance shapes the motion plan at generation time, and the filter then takes the guided motion plan as its reference and imposes the CBF condition at every control step.
+
+#### End-effector wrapper
+
+The filter works on joint configurations, while each generator produces actions in the space in which it was trained, so an interface converts each motion plan into the joint increments of the reference. Joint actions convert exactly: increments are used directly, and absolute targets $q^{\mathrm{tgt}}_k$ are differenced against the configuration at the replanning step,
+
+$$
+\Delta q_0 = q^{\mathrm{tgt}}_0 - q_0, \qquad \Delta q_k = q^{\mathrm{tgt}}_k - q^{\mathrm{tgt}}_{k-1}, \quad k \ge 1.
+$$
+
+Some generators, including the two VLA policies, output end-effector displacements. The displacement becomes a twist $\xi_k$ whose translation is the translation of the displacement scaled by a fixed factor $c_{\mathrm{cmd}}$ and whose rotation is zero, and the damped least-squares inverse of the Jacobian $J$ maps the twist to a joint increment,
+
+$$
+\Delta q_k = \operatorname{clip}\bigl(J^{\top}(JJ^{\top}+\lambda^2 I)^{-1}\xi_k,\ \pm\Delta q_{\max}\bigr),
+$$
+
+where the damping $\lambda>0$ keeps the increment bounded near singular configurations and $\Delta q_{\max}$ bounds it. The Jacobian $J$ of the gripper is evaluated once, at the configuration of the replanning step. On LIBERO-Safety, the converted increments differ from the requested twist by a median of 5.5%.
 
 <Tabs tabs={[
-  { id: "main", label: "Main results" },
-  { id: "ablations", label: "Ablations" },
-  { id: "perception", label: "Perception" },
-  { id: "crossembod", label: "Cross-embodiment" },
-  { id: "safelibero", label: "SafeLIBERO" },
-  { id: "scenes", label: "Scenes" },
+  { id: "setup", label: "Setup" },
+  { id: "isolation", label: "Isolation" },
+  { id: "pickplace", label: "Pick-and-place" },
+  { id: "nut", label: "Nut assembly" },
+  { id: "crossembod", label: "Other robots" },
+  { id: "vla", label: "VLA policies" },
+  { id: "perception", label: "Simulated perception" },
+  { id: "hardware", label: "Real robot" },
 ]}>
 
-<Tab id="main">
+<Tab id="setup">
 
-### Results
+### Setup
 
-We evaluate in Robosuite on the PickPlace-can task. The robot picks a can and places it in a bin while a separate dynamic obstacle, an articulated arm of ten capsule links, moves into the workspace. The obstacle is grasp-triggered and executes one of sixteen curated motions that challenge each link and joint of the arm in turn, so checking only the end effector is structurally insufficient. The headline generator is a Diffusion Policy in absolute joint position, the loop runs at 20 Hz, and the obstacle is crossed with ten seeds.
+The experiments answer the following questions.
 
-The filter delivers the guarantee the baselines do not, holding penetration at **zero** across every whole-arm configuration on the designed matrix, while every faithful baseline penetrates the obstacle on a third to three quarters of episodes. The best cell, whole-arm coverage with obstacle prediction on a Diffusion Policy, reaches **63.8% safe task completion at zero penetration**, beating the strongest baseline by roughly 31 points and widening the gap on the harder stress set. The guarantee extends to the carried can through the post-grasp object capsule.
+- **Q1.** Is protecting the end effector enough, or must the whole arm be protected?
+- **Q2.** In dynamic scenarios, does predicting the obstacle motion help, compared with reactive safety?
+- **Q3.** Should safety be enforced at generation time, at execution time, or both?
+- **Q4.** How much task success does safety cost?
+- **Q5.** Which components give our filter its advantage?
+- **Q6.** When does the filter stop working, and does the limit come from the robot kinematics or from the formulation?
+- **Q7.** Is the layer generic, or tailored to one robot, task, policy or obstacle motion?
+- **Q8.** Can the layer be deployed under real-world conditions?
 
-### Whole-arm safe rerouting — designed dynamic scenes
+We evaluate every method with the metrics below.
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_frozen_generator.mp4", label: "Frozen generator" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_mpc_filter.mp4", label: "Filter (ours)" }}
-  caption="dyn_armlink_v2 — the frozen generator collides with the moving obstacle; the filter reroutes and stays clear."
-/>
+- **Safe success rate (Safe-Succ.↑, %):** percentage of episodes that complete the task without any collision with the obstacle. It is the primary metric, because a policy can be safe by failing the task, so task success and safety are counted together.
+- **Task success rate (Success↑, %):** percentage of episodes that complete the task.
+- **Collision rate (Coll.↓, %):** percentage of episodes in which the robot or the object it holds overlaps the obstacle. It is measured between the collision meshes of the simulator, not between the capsules of the layer, so the safety margin cannot hide a contact.
+- **Maximum slack (Max-slk↓, mm):** largest slack that the soft barrier rows need at any step of the horizon. It shows how far the filter falls short of the barrier condition.
+- **Peak deviation (Dev-pk↓, mm):** largest distance of the end effector from the motion plan, until the task succeeds or the episode ends, taken as the median over episodes. The generator replans from the configuration that the robot reached, so the distance at each control step is measured to the motion plan in force at that control step.
+- **Control rate (Ctrl, Hz):** number of control steps per second, averaged over episodes that run one at a time, measured end to end.
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/dyn_carry_deflect_v2_frozen_generator.mp4", label: "Frozen generator" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/dyn_carry_deflect_v2_mpc_filter.mp4", label: "Filter (ours)" }}
-  caption="dyn_carry_deflect_v2 — the carried object is also kept clear through the post-grasp object capsule."
-/>
+In the isolation experiments, each collision rate carries ± the larger distance to the bounds of its 95% Wilson interval.
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/wrist_carry_stress_frozen_generator.mp4", label: "Frozen generator" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/wrist_carry_stress_mpc_filter.mp4", label: "Filter (ours)" }}
-  caption="wrist_carry_stress — a wrist-focused stress scene from the designed dynamic matrix."
-/>
-
-### Whole-arm safe rerouting — gold/silver stress scenes
-
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_frozen_generator.mp4", label: "Frozen generator" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_mpc_filter.mp4", label: "Filter (ours)" }}
-  caption="paper_gold_02 — one of the curated gold-tier stress poses, built so the frozen generator is forced to penetrate."
-/>
-
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_01_frozen_generator.mp4", label: "Frozen generator" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_01_mpc_filter.mp4", label: "Filter (ours)" }}
-  caption="paper_silver_01 — a silver-tier stress pose."
-/>
-
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_02_frozen_generator.mp4", label: "Frozen generator" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/paper_silver_02_mpc_filter.mp4", label: "Filter (ours)" }}
-  caption="paper_silver_02 — a silver-tier stress pose where the frozen generator completes the task but collides; the filter stays safe even where it must forfeit the place."
-/>
-
-### Headline numbers
+#### Generators
 
 <ResultsTable
-  caption="Table 1. Panda, designed dynamic matrix (16 scenes x 10 seeds, n = 160). Safe-Succ. is task completion AND zero penetration; Penetration is exact mesh-to-mesh overlap. Max-slk is the worst single-episode CBF slack the MPC filter admitted (our filter/hybrid configs only). Dev-pk is peak trajectory deviation from the frozen plan. Ctrl is median control rate from a contention-free solo timing pass. Baselines are shown in both the faithful (paper reproduction) and augmented (our geometry + prediction added) tiers."
-  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Max-slk (mm) ↓", "Worst geom dist (m)", "Dev-pk (m)", "Ctrl (Hz) ↑"]}
+  caption="Generators of the experiments, on the Panda unless the row names another robot. The output is per motion plan, in steps × dimensions. The image generators use ResNet-18 and a U-Net, and the reach planner is a temporal U-Net. A dash marks a generator that we did not train."
+  headers={["Generator", "Parameters", "Images", "State", "Output", "Sampler", "Demonstrations"]}
   rows={[
-    ["Filter whole-arm predict · DP", 160, 63.8, 63.8, 79.4, 0.6, 0.0, 22, "+0.000", 0.171, 38.0],
-    ["Filter whole-arm nopredict · DP", 160, 59.4, 59.4, 80.0, 0.0, 0.0, 0.34, "+0.005", 0.123, 37.9],
-    ["Filter whole-arm predict · DDPM-abs", 160, 57.5, 57.5, 71.9, 0.6, 0.0, 10, "+0.000", 0.133, 41.7],
-    ["Filter whole-arm predict · FM", 160, 48.8, 48.8, 78.1, 1.9, 0.0, 0.30, "+0.000", 0.107, 40.7],
-    ["Filter whole-arm nopredict · FM", 160, 48.1, 48.1, 76.9, 1.2, 0.6, 0.25, "-0.008", "—", 41.5],
-    ["Filter whole-arm predict · FM-abs", 160, 38.1, 38.1, 48.1, 0.0, 0.0, 10, "+0.011", "—", 37.4],
-    ["Filter whole-arm nopredict · DDPM", 160, 36.9, 36.9, 73.1, 2.5, 0.6, 6.3, "-0.048", "—", 37.4],
-    ["Filter whole-arm predict · DDPM", 160, 35.6, 35.6, 73.1, 1.9, 0.0, 2.8, "+0.000", 0.143, 37.3],
-    ["Filter EE predict · DDPM", 160, 37.5, 73.8, 86.9, 53.1, 53.1, 0.08, "-0.097", "—", 44.5],
-    ["Filter EE predict · FM", 160, 35.6, 79.4, 91.9, 58.1, 58.1, 0.07, "-0.096", "—", 44.9],
-    ["Filter EE nopredict · DDPM", 160, 35.0, 67.5, 86.2, 54.4, 54.4, 0.08, "-0.097", "—", "-"],
-    ["Filter EE predict · DP", 160, 34.4, 76.2, 80.0, 56.9, 56.9, 38, "-0.086", 0.110, 45.6],
-    ["Filter EE nopredict · FM", 160, 34.4, 76.9, 90.0, 58.8, 58.8, 0.07, "-0.096", "—", "-"],
-    ["Filter EE nopredict · DP", 160, 32.5, 74.4, 78.8, 58.1, 58.1, 0.15, "-0.088", "—", 46.2],
-    ["Hybrid · DDPM-abs", 160, 55.0, 55.0, 70.0, 0.0, 0.0, 54, "+0.011", "—", 29.9],
-    ["Hybrid · DP", 160, 45.6, 45.6, 70.0, 0.0, 0.0, 2.1, "+0.011", 0.207, 31.9],
-    ["Hybrid · FM", 160, 36.9, 36.9, 71.2, 1.9, 0.6, 0.48, "-0.016", 0.100, 33.2],
-    ["Hybrid · FM-abs", 160, 29.4, 29.4, 35.0, 0.0, 0.0, 29, "+0.011", "—", 33.0],
-    ["Hybrid · DDPM", 160, 25.6, 25.6, 68.8, 1.2, 1.2, 1.2, "-0.022", 0.144, 29.1],
-    ["Guidance · DP", 160, 36.2, 60.6, 73.8, 36.9, 36.9, "—", "-0.083", "—", 13.0],
-    ["Guidance · DDPM-abs", 160, 35.6, 65.6, 78.1, 44.4, 43.1, "—", "-0.082", "—", 12.9],
-    ["Guidance · FM", 160, 28.8, 65.6, 76.9, 46.2, 45.6, "—", "-0.096", "—", "-"],
-    ["Guidance · DDPM", 160, 28.1, 58.8, 70.6, 46.2, 46.2, "—", "-0.097", "—", "-"],
-    ["Guidance · FM-abs", 160, 26.2, 48.8, 50.6, 31.2, 31.2, "—", "-0.066", "—", 13.0],
-    ["Frozen Generator · DP", 160, 36.2, 83.1, 83.1, 59.4, 59.4, "—", "-0.090", "—", "-"],
-    ["Frozen Generator · FM", 160, 26.9, 84.4, "n/a", 66.9, 66.9, "—", "-0.096", "—", "-"],
-    ["Frozen Generator · DDPM", 160, 26.9, 68.8, "n/a", 63.1, 62.5, "—", "-0.124", "—", "-"],
-    ["CBF-QP / VLSA — faithful", 160, 33.1, 76.2, 85.0, 53.1, 53.1, "—", "-0.096", 0.008, 13.9],
-    ["PACS — augmented", 160, 33.1, 47.5, 80.0, 31.9, 31.9, "—", "-0.094", "—", "-"],
-    ["PACS — faithful", 160, 31.9, 48.8, 78.8, 31.2, 31.2, "—", "-0.092", "—", 4.0],
-    ["SafeFlow — faithful", 160, 31.2, 73.1, 81.9, 55.6, 55.6, "—", "-0.097", "—", 14.7],
-    ["SafeFlowMatcher-Y2 — augmented", 160, 27.5, 30.0, 67.5, 8.1, 8.1, "—", "-0.095", "—", "-"],
-    ["SafeDiffuser — faithful", 160, 23.1, 61.9, 73.1, 57.5, 57.5, "—", "-0.123", "—", 13.6],
-    ["CBF-QP / VLSA — augmented", 160, 22.5, 52.5, 77.5, 46.9, 46.9, "—", "-0.095", "—", "-"],
-    ["OmniGuide — faithful", 160, 18.8, 77.5, 83.8, 73.1, 73.1, "—", "-0.097", "—", 12.9],
-    ["SafeFlowMatcher-Y2 — faithful", 160, 14.4, 45.6, 69.4, 45.0, 45.0, "—", "-0.096", "—", 12.7],
-    ["SafeDiffuser — augmented", 160, 13.1, 41.2, 63.1, 61.2, 61.2, "—", "-0.098", "—", "-"],
-    ["OmniGuide — augmented", 160, 11.9, 51.2, 63.1, 75.6, 75.6, "—", "-0.097", "—", "-"],
-    ["SafeFlowMatcher — faithful", 160, 6.9, 46.2, 69.4, 78.8, 78.8, "—", "-0.096", "—", "-"],
-    ["SafeFlowMatcher — augmented", 160, 3.8, 34.4, 61.2, 79.4, 79.4, "—", "-0.124", "—", "-"],
-    ["SafeFlow — augmented", 160, 0.0, 3.8, 5.0, 55.0, 53.8, "—", "-0.096", "—", "-"],
+    ["Diffusion Policy", "28.8 M", "2", "9", "16×8", "DDIM, 10", "180"],
+    ["Diffusion planner", "38.0 M", "2", "9", "16×8", "DDIM, 10", "180"],
+    ["Flow matching", "38.0 M", "2", "9", "16×8", "Euler, 10", "180"],
+    ["Diffusion Policy, nut", "28.8 M", "2", "9", "16×8", "DDIM, 10", "180"],
+    ["Diffusion Policy, other arms", "28.8 M", "2", "13", "16×7 or 8", "DDIM, 10", "900"],
+    ["Reach planner, Realman", "16.4 M", "0", "21", "16×6", "DDIM, 10", "5,000"],
+    ["π0.5, two checkpoints", "3.35 B", "2", "8", "10×7", "flow, 10", "—"],
   ]}
 />
 
+#### Baselines
+
 <ResultsTable
-  caption="Table 2. Panda, gold/silver stress set (22 curated poses x 10 seeds, n = 220), built so the frozen generator is forced to penetrate. Same columns as Table 1, minus Ctrl (no separate solo timing pass for this set). Baselines shown in both the faithful and augmented tiers."
-  headers={["Method", "n", "Safe-Succ % ↑", "Success %", "Grasp %", "Contact % (d≤0)", "Penetration % (d<0) ↓", "Max-slk (mm) ↓", "Worst geom dist (m)", "Dev-pk (m)"]}
+  caption="Training-free safety methods for generative motion policies. Stage, where the method acts, at generation time (Gen.), at execution time (Exec.) or both. Guar., whether the method states a formal invariance claim when its program is feasible. Architecture, the generator family that the method targets, diffusion, flow matching (FM), VLA or any (Agnostic). Moving, whether it models obstacle motion. Arm, whether it protects the whole arm. Strategy, how it answers an obstacle advancing on the robot, by a constraint in the sampling (shaping), by a soft gradient in the sampling (guidance), by a correction of the current command (reactive), by braking along the motion plan (braking) or by a new route around the obstacle (reroute). For PRESAGE, the row lists properties by design."
+  headers={["Method", "Stage", "Guar.", "Architecture", "Moving", "Arm", "Strategy"]}
   rows={[
-    ["Filter whole-arm predict · DP", 220, 47.7, 47.7, 67.3, 8.6, 0.0, 25, "+0.000", 0.147],
-    ["Filter whole-arm nopredict · DP", 220, 47.7, 47.7, 67.3, 8.6, 0.0, 25, "+0.000", 0.102],
-    ["Filter whole-arm predict · FM", 220, 47.3, 47.3, 68.2, 4.5, 0.0, 7.4, "+0.000", 0.089],
-    ["Filter whole-arm nopredict · FM", 220, 47.3, 47.3, 68.2, 4.5, 0.0, 7.4, "+0.000", "—"],
-    ["Filter whole-arm predict · DDPM-abs", 220, 40.0, 40.0, 60.9, 5.0, 0.0, 25, "+0.000", 0.105],
-    ["Filter whole-arm predict · FM-abs", 220, 39.5, 39.5, 60.9, 4.5, 0.5, 28, "-0.005", "—"],
-    ["Filter whole-arm predict · DDPM", 220, 29.5, 29.5, 62.7, 0.0, 0.0, 17, "+0.009", 0.117],
-    ["Filter whole-arm nopredict · DDPM", 220, 29.5, 29.5, 62.7, 0.0, 0.0, 17, "+0.009", "—"],
-    ["Filter EE predict · DP", 220, 25.5, 74.1, 77.7, 70.9, 69.5, 0.14, "-0.130", 0.098],
-    ["Filter EE nopredict · DP", 220, 25.5, 74.1, 77.7, 70.9, 69.5, 0.14, "-0.130", "—"],
-    ["Filter EE predict · DDPM", 220, 9.1, 61.4, 84.5, 79.5, 78.6, 32, "-0.139", "—"],
-    ["Filter EE nopredict · DDPM", 220, 9.1, 61.4, 84.5, 79.5, 78.6, 32, "-0.139", "—"],
-    ["Filter EE predict · FM", 220, 5.9, 83.2, 92.7, 90.5, 90.5, 0.10, "-0.138", "—"],
-    ["Filter EE nopredict · FM", 220, 5.9, 83.2, 92.7, 90.5, 90.5, 0.10, "-0.138", "—"],
-    ["Hybrid · FM", 220, 31.8, 31.8, 64.5, 1.8, 0.0, 0.24, "+0.000", 0.091],
-    ["Hybrid · DDPM-abs", 220, 29.5, 29.5, 60.9, 4.1, 0.0, 20, "+0.000", "—"],
-    ["Hybrid · DDPM", 220, 22.3, 22.3, 60.0, 1.4, 0.0, 8.7, "+0.000", 0.116],
-    ["Hybrid · FM-abs", 220, 22.3, 22.3, 58.6, 2.3, 0.0, 107, "+0.000", "—"],
-    ["Hybrid · DP", 220, 13.2, 13.2, 65.0, 3.2, 0.0, 3.2, "+0.000", 0.139],
-    ["Guidance · DDPM-abs", 220, 28.2, 36.8, 68.6, 23.6, 18.6, "—", "-0.099", "—"],
-    ["Guidance · DP", 220, 25.0, 29.1, 66.8, 16.4, 15.0, "—", "-0.098", "—"],
-    ["Guidance · FM-abs", 220, 20.9, 26.4, 65.9, 22.3, 19.1, "—", "-0.099", "—"],
-    ["Guidance · DDPM", 220, 18.2, 39.1, 62.3, 41.4, 40.5, "—", "-0.098", "—"],
-    ["Guidance · FM", 220, 8.6, 44.5, 69.1, 61.8, 61.8, "—", "-0.113", "—"],
-    ["Frozen Generator · DP", 220, 20.0, 78.2, 81.8, 77.7, 76.8, "—", "-0.132", "—"],
-    ["Frozen Generator · DDPM", 220, 7.3, 74.1, "n/a", 83.6, 83.6, "—", "-0.139", "—"],
-    ["Frozen Generator · FM", 220, 6.4, 87.3, "n/a", 92.7, 92.3, "—", "-0.131", "—"],
-    ["CBF-QP / VLSA — augmented", 220, 30.5, 36.4, 70.9, 11.4, 9.5, "—", "-0.050", "—"],
-    ["CBF-QP / VLSA — faithful", 220, 28.6, 67.7, 84.1, 60.9, 60.5, "—", "-0.131", 0.012],
-    ["SafeFlowMatcher-Y2 — faithful", 220, 14.5, 25.9, 68.2, 36.8, 36.4, "—", "-0.108", "—"],
-    ["PACS — faithful", 220, 14.5, 18.6, 63.6, 23.2, 21.8, "—", "-0.124", "—"],
-    ["PACS — augmented", 220, 14.5, 18.6, 63.6, 23.2, 21.8, "—", "-0.124", "—"],
-    ["SafeFlow — faithful", 220, 13.6, 65.9, 81.8, 80.5, 79.5, "—", "-0.131", "—"],
-    ["SafeDiffuser — faithful", 220, 6.8, 45.9, 65.9, 79.5, 79.1, "—", "-0.125", "—"],
-    ["SafeFlowMatcher-Y2 — augmented", 220, 5.0, 5.5, 68.2, 3.2, 2.3, "—", "-0.087", "—"],
-    ["SafeDiffuser — augmented", 220, 4.5, 23.2, 61.4, 75.0, 75.0, "—", "-0.127", "—"],
-    ["OmniGuide — faithful", 220, 3.2, 67.7, 71.8, 96.4, 96.4, "—", "-0.136", "—"],
-    ["SafeFlow — augmented", 220, 0.5, 0.5, 0.9, 26.8, 25.9, "—", "-0.110", "—"],
-    ["SafeFlowMatcher — faithful", 220, 0.0, 34.1, 68.6, 96.4, 96.4, "—", "-0.136", "—"],
-    ["SafeFlowMatcher — augmented", 220, 0.0, 30.0, 68.6, 95.0, 95.0, "—", "-0.144", "—"],
-    ["OmniGuide — augmented", 220, 0.0, 48.2, 57.3, 90.5, 90.5, "—", "-0.147", "—"],
+    ["SafeDiffuser", "Gen.", "✓", "Diffusion", "✗", "✗", "shaping"],
+    ["SafeFlow", "Gen.", "✓", "FM", "✗", "✗", "shaping"],
+    ["SafeFlowMatcher", "Gen.", "✓", "FM", "✗", "✗", "shaping"],
+    ["OmniGuide", "Gen.", "✗", "FM", "✗", "✗", "guidance"],
+    ["AEGIS", "Exec.", "✓", "Agnostic", "✗", "✗", "reactive"],
+    ["Knows", "Exec.", "✗", "VLA", "✗", "✗", "reactive"],
+    ["RAIL", "Exec.", "✓", "Agnostic", "✗", "✓", "braking"],
+    ["PACS", "Exec.", "✓", "Agnostic", "✓", "✓", "braking"],
+    ["PRESAGE (ours)", "Both", "✓", "Agnostic", "✓", "✓", "reroute"],
   ]}
 />
 
-Among the three configurations the filter performs best and the hybrid does not improve on it. Guidance alone penetrates on 31 to 46% of episodes, inside the baseline band, and adding the filter on the identical generator drops that to zero: generation-time guidance shapes the sample against the obstacle pose available then, but by execution the obstacle has moved and the guided plan is stale, whereas the execution-time filter re-solves against the live state at every tick.
+The baselines run as their papers or released code describe them, with the adaptations that our task needs. Each one runs on our generators with ten sampling steps, against the moving human arm, which it reads again at each motion plan or control step. PACS runs its separation-monitoring variant, which its paper presents as its own, because our code does not model contact energy. Our reproduction of AEGIS skips its barrier while the obstacle is more than 0.50 m from the end effector, a gate that AEGIS does not have. When the solver of a baseline finds no solution, the generated command passes unchanged. The published code contains every setting.
 
-The same per-robot description instantiates four arms with no robot-specific source edit — the whole-arm filter transfers to the retargeted UR5e, KUKA IIWA, and Kinova Gen3 arms. Under a realistic perceived obstacle, where the filter observes the scene through a simulated depth pipeline instead of the true pose, safe-success falls from 63.8% to 48.1% and collisions rise to 2.5%, a real cost that the perception section examines in detail. Wrapped around a frozen pi0.5 vision-language-action policy on LIBERO tasks — bridging the VLA's end-effector action into the filter by differential inverse kinematics — the same filter cuts physical arm-collision roughly six-fold over a faithful end-effector-only CBF reproduction, without retraining the policy.
+#### Parameters
+
+In the pick-and-place and nut assembly tasks, we ran a grid search with Diffusion Policy to find the best-performing parameters.
+
+<ResultsTable
+  caption="Parameters of the safety layer, grouped by the part of the layer that uses them. Value, the value used in the experiments. Grid search, the range of values evaluated in the grid search of the pick-and-place and nut assembly tasks. A dash marks a value set without a search."
+  headers={["Parameter", "Value", "Grid search"]}
+  rows={[
+    ["Filter", "", ""],
+    ["Barrier gain γ", "0.5", "0.25 to 1"],
+    ["Safety margin r_safe", "0.04 m", "0.02 to 0.08 m"],
+    ["Horizon N", "8 control steps", "—"],
+    ["Control period Δt", "0.05 s", "—"],
+    ["Filter velocity limit", "1.5 rad/s", "1.5 to 12 rad/s"],
+    ["Tracking weight w_track", "100", "100 to 1,000"],
+    ["Effort weight w_eff", "1", "0 to 2"],
+    ["Slack weight ρ", "10⁴", "—"],
+    ["Slack weight ν", "10³", "—"],
+    ["Culling distance", "0.15 m", "—"],
+    ["Guidance, Diffusion Policy", "", ""],
+    ["Sharpness α", "20", "—"],
+    ["Proximity distance d_ref", "1 m", "—"],
+    ["Proximity floor d_floor", "0.1 m", "—"],
+    ["Scale s, pick-and-place", "2×10⁻⁴", "2.5×10⁻⁵ to 8×10⁻⁴"],
+    ["Scale s, nut", "10⁻⁴", "5×10⁻⁵ to 4×10⁻⁴"],
+    ["Hybrid scale, pick-and-place", "1.25×10⁻⁵", "1.25×10⁻⁵ to 2×10⁻⁴"],
+    ["Hybrid scale, nut", "1.25×10⁻⁵", "1.25×10⁻⁵ to 10⁻⁴"],
+    ["VLA interface", "", ""],
+    ["Slack cap", "1 mm", "—"],
+    ["Pass-through threshold", "1 mm", "—"],
+    ["Hand capsule scale", "0.7", "—"],
+    ["Damping λ", "0.05", "—"],
+    ["Increment bound Δq_max", "0.2 rad", "—"],
+    ["Replanning interval", "5 control steps", "—"],
+    ["Command scale c_cmd, SafeLIBERO", "0.05", "—"],
+    ["Command scale c_cmd, LIBERO-Safety", "3.96", "—"],
+    ["Solvers and episodes", "", ""],
+    ["QP solver", "OSQP", "—"],
+    ["QP tolerance", "10⁻³", "—"],
+    ["QP iteration limit", "200", "—"],
+    ["Fallback solver", "SLSQP", "—"],
+    ["Fallback iteration limit", "15", "—"],
+    ["Replanning interval", "8 control steps", "—"],
+    ["Episode limit", "800 control steps", "—"],
+  ]}
+/>
+
+#### Evaluation protocol
+
+Every obstacle scene of a task runs with the seeds 0 to 9 of the task scene, or 0 to 49 in the convex-obstacle task experiment. On the Panda robot, the seed controls a joint noise of 0.02 rad on the start configuration and the position and rotation of the can in its box. On the other arms, the seed controls only the can. Every method runs from the same start state of each seed. We exclude a seed when, after the reset and before the first action, the robot or the payload overlaps the obstacle, and the excluded seed leaves every method of its table. The robot is scored on every step of a kept episode, and the payload from the second step on.
+
+The can or the nut counts as part of the robot while it is held, that is, while its centre lies within 0.06 m of the end effector and the gripper is closed. A collision of a released object does not count.
+
+On SafeLIBERO and LIBERO-Safety, the robot receives no command for 20 steps after the reset while the objects settle. We exclude a start state when the robot overlaps the obstacle at any of these steps.
+
+The isolation experiments count the approaches or paths on which the obstacle collides with the robot without the layer, and they exclude no seed.
+
+#### Obstacle scenes
+
+<ResultsTable
+  caption="Sets of obstacle scenes, grouped by experiment, on the Panda unless the row names another robot. Obstacle, whether the obstacle of the set moves (moving), stays still (static) or does both in different scenes (both). # obstacles, the number of obstacles in one scene. Scenes, the number of obstacle scenes. Episodes, the number of episodes after the exclusion."
+  headers={["Set", "Obstacle", "# obstacles", "Scenes", "Episodes"]}
+  rows={[
+    ["Isolation, held pose", "", "", "", ""],
+    ["Convex obstacle", "moving", "1", "290", "290"],
+    ["Several convex obstacles", "moving", "1 to 4", "843", "896"],
+    ["Second arm", "moving", "1", "1,738", "8,641"],
+    ["Pick-and-place", "", "", "", ""],
+    ["Designed", "moving", "1", "16", "156"],
+    ["Stress", "static", "1", "22", "205"],
+    ["Control", "static", "1", "72", "587"],
+    ["Convex obstacle in the task", "moving", "1", "2", "94"],
+    ["Randomized motions", "moving", "1", "28", "236"],
+    ["Speed response", "moving", "1", "66", "638"],
+    ["Designed and stress, UR5e", "both", "1", "38", "363"],
+    ["Designed and stress, IIWA", "both", "1", "38", "349"],
+    ["Designed and stress, Kinova", "both", "1", "38", "361"],
+    ["Nut assembly", "", "", "", ""],
+    ["Designed", "moving", "1", "14", "124"],
+    ["Stress", "static", "1", "22", "208"],
+    ["VLA benchmarks", "", "", "", ""],
+    ["SafeLIBERO", "static", "1", "32", "1,527"],
+    ["LIBERO-Safety", "both", "1 or 2", "48", "2,372"],
+    ["LIBERO-Safety, authored", "moving", "1", "2", "100"],
+  ]}
+/>
+
+#### Summary
+
+<ResultsTable
+  caption="Main findings of the experiments, one row per question. Answer, the answer that our experiments give. Experiments, the experiments whose results support the answer."
+  headers={["Q", "Question", "Answer", "Experiments"]}
+  rows={[
+    ["Q1", "Is protecting the end effector enough, or must the whole arm be protected?", "The whole arm must be protected.", "Convex obstacles, Second arm, Ablation, Convex in the task"],
+    ["Q2", "In dynamic scenarios, does predicting the obstacle motion help, compared with reactive safety?", "Yes, against a fast obstacle. On the task with Diffusion Policy, it adds no safe success.", "Second arm, Ablation"],
+    ["Q3", "Should safety be enforced at generation time, at execution time, or both?", "At execution time.", "Pick-and-place"],
+    ["Q4", "How much task success does safety cost?", "27.3 and 40.2% of the completed tasks with Diffusion Policy, on the designed and stress sets.", "Pick-and-place"],
+    ["Q5", "Which components give our filter its advantage?", "The whole-arm geometry and the horizon.", "Ablation, Augmentation, Convex in the task"],
+    ["Q6", "When does the filter stop working, and does the limit come from the robot kinematics or from the formulation?", "The actuation of the robot beyond 0.40 m/s, and the combined conditions of several obstacles at once.", "Second arm, Speed response, Several obstacles"],
+    ["Q7", "Is the layer generic, or tailored to one robot, task, policy or obstacle motion?", "Generic. It lowers the collision rate on every task, robot, policy and set of obstacle motions that we evaluate.", "Nut assembly, Randomized motions, Other robots, SafeLIBERO, LIBERO-Safety"],
+    ["Q8", "Can the layer be deployed under real-world conditions?", "Yes, when the perceived obstacle encloses the true one.", "Simulated perception, Robustness, Real robot"],
+  ]}
+/>
 
 </Tab>
 
-<Tab id="ablations">
+<Tab id="pickplace">
 
-### Ablation: where to enforce safety
+### Pick-and-place task
 
-The same CBF specification is placed at three points along the generation-to-execution axis: **Guidance** at generation time, the execution-time **Filter** (a model-predictive controller), and **Hybrid**, guidance followed by the filter. Guidance alone shapes the sample against the obstacle pose available at generation time, but by execution the obstacle has moved and the guided plan is stale, so it still penetrates on a third of episodes. The execution-time filter re-solves against the live joint state and the predicted obstacle at every control tick and drops penetration to zero. Hybrid does not improve on the filter alone. The isolated comparison on the headline Diffusion Policy generator is below.
+In the pick-and-place scenario, the Panda robot picks a can from a box and places it in a bin. The obstacle is a multi-link human arm, a right arm from the CMU humanoid model. These experiments answer Q3, Q4, Q5 and the second part of Q6. Each obstacle scene runs with ten seeds. The designed set is eight motions of the human arm and a slower copy of each, and each motion targets one link of the robot, such as the wrist or the elbow, or one phase of the task, such as the approach to the can or the carry to the bin. The stress set is 22 static poses of the human arm at two levels of difficulty, eleven at each level, selected by a screen in which the frozen generator completed the task but drove the robot into the obstacle.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_setup.webp" alt="Pick-and-place setup figure" caption="The pick-and-place scenario. The robot picks the can from the box and places it in one compartment of the bin on the other side. Once the robot grasps the can, the human arm moves 48 cm across the path of the carry, toward the box, and stays there. The translucent copies show later poses of the arm, and the cyan arrow shows the path of its hand." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_pickplace_rollout.webp" alt="Pick-and-place rollout clearance figure" caption="The episode of the scene above, with our filter and with the frozen Diffusion Policy. Left, the end-effector paths, the hand path and later poses. Right, the clearance between the collision meshes. Without the safety layer, the carried can collides with the human arm by 41.1 mm. The filter lifts the can over the hand, keeps 46.2 mm or more and places it 15 control steps later." />
+
+#### Obstacle scenes
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_pp_designed.webp" alt="Designed-set gallery" caption="The designed set of the pick-and-place scenario. Each panel, (a) to (h), shows one of the eight motions of the human arm at the start of seed 0, with translucent copies of later poses and the path of its hand in cyan. The slower copies follow the same paths and are not shown." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_pp_stress.webp" alt="Stress-set gallery" caption="The stress set of the pick-and-place scenario. Each panel shows one static pose of the human arm at the start of seed 0, with the first level in panels 1a to 1k and the second level in panels 2a to 2k, separated by a line. Panels 2e and 2k show seed 5, because the first seeds of these poses are excluded." />
+
+#### Comparison
 
 <ResultsTable
-  caption="Ablation. The same CBF specification enforced at three points, on the headline Diffusion Policy generator (designed dynamic set, n = 160)."
-  headers={["Placement", "Safe-Succ % ↑", "Success %", "Penetration % (d<0) ↓"]}
+  caption="The generators pick and place a can while the human arm moves over the task (designed set) or holds a static pose (stress set). Gen., generator family: Diffusion Policy (DP), diffusion planner (DDPM) or flow matching (FM), with absolute joint targets (abs) or joint increments (delta). Safe-Succ., safe success. Coll., collision rate. Max-slk, maximum slack. Dev-pk, peak deviation. Ctrl, control rate. Rates in %."
+  headers={["Method", "Gen.", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Designed Max-slk↓ (mm)", "Designed Dev-pk↓ (mm)", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓", "Stress Max-slk↓ (mm)", "Stress Dev-pk↓ (mm)", "Ctrl (Hz)"]}
   rows={[
-    ["Guidance (generation only)", 36.2, 60.6, 36.9],
-    ["Filter (execution MPC) — ours", 63.8, 63.8, 0.0],
-    ["Hybrid (guidance + filter)", 45.6, 45.6, 0.0],
-    ["Frozen generator (no safety)", 36.2, 83.1, 59.4],
+    ["Frozen generator", "DP abs", "20.5", "84.6", "76.3", "—", "—", "16.6", "80.0", "82.4", "—", "—", "57.1"],
+    ["CBF-QP", "FM delta", "30.8", "69.2", "59.6", "—", "62", "13.7", "79.5", "84.9", "—", "62", "46.7"],
+    ["CBF-QP", "DP abs", "28.2", "81.4", "65.4", "—", "53", "36.1", "72.7", "56.1", "—", "61", "45.2"],
+    ["SafeFlow", "FM delta", "28.2", "82.7", "69.9", "—", "—", "4.4", "90.2", "94.6", "—", "—", "42.4"],
+    ["SafeDiffuser", "DDPM delta", "26.3", "72.4", "65.4", "—", "—", "4.9", "76.6", "87.3", "—", "—", "44.5"],
+    ["OmniGuide", "FM delta", "32.7", "82.1", "64.1", "—", "—", "7.3", "80.0", "89.8", "—", "—", "40.9"],
+    ["PACS", "FM delta", "26.9", "36.5", "32.7", "—", "—", "7.8", "7.8", "0.0", "—", "—", "34.4"],
+    ["SafeFlowMatcher", "FM delta", "30.1", "71.2", "56.4", "—", "—", "5.9", "71.7", "89.3", "—", "—", "35.5"],
+    ["Filter (ours)", "DP abs", "61.5", "61.5", "0.0", "5.8", "128", "47.8", "47.8", "0.0", "38.7", "92", "40.9"],
+    ["Filter (ours)", "DDPM abs", "54.5", "54.5", "0.0", "10.6", "119", "47.3", "47.3", "0.0", "24.7", "89", "40.1"],
+    ["Filter (ours)", "FM delta", "45.5", "45.5", "0.0", "4.3", "92", "48.8", "48.8", "0.0", "0.3", "76", "36.7"],
+    ["Guidance (ours)", "DP abs", "39.1", "42.9", "9.6", "—", "—", "15.1", "15.1", "5.4", "—", "—", "31.9"],
+    ["Hybrid (ours)", "DP abs", "56.4", "56.4", "0.0", "6.5", "103", "47.8", "47.8", "0.0", "39.0", "80", "29.7"],
   ]}
 />
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_guidance.mp4", label: "Guidance" },
-    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_mpc_filter.mp4", label: "Filter (ours)" },
-    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v2_hybrid.mp4", label: "Hybrid" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_designed_1.mp4", label: "Designed, motion (a)" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_designed_2.mp4", label: "Designed, motion (b)" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_designed_3.mp4", label: "Designed, motion (c)" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_stress_1.mp4", label: "Stress, pose 1a" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_stress_2.mp4", label: "Stress, pose 1b" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_cmp_stress_3.mp4", label: "Stress, pose 1c" },
   ]}
-  caption="dyn_armlink_v2 across the three placements of the same CBF specification."
+  caption="Pick-and-place comparison. The first three are designed-set motions and the last three are stress-set poses. The frozen generator is on the left and our whole-arm filter is on the right."
 />
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_guidance.mp4", label: "Guidance" },
-    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_mpc_filter.mp4", label: "Filter (ours)" },
-    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_hybrid.mp4", label: "Hybrid" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_baseline_designed.mp4", label: "Designed, motion (d)" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_baseline_stress.mp4", label: "Stress, pose 1d" },
   ]}
-  caption="paper_gold_02 across the three placements of the same CBF specification."
+  caption="Same generator, the published CBF-QP on the left and our filter on the right."
 />
+
+#### Control set
+
+The stress set was selected by a screen that used the filter, so we also ran a control set of 72 static obstacle scenes selected without the filter, 587 episodes in all.
+
+<ResultsTable
+  caption="The generators pick and place a can while the human arm holds a static pose of the control set. Safe-Succ., safe success. Coll., collision rate. Rates in %."
+  headers={["Method", "Gen.", "Control Safe-Succ.↑ (587)", "Control Success↑", "Control Coll.↓"]}
+  rows={[
+    ["Frozen generator", "DP abs", "8.3", "78.4", "90.6"],
+    ["Filter (ours)", "DP abs", "24.2", "24.2", "0.0"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/pp_control_1.mp4", label: "Control set, pose 1" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_control_2.mp4", label: "Control set, pose 2" },
+  ]}
+  caption="Control set, frozen generator on the left and our filter on the right."
+/>
+
+#### Ablation
+
+<ResultsTable
+  caption="Ablation of our filter in the pick-and-place scenario with Diffusion Policy. A cross marks a removed component. Safe-Succ., safe success. Coll., collision rate. Rates in %."
+  headers={["Whole arm", "Prediction", "Horizon (control steps)", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓"]}
+  rows={[
+    ["✓", "✓", "8", "61.5", "61.5", "0.0", "47.8", "47.8", "0.0"],
+    ["✗", "✓", "8", "39.7", "68.6", "43.6", "42.9", "56.1", "32.7"],
+    ["✓", "✗", "8", "62.8", "62.8", "0.0", "47.8", "47.8", "0.0"],
+    ["✓", "✗", "1", "32.7", "32.7", "0.0", "24.9", "24.9", "0.0"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/pp_ablation_nowhole.mp4", label: "No whole arm, against the full filter" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_ablation_nopred_h8.mp4", label: "No prediction, horizon 8, against the full filter" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_ablation_nopred_h1.mp4", label: "No prediction, horizon 1, against the full filter" },
+  ]}
+  caption="Ablation on designed motion (e). Each clip shows the filter with one component removed on the left and the full filter on the right."
+/>
+
+#### Augmentation and can knocks
+
+We add the components of our filter to the published CBF-QP, in the same task, with Diffusion Policy and with flow matching. The augmented CBF-QP uses our geometry, prediction, horizon, slack, culling and filter velocity limit, and keeps its own objective and reference tracking. We also study the can knock, an episode in which the can moves by more than 5 mm on the table before the first command to close the gripper, by varying the reference tracking, the effort term and the filter velocity limit.
+
+<ResultsTable
+  caption="Results of the augmentation experiment in the pick-and-place scenario. Each row is our filter or the augmented CBF-QP, with Diffusion Policy (DP abs) or flow matching with joint increments (FM delta). For the designed set (156 episodes) and the stress set (205), the columns present safe success, task success and collision rate in %."
+  headers={["Method", "Gen.", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓"]}
+  rows={[
+    ["Filter (ours)", "DP abs", "61.5", "61.5", "0.0", "47.8", "47.8", "0.0"],
+    ["CBF-QP, augmented", "DP abs", "66.7", "66.7", "0.6", "40.0", "40.0", "0.5"],
+    ["Filter (ours)", "FM delta", "45.5", "45.5", "0.0", "48.8", "48.8", "0.0"],
+    ["CBF-QP, augmented", "FM delta", "46.2", "46.2", "0.6", "53.2", "53.7", "1.5"],
+  ]}
+/>
+
+<ResultsTable
+  caption="Results of the knock experiment with Diffusion Policy on the stress set of the pick-and-place scenario (205 episodes). Each row is a configuration of our filter or the augmented CBF-QP. With CBF-QP tracking, our filter follows the motion plan as the CBF-QP does. The columns present safe success, task success, collision rate and can knocks in %. A can knock is an episode in which the can moves by more than 5 mm before the first command to close the gripper."
+  headers={["Method", "Safe-Succ.↑", "Success↑", "Coll.↓", "Can knocks↓"]}
+  rows={[
+    ["Frozen generator", "16.6", "80.0", "82.4", "8.8"],
+    ["Filter (ours)", "47.8", "47.8", "0.0", "7.8"],
+    ["Filter (ours), CBF-QP tracking", "46.3", "46.3", "0.0", "3.9"],
+    ["Filter (ours), CBF-QP tracking, no effort term", "38.0", "38.0", "0.0", "20.0"],
+    ["Filter (ours), CBF-QP tracking, no effort term, no filter velocity limit", "46.8", "46.8", "0.0", "5.9"],
+    ["CBF-QP, augmented", "40.0", "40.0", "0.5", "20.0"],
+    ["CBF-QP, augmented, no filter velocity limit", "48.8", "48.8", "0.0", "4.9"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/pp_aug_designed.mp4", label: "Designed, motion (a)" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_aug_stress.mp4", label: "Stress, pose 1a" },
+  ]}
+  caption="Our filter on the left and the augmented CBF-QP on the right."
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/pp_knock.mp4", label: "Stress, pose 1a" },
+  ]}
+  caption="A can-knock example. Left, the row Filter (ours), CBF-QP tracking, no effort term of the knock table. Right, the row Filter (ours)."
+/>
+
+#### Convex obstacle in the task
+
+We repeat the comparison with a single convex obstacle in the task, a sphere of 6 cm radius that moves at 0.40 m/s along a straight path of 0.60 m in front of the robot. One obstacle scene tests the pick phase, with the sphere passing next to the can during the descent and the grasp. A second tests the carry phase, with the sphere crossing the path of the robot during the lift and the transport. We run each obstacle scene in 50 task scenes, and 94 of the 100 episodes remain after the exclusion.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_convex_task_setup.webp" alt="Convex-obstacle-in-task setup figure" caption="An example of the convex-obstacle experiment. A sphere of 6 cm radius crosses 0.60 m in front of the robot at 0.40 m/s. In the obstacle scene of the pick phase, it passes at the height of the can during the descent and the grasp. In the obstacle scene of the carry phase, it passes at transport height after the grasp. Solid spheres mark the start of each path and translucent spheres its end." />
+
+<ResultsTable
+  caption="The generators pick and place a can while a single convex obstacle moves in the task space. Gen., generator family, as in the comparison table. Safe-Succ., safe success. Coll., collision rate. Rates in %."
+  headers={["Method", "Gen.", "Convex Safe-Succ.↑ (94)", "Convex Success↑", "Convex Coll.↓"]}
+  rows={[
+    ["Frozen generator", "DP abs", "84.0", "98.9", "14.9"],
+    ["CBF-QP", "DP abs", "86.2", "97.9", "12.8"],
+    ["Filter (ours), end-effector", "DP abs", "76.6", "94.7", "20.2"],
+    ["Filter (ours), whole-arm", "DP abs", "88.3", "88.3", "0.0"],
+    ["Frozen generator", "FM delta", "53.2", "90.4", "40.4"],
+    ["CBF-QP", "FM delta", "48.9", "92.6", "45.7"],
+    ["Filter (ours), end-effector", "FM delta", "46.8", "91.5", "48.9"],
+    ["Filter (ours), whole-arm", "FM delta", "80.9", "80.9", "0.0"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/pp_convex_pick.mp4", label: "Pick phase" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_convex_carry.mp4", label: "Carry phase" },
+  ]}
+  caption="Convex obstacle in the task, four panels each: frozen generator, published CBF-QP, our end-effector filter and our whole-arm filter."
+/>
+
+#### Randomized motions
+
+Each randomized motion keeps the start and end poses of a designed motion, and with them the task phase it targets, but randomizes the route between them. We keep the 28 randomized motions that pass close to the robot without crossing it at its start pose.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_randpath_setup.webp" alt="Randomized-motion setup figure" caption="One randomized motion in the pick-and-place scenario. The human arm keeps the start and end poses of a designed motion, and its hand follows a random route between them, shown by the cyan line. The translucent copies show later poses of the arm." />
+
+<ResultsTable
+  caption="Diffusion Policy picks and places a can while the human arm executes randomized motions, with the designed motions for reference. Safe-Succ., safe success. Coll., collision rate. Rates in %."
+  headers={["Method", "Randomized Safe-Succ.↑ (236)", "Randomized Success↑", "Randomized Coll.↓", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓"]}
+  rows={[
+    ["Frozen generator", "14.8", "84.3", "82.6", "20.5", "84.6", "76.3"],
+    ["Guidance (ours)", "28.8", "35.2", "9.3", "39.1", "42.9", "9.6"],
+    ["Hybrid (ours)", "53.0", "53.0", "0.0", "56.4", "56.4", "0.0"],
+    ["Filter (ours)", "55.1", "55.1", "0.0", "61.5", "61.5", "0.0"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/pp_randpath_1.mp4", label: "Randomized motion 0" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_randpath_2.mp4", label: "Randomized motion 2" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_randpath_3.mp4", label: "Randomized motion 4" },
+  ]}
+  caption="Randomized motions, frozen generator on the left and our filter on the right."
+/>
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_randpath_gallery.webp" alt="Gallery of the 28 randomized motions" caption="The 28 randomized motions, one still of the filter run each, labelled by motion number." />
+
+#### Speed response
+
+The second-arm setup has no generator and no task, so we also test the speed response in this task. We take six of the eight designed motions of the human arm and raise their final speed from 0.40 to 2.00 m/s, with Diffusion Policy and the whole-arm filter. We evaluate each final speed in two settings, one in which the arm reaches the final speed with a constant acceleration, and one in which it moves at constant speed, so its speed jumps to the final value at the start of the motion.
+
+<ResultsTable
+  caption="Diffusion Policy picks and places a can while the human arm executes six designed motions at increasing final speeds, with the whole-arm filter. Safe-Succ., safe success. Coll., collision rate. Rates in %. A range covers episodes whose collision is not resolved."
+  headers={["Final speed (m/s)", "Const. accel. Safe-Succ.↑ (58)", "Const. accel. Coll.↓", "Const. speed Safe-Succ.↑ (58)", "Const. speed Coll.↓"]}
+  rows={[
+    ["0.40", "67.2", "0.0", "67.2", "0.0"],
+    ["0.80", "62.1", "1.7", "63.8", "3.4"],
+    ["1.20", "60.3", "5.2", "60.3–63.8", "6.9–10.3"],
+    ["1.60", "60.3", "6.9", "60.3", "10.3"],
+    ["2.00 (3.68 m/s²)", "56.9", "8.6", "60.3", "10.3"],
+    ["2.00 (7.36 m/s²)", "60.3", "10.3", "60.3", "10.3"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_040.mp4", label: "0.40 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_080.mp4", label: "0.80 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_120.mp4", label: "1.20 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_160.mp4", label: "1.60 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_200a.mp4", label: "2.00 m/s (3.68 m/s²)" },
+    { src: "/projects/sgm-preview-7a2f/videos/pp_speed_200b.mp4", label: "2.00 m/s (7.36 m/s²)" },
+  ]}
+  caption="Speed response under the whole-arm filter, one clip per final speed. Constant acceleration on the left and constant speed on the right."
+/>
+
+</Tab>
+
+<Tab id="isolation">
+
+### Isolation experiments
+
+The isolation experiments evaluate the safety layer without a generator or a task. The robot holds a fixed pose, which is the reference of the filter, so every motion of the robot comes from the layer and every contact is a failure of the layer.
+
+#### Convex obstacles
+
+A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and advances on one link of the held robot at a time, while the robot holds one of two poses. It aims at points on the axis of the largest capsule of each link, from a set of 128 approach directions, and we keep the approaches in which the obstacle reaches the target link first. The experiment measures, under the whole-arm filter, the collision rate on each link and on an object the robot carries. We then extend it to several convex obstacles of the same size and speed, each aimed at a different link, up to four, arriving together or one after another with 1.55 s between their starts.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_convex_setup.webp" alt="Convex-obstacle setup figure" caption="The top row shows the robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. The convex obstacle (violet) is aimed at the wrist in the held pose. Without the safety layer, it collides with the robot by 92.8 mm. With the filter, the robot moves away and keeps 17.7 mm or more." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_panda_links.webp" alt="Panda link names" caption="Links of the Panda robot in the held pose. The link names match the rows of the convex-obstacle table. The flange receives no approach, because the obstacle reaches the wrist or the gripper first." />
+
+<ResultsTable
+  caption="A convex obstacle advances on one link of the held robot, or on the object it carries, with the whole-arm filter. n, approaches. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
+  headers={["Link (joint)", "n", "Coll.↓"]}
+  rows={[
+    ["Gripper (7)", "38", "0.0 ± 9.2"],
+    ["Wrist (6)", "35", "2.9 ± 11.7"],
+    ["Forearm (5)", "67", "1.5 ± 6.5"],
+    ["Elbow (4)", "32", "53.1 ± 16.7"],
+    ["Distal upper arm (3)", "11", "54.5 ± 26.5"],
+    ["Upper arm (2)", "47", "100.0 ± 7.6"],
+    ["Shoulder (1)", "37", "100.0 ± 9.4"],
+    ["Carried object", "23", "0.0 ± 14.3"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_gripper.mp4", label: "Gripper (joint 7)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_wrist.mp4", label: "Wrist (joint 6)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_forearm.mp4", label: "Forearm (joint 5)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_elbow.mp4", label: "Elbow (joint 4)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_distal_upper_arm.mp4", label: "Distal upper arm (joint 3)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_upper_arm.mp4", label: "Upper arm (joint 2)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_shoulder.mp4", label: "Shoulder (joint 1)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_convex_object.mp4", label: "Carried object" },
+  ]}
+  caption="A convex obstacle of 60 mm radius moves at 0.40 m/s onto one link at a time, in one held pose. Each clip shows no safety layer on the left and the whole-arm filter on the right. The last clip aims the obstacle at a carried object."
+/>
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_several_convex_setup.webp" alt="Several-obstacles setup figure" caption="Several convex obstacles on the held robot, from one draw with four obstacles. Each obstacle aims at a different link, and the cyan arrow shows its path. When the obstacles arrive one after another, each starts at the control step in its label. When they arrive together, all four start at control step 20. The link names match the Panda-links figure." />
+
+<ResultsTable
+  caption="Up to four convex obstacles advance on the held robot, each aimed at a different link, together or one after another. n, obstacles that come within 40 mm of the robot, out of 128 per obstacle and setting. Coll., share of these obstacles that collide, ± the 95% Wilson interval. Rates in %."
+  headers={["Obstacles", "Together n", "Together Coll.↓", "One after another n", "One after another Coll.↓"]}
+  rows={[
+    ["1", "107", "15.9 ± 8.1", "107", "15.9 ± 8.1"],
+    ["2", "197", "38.1 ± 6.9", "205", "22.9 ± 6.2"],
+    ["3", "283", "47.3 ± 5.8", "312", "25.3 ± 5.1"],
+    ["4", "380", "57.1 ± 5.0", "412", "25.5 ± 4.4"],
+  ]}
+/>
+
+When the four obstacles arrive together, 69.1% of the collisions start when no single command meets the conditions of all obstacles at once, although one exists for each obstacle alone. When they arrive one after another, this share is 14.3%. These collisions are failures of the filter, not of the joint limits.
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k2_together.mp4", label: "2 obstacles, together" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k2_after.mp4", label: "2 obstacles, one after another" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k3_together.mp4", label: "3 obstacles, together" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k3_after.mp4", label: "3 obstacles, one after another" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k4_together.mp4", label: "4 obstacles, together" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_multi_k4_after.mp4", label: "4 obstacles, one after another" },
+  ]}
+  caption="Up to four convex obstacles advance on the held robot under the whole-arm filter, each aimed at a different link, arriving together or one after another."
+/>
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k3_together_allvisible.webp" alt="Three-obstacle together case, all obstacles visible" caption="The three-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_multi_k4_together_allvisible.webp" alt="Four-obstacle together case, all obstacles visible" caption="The four-obstacle together case at one control step, chosen so every obstacle is visible, because at some control steps an obstacle is hidden behind the robot." />
+
+#### Second arm
+
+A second Panda arm, described by 14 capsules, moves through the space of the held robot and can collide with any link. At 0.40 m/s the experiment measures the collision rate and the median clearance for a filter that protects only the end effector and for the whole-arm filter. The same setup at 0.90 m/s, with the prediction on or off and a horizon of 1 or 8 control steps, separates the prediction from the horizon. Raising the speed of the second arm, and separately raising the filter velocity limit at 0.90 m/s up to 2.175 rad/s, measures how the filter responds to the obstacle speed and to its own limit.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_secondarm_setup.webp" alt="Second-arm setup figure" caption="The top row shows the held robot without the safety layer and the bottom row with the whole-arm filter. The left column is a wide view and the right column a close view, and a red tint marks a collision. A second Panda arm (red) moves through the space of the held robot at 0.40 m/s. Without the safety layer, it collides with the robot by 145.4 mm. With the filter, the held robot moves away and keeps 41.6 mm or more." />
+
+<ResultsTable
+  caption="A second arm moves through the space of the held robot at 0.40 m/s. Coll., collision rate, ± the 95% Wilson interval. Clear., median over paths of the smallest distance between the two arms. Rates in %."
+  headers={["Configuration", "Coll.↓ (Paths 1,382)", "Clear.↑ (mm)"]}
+  rows={[
+    ["No safety layer", "100.0 ± 0.3", "-70.5"],
+    ["Filter (ours), end-effector", "83.5 ± 2.0", "-54.8"],
+    ["Filter (ours), whole-arm", "1.3 ± 0.7", "51.7"],
+  ]}
+/>
+
+<ResultsTable
+  caption="A second arm moves through the space of the held robot at 0.90 m/s, with the whole-arm filter. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
+  headers={["Prediction", "Horizon (control steps)", "Coll.↓ (Paths 96)"]}
+  rows={[
+    ["✓", "8", "20.8 ± 9.2"],
+    ["✓", "1", "24.0 ± 9.4"],
+    ["✗", "1", "93.8 ± 6.7"],
+  ]}
+/>
+
+The prediction removes the failures on 67 of the 96 paths, and the same 23 paths fail in both configurations. The prediction carries most of the gain against a moving obstacle, and the longer horizon of 8 control steps adds a smaller gain of 3 paths.
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/iso_prediction.mp4", label: "0.90 m/s: prediction with horizon 8, prediction with horizon 1, no prediction with horizon 1" },
+  ]}
+  caption="A second arm moves through the space of the held robot at 0.90 m/s under the whole-arm filter. The three panels are prediction with horizon 8, prediction with horizon 1, and no prediction with horizon 1."
+/>
+
+<ResultsTable
+  caption="(a) A second arm moves through the space of the held robot at increasing speeds. n, paths that collide without the safety layer. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
+  headers={["Commanded (m/s)", "Realised (m/s)", "n", "Coll.↓ end-effector", "Coll.↓ whole-arm"]}
+  rows={[
+    ["0.15", "0.15", "1425", "83.8 ± 2.0", "0.4 ± 0.5"],
+    ["0.20", "0.20", "1425", "83.7 ± 2.0", "0.4 ± 0.5"],
+    ["0.40", "0.40", "1382", "83.5 ± 2.0", "1.3 ± 0.7"],
+    ["0.90", "0.90", "1473", "85.4 ± 1.9", "13.5 ± 1.8"],
+    ["1.60", "1.51", "1493", "88.0 ± 1.7", "48.8 ± 2.5"],
+    ["2.00", "1.69", "1443", "89.7 ± 1.7", "62.4 ± 2.5"],
+  ]}
+/>
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_015.mp4", label: "0.15 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_020.mp4", label: "0.20 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_040.mp4", label: "0.40 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_090.mp4", label: "0.90 m/s" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_160.mp4", label: "1.60 m/s (realised 1.51)" },
+    { src: "/projects/sgm-preview-7a2f/videos/iso_secondarm_200.mp4", label: "2.00 m/s (realised 1.69)" },
+  ]}
+  caption="A second arm moves through the space of the held robot at each commanded speed. Every clip shows three panels: no safety layer, the end-effector filter, and the whole-arm filter. The second arm is red."
+/>
+
+<ResultsTable
+  caption="(b) The whole-arm filter at 0.90 m/s, in one held pose, with a tracking weight of 10 and each filter velocity limit. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
+  headers={["Filter velocity limit (rad/s)", "Coll.↓ (Paths 96)"]}
+  rows={[
+    ["1.50", "16.7 ± 8.7"],
+    ["1.60", "14.6 ± 8.4"],
+    ["1.70", "13.5 ± 8.3"],
+    ["1.80", "11.5 ± 7.9"],
+    ["1.90", "10.4 ± 7.7"],
+  ]}
+/>
+
+**Full clip inventory** (external archive, link coming soon).
 
 </Tab>
 
 <Tab id="perception">
 
-### Perception robustness
+### Simulated perception
 
-The headline experiments hand the filter the true obstacle pose. To measure what the safety layer is worth without one, we replace that oracle with a simulated depth pipeline. Two virtual depth cameras cast rays into the scene, and the returned points are assigned to the limbs of a simulated 3D body tracker whose per-landmark noise is calibrated against published Azure-Kinect-versus-motion-capture accuracy. We simulate the output of a commodity body tracker rather than one we built, deriving noisy landmarks from the true joint positions, and we fit a capsule per limb from the points assigned to it. One thing is still free and we state it plainly. Ground-truth geometry ids decide which returned points belong to the human at all, which is the same free segmentation the depth-space literature this descends from also assumes, since that literature does not need to know what the obstacle is.
+To estimate the obstacle, we simulate a realistic perception pipeline for the multi-link human arm of the pick-and-place scenario. Two simulated depth cameras return a point cloud of the arm, with a depth noise of 0.5 per cent of the distance. They sample the scene on a sparse grid of 40×30 rays or on a dense grid of 160×120 rays. We also simulate a body tracker that returns 11 landmarks of the arm, such as the shoulder, the elbow and the wrist, each at its true position plus a noise calibrated to the published accuracy of the Azure Kinect body tracker against motion capture. The noise grows when the landmark is hidden from both cameras, and the landmarks arrive 200 ms late.
 
-*Four honesty notes travel with every number in this section. The shipped configuration was tuned in-sample, its hyper-parameters were selected on the same perception metric they are then reported on, and the rollout campaign is a fresh measurement those hyper-parameters never saw. Motion prediction is on in every row, and the shipped configuration has the worst measured velocity estimate of the three we tested. Occlusion inflates the landmark error, by about 2.5x on proximal joints and 4x on distal ones, rather than dropping landmarks, because the reference device predicts an occluded joint instead of omitting it. And the pipeline is not finger-accurate, four finger capsules are fused into one segment because no commodity tracker reports finger joints. The 200 ms of latency is adopted and swept rather than calibrated, the rest of the noise model is calibrated.*
+From these measurements we build the obstacle that the filter receives. At each control step, the landmarks divide the point cloud among the segments of the arm, such as the upper arm between the shoulder and the elbow, and we fit one capsule to the points of each segment. Each capsule takes its position from the depth points of the current control step, and the landmarks only decide which points belong to which segment. We estimate the velocity of each capsule from the motion of its segment in the tracked landmarks over the last 0.45 s. The segmentation of the arm is perfect, and we run Diffusion Policy with both grids on both sets of obstacle scenes.
 
-#### How perception is created
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_perception_explainer.webp" alt="Perception pipeline example figure" caption="An example of the perception pipeline at one obstacle pose of the stress set, with (a) the sparse grid and (b) the dense grid at the same control step. From left to right, the panels show the ray hits of each depth camera on the human arm, the depth points with the tracked landmarks, and the fitted capsules over the true arm. With the sparse grid, the robot touches the shoulder of the arm while the fitted capsules place it 23 mm away. With the dense grid, the robot stays 62 mm away. The two rows come from separate runs, so the robot is in a different place in each. The inset shows the two cameras from above." />
 
-Each clip replays the sensing pipeline tick by tick. Two virtual depth cameras cast a ray grid into the scene, the returned points are attached to the limbs of the simulated body tracker and coloured by skeleton segment, and each limb is fitted with the capsule the safety layer then treats as the obstacle. When a segment leaves view its capsule is held at its last fit, drawn in amber, rather than dropped. On the left is the headline 40x30 grid, on the right the dense 160x120 grid, the same scene and seed. The denser grid resolves more of the arm and holds fewer segments.
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_perception_sparse.webp" alt="Sparse perception explainer still" caption="Sparse perception (40×30) on the stress pose 2d at one control step. The panel shows the recovered depth cloud of 66 points, the 11 tracked landmarks, and the 7 fitted capsules over the true arm. The plate reads -4.6 mm." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_perception_dense.webp" alt="Dense perception explainer still" caption="Dense perception (160×120) on the same stress pose 2d at the same control step. The panel shows the recovered depth cloud of 1096 points, the 11 tracked landmarks, and the 7 fitted capsules over the true arm. The plate reads 62.0 mm." />
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_40x30.mp4", label: "Headline grid (40×30)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/howperception_skel_160x120.mp4", label: "Dense grid (160×120)" }}
-  caption="elbow_carry_stress, seed 0, the skeleton-seeded pipeline. The point cloud is coloured by skeleton segment, and amber capsules are HELD, the last fit for a segment the cameras have lost, which is the current pipeline's answer to occlusion. The sparse grid on the left holds more segments and holds them for longer."
+<ResultsTable
+  caption="Diffusion Policy picks and places a can while our filter receives the human arm from its exact pose or from simulated perception on a sparse (40×30) or dense (160×120) depth grid. Safe-Succ., safe success. Coll., collision rate. Rates in %."
+  headers={["Method", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓"]}
+  rows={[
+    ["Filter (ours), exact obstacle pose", "61.5", "61.5", "0.0", "47.8", "47.8", "0.0"],
+    ["Filter (ours), sparse perception", "46.2", "48.1", "3.2", "39.5", "43.9", "14.1"],
+    ["Filter (ours), dense perception", "48.7", "50.6", "2.6", "43.9", "44.4", "3.9"],
+  ]}
 />
-
-Perception is not free. On the designed dynamic scenes, safe-success for the whole-arm filter is 50.6% at the headline sparse grid against 63.8% with the true obstacle pose, and penetration is 1.9%. Penetration means strict mesh overlap, the paper's safety definition, scored against ground truth even though the filter plans against the noisy estimate. The gap from 63.8% to 50.6% is a task cost rather than a safety cost. A noisy and partly occluded obstacle estimate makes the barrier harder to satisfy, so the filter holds more standoff and completes fewer places, while penetration stays near the ground-truth level. Where the estimate is wrong it is usually conservative, an unobserved limb is held at its last fit rather than dropped, so the filter keeps the arm safe and pays for it in task progress. Guidance, which has no runtime filter, is the method most exposed to the noisy estimate and penetrates on 48.1% of the designed sparse episodes against the filter's 1.9%.
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/dyn_armlink_v1_filter_skel_dense.mp4", label: "Filter · dyn_armlink_v1" },
-    { src: "/projects/sgm-preview-7a2f/videos/elbow_carry_stress_filter_skel_dense.mp4", label: "Filter · elbow_carry_stress" },
-    { src: "/projects/sgm-preview-7a2f/videos/paper_gold_02_filter_skel_dense.mp4", label: "Filter · paper_gold_02" },
+    { src: "/projects/sgm-preview-7a2f/videos/percep_designed_c.mp4", label: "Designed, motion (c)" },
+    { src: "/projects/sgm-preview-7a2f/videos/percep_stress_1c.mp4", label: "Stress, pose 1c" },
   ]}
-  caption="The whole-arm filter acting on the perceived obstacle across three scenes, skeleton-seeded pipeline at the dense 160x120 grid, seed 0. All three are safe-successful, clearing by 36.9, 61.2 and 32.2 mm with no collision. These illustrate the method, not the sparse headline row of the table below."
+  caption="Simulated perception. Each clip shows three panels: the filter with the exact obstacle pose, with sparse perception, and with dense perception. The translucent capsules are the ones the filter received, recomputed from the recorded run."
+/>
+
+#### Robustness
+
+We add one error at a time to the sparse pipeline on the designed set. We take the types of error from the literature and vary their rates, since no source publishes a rate. For the body tracker, we swap the labels of landmarks, invert the shoulder and the wrist, drop single landmarks, lose the whole skeleton for short periods, and delay the landmarks by up to 800 ms. For the depth cameras, we drop the returns on dark surfaces, and we add flying pixels, which are false returns at the edges of the arm whose depth falls between the arm and the background.
+
+<ResultsTable
+  caption="Results of the perception errors in the pick-and-place scenario with Diffusion Policy, sparse perception and the designed set (156 episodes). Each row adds one error, at its strongest level, to the perception pipeline. Rates in %. The table below presents every level and the meaning of each unit."
+  headers={["Error", "Level", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓"]}
+  rows={[
+    ["No added error", "—", "46.2", "48.1", "3.2"],
+    ["Body tracker", "", "", "", ""],
+    ["Landmark labels swapped (% of control steps)", "8.2", "42.3", "45.5", "6.4"],
+    ["Shoulder and wrist inverted (% of control steps)", "3.5", "44.2", "46.2", "3.8"],
+    ["Landmark dropout (% per landmark and control step)", "7.5", "45.5", "46.8", "2.6"],
+    ["Skeleton loss (% per control step)", "5.5", "42.9", "45.5", "3.2"],
+    ["Landmark delay (ms)", "800", "42.3", "46.2", "4.5"],
+    ["Depth camera", "", "", "", ""],
+    ["Dark returns dropped (%)", "50", "43.6", "46.8", "5.8"],
+    ["Flying pixels (% of edge pixels)", "1", "40.4", "41.7", "3.2"],
+    ["", "10", "19.9", "20.5", "3.2"],
+    ["", "100", "0.6", "0.6", "10.9"],
+  ]}
 />
 
 <ResultsTable
-  caption="Table 3a. Perception headline, the multi-link MPC filter driving Diffusion Policy. Safe-success is success and no penetration (d<0), scored against ground truth. Designed is 16 scenes x 10 seeds (n = 160), stress is 22 curated poses x 10 seeds (n = 220). The Ctrl column is a measured rate for the ground-truth row and projections for the perceived rows, formed by replacing the simulated ray-cast with a real camera's cost. The actually measured perceived rates are 18.1 Hz sparse and 3.0 Hz dense, because the simulated ray-casting dominates our compute and a real camera does not."
-  headers={["Sensor", "Designed S-Succ % ↑", "Designed Pen % ↓", "Stress S-Succ % ↑", "Stress Pen % ↓", "Ctrl (Hz)"]}
+  caption="Perception robustness with Diffusion Policy and the sparse pipeline, on the designed set of the pick-and-place scenario (156 episodes). Each row adds one error to the simulated perception pipeline. The delay and the Kinect-v2 model replace the base delay and depth noise. Dark returns lie on the upper arm and forearm, or at an incidence of 70° or more. Rates in %."
+  headers={["Error", "Level", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓"]}
   rows={[
-    ["Ground truth", 63.8, 0.0, 47.7, 0.0, "38.0 meas."],
-    ["Perceived, sparse 40x30", 50.6, 1.9, 35.5, 11.8, "29.2 proj."],
-    ["Perceived, dense 160x120", 48.8, 0.6, 41.4, 4.1, "26.4 proj."],
+    ["No added error", "—", "46.2", "48.1", "3.2"],
+    ["Body tracker", "", "", "", ""],
+    ["Landmark labels swapped (% of control steps)", "3.5", "44.9", "47.4", "3.8"],
+    ["", "8.2", "42.3", "45.5", "6.4"],
+    ["Shoulder and wrist inverted (% of control steps)", "3.5", "44.2", "46.2", "3.8"],
+    ["Landmark dropout (% per landmark and control step)", "0.5", "44.9", "46.8", "2.6"],
+    ["", "2.5", "44.9", "47.4", "3.2"],
+    ["", "7.5", "45.5", "46.8", "2.6"],
+    ["Skeleton loss (% per control step)", "0.35", "44.9", "46.8", "3.2"],
+    ["", "2.0", "43.6", "45.5", "2.6"],
+    ["", "5.5", "42.9", "45.5", "3.2"],
+    ["Landmark delay (ms)", "300", "46.8", "48.7", "3.8"],
+    ["", "500", "48.1", "50.0", "4.5"],
+    ["", "800", "42.3", "46.2", "4.5"],
+    ["Depth camera", "", "", "", ""],
+    ["Dark returns dropped (%)", "10", "46.2", "48.7", "4.5"],
+    ["", "50", "43.6", "46.8", "5.8"],
+    ["Flying pixels (% of edge pixels)", "1", "40.4", "41.7", "3.2"],
+    ["", "10", "19.9", "20.5", "3.2"],
+    ["", "100", "0.6", "0.6", "10.9"],
+    ["Kinect-v2 noise model", "—", "49.4", "50.6", "3.2"],
   ]}
 />
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/percep_rob_flying.mp4", label: "Designed, motion (e): flying pixels, 100% of edge pixels" },
+    { src: "/projects/sgm-preview-7a2f/videos/percep_rob_swapped.mp4", label: "Designed, motion (d), slower copy: landmark labels swapped, 8.2% of control steps" },
+    { src: "/projects/sgm-preview-7a2f/videos/percep_rob_dark.mp4", label: "Designed, motion (c), slower copy: dark returns dropped, 50%" },
+  ]}
+  caption="Perception robustness. Each clip shows the sparse pipeline with no added error beside the sparse pipeline with one error. The translucent capsules are the ones the filter received, recomputed from the recorded run."
+/>
+
+#### Pipeline parameters
 
 <ResultsTable
-  caption="Table 3b. All three placements of the CBF, designed dynamic scenes, perceived obstacle (n = 160). Clr mean is over all 160 cells, Worst is the worst-case clearance in metres, negative is penetration. Hybrid at the dense grid is the only cell in the entire 2280-cell campaign with zero penetration and a positive worst-case clearance. The most conservative method paired with the best sensor is the one configuration that never touches the obstacle."
-  headers={["Method", "Grid", "S-Succ % ↑", "Pen % ↓", "Clr mean (mm)", "Worst (m)"]}
+  caption="Parameters of the simulated perception pipeline."
+  headers={["Parameter", "Value"]}
   rows={[
-    ["Filter", "sparse", 50.6, 1.9, 156.7, "-0.010"],
-    ["Hybrid", "sparse", 34.4, 1.9, 165.7, "-0.015"],
-    ["Guidance", "sparse", 31.2, 48.1, 128.3, "-0.086"],
-    ["Filter", "dense", 48.8, 0.6, 158.3, "-0.008"],
-    ["Hybrid", "dense", 33.1, 0.0, 168.3, "+0.009"],
-    ["Guidance", "dense", 33.8, 41.2, 131.5, "-0.068"],
+    ["Depth cameras", ""],
+    ["Cameras", "2"],
+    ["Position", "(0, ±1.2, 1.5) m"],
+    ["Target", "(0, 0, 0.9) m"],
+    ["Vertical field of view", "60°"],
+    ["Ray grid, sparse", "40×30"],
+    ["Ray grid, dense", "160×120"],
+    ["Depth noise, standard deviation (% of the depth)", "0.5"],
+    ["Segmentation", "exact"],
+    ["Skeleton tracker", ""],
+    ["Landmarks", "11"],
+    ["Landmark noise", "Azure Kinect body tracker"],
+    ["Noise scale when hidden, proximal", "2.5"],
+    ["Noise scale when hidden, distal", "4"],
+    ["Track loss probability", "0.0005 per control step"],
+    ["Track loss duration", "6 control steps"],
+    ["Landmark delay", "200 ms"],
+    ["Capsule fit", ""],
+    ["Segments", "7"],
+    ["Minimum points per capsule", "5"],
+    ["Averaging window", "5 control steps"],
+    ["Velocity window", "9 control steps"],
   ]}
 />
-
-#### The stress set, and how much sensing matters
-
-The gold/silver stress set of 22 curated poses is built so the frozen generator is forced to penetrate. All three placements are evaluated at both grids.
-
-<ResultsTable
-  caption="Table 3c. All three placements, gold/silver stress set, perceived obstacle (n = 220). On this tight set the filter loses safety to sparse perception (penetration 11.8%) and denser sensing buys it back (4.1%). Hybrid is again the most conservative method by penetration, at the cost of the most completions."
-  headers={["Method", "Grid", "S-Succ % ↑", "Pen % ↓", "Clr mean (mm)", "Worst (m)"]}
-  rows={[
-    ["Filter", "sparse", 35.5, 11.8, 32.5, "-0.047"],
-    ["Hybrid", "sparse", 19.1, 1.4, 63.6, "-0.009"],
-    ["Guidance", "sparse", 27.3, 26.4, 33.0, "-0.124"],
-    ["Filter", "dense", 41.4, 4.1, 43.7, "-0.031"],
-    ["Hybrid", "dense", 17.3, 0.5, 68.0, "-0.026"],
-    ["Guidance", "dense", 24.1, 23.2, 37.6, "-0.134"],
-  ]}
-/>
-
-How much sensing matters is a condition, not a fixed trade. When the sensor already resolves the obstacle well enough for the motion at hand, extra rays buy only standoff, and standoff costs completions. When it does not, the extra rays buy back the episodes being lost to a wrong obstacle, and there is no trade. On the designed set the two grids are statistically indistinguishable on safe-success, 65 episodes safe under both, 16 lost by going dense and 13 gained, exact McNemar p = 0.71. Every one of those 16 lost episodes failed on task completion rather than collision, each with positive clearance in the dense run. On the tight stress set the effect is real, safe-success 8 lost and 21 gained (p = 0.024), penetration 21 fixed and 4 broken (p = 0.0009). The campaign is not powered to prove equivalence, so the designed-set nulls read as no difference detected rather than as sameness.
 
 </Tab>
 
 <Tab id="crossembod">
 
-### Cross-embodiment transfer
+### Other robots
 
-The same generator-agnostic whole-arm MPC-CBF filter, with no robot-specific edits, transfers to the UR5e (6-DOF), the KUKA IIWA (7-DOF), and the Kinova Gen3 (7-DOF), and it collapses penetration on every arm.
+We evaluate the safety layer on three other arms, a UR5e, a KUKA IIWA and a Kinova Gen3. We build the capsule set of each arm in the same way as for the Panda robot. For each arm, we train a Diffusion Policy on 1,000 demonstrations of the pick-and-place task from a scripted policy, 900 for training and 100 for validation, and we evaluate it on the designed and stress sets of the pick-and-place task.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_crossembod_setup.webp" alt="Three other robots in the pick-and-place scenario" caption="The pick-and-place scenario with three other robots: (a) the UR5e, (b) the KUKA IIWA and (c) the Kinova Gen3, each with a Robotiq gripper. The human arm is the obstacle, and its hand moves back and forth along the cyan arrow. The translucent copy shows the other end of the motion." />
+
+#### Obstacle scenes
+
+These arms use the designed and stress sets of the pick-and-place task. The scene galleries are in the Pick-and-place tab.
+
+#### Results
+
+<ResultsTable
+  caption="Three other arms pick and place a can, each with its own Diffusion Policy, while the human arm moves over the task (designed set) or holds a static pose (stress set). Safe-Succ., safe success. Coll., collision rate. Rates in %."
+  headers={["Robot", "Method", "Designed n", "Designed Safe-Succ.↑", "Designed Success↑", "Designed Coll.↓", "Stress n", "Stress Safe-Succ.↑", "Stress Success↑", "Stress Coll.↓"]}
+  rows={[
+    ["UR5e", "Frozen generator", "160", "13.8", "60.0", "73.8", "203", "0.0", "65.0", "97.5"],
+    ["UR5e", "Filter (ours)", "160", "36.9", "36.9", "0.6", "203", "7.9", "7.9", "2.0"],
+    ["KUKA IIWA", "Frozen generator", "156", "22.4", "75.0", "71.8", "193", "6.2", "81.9", "88.1"],
+    ["KUKA IIWA", "Filter (ours)", "156", "37.2", "37.8", "0.6", "193", "10.4", "10.4", "1.0"],
+    ["Kinova Gen3", "Frozen generator", "158", "12.7", "62.7", "69.0", "203", "11.3", "71.4", "78.8"],
+    ["Kinova Gen3", "Filter (ours)", "158", "19.0", "21.5", "6.3", "203", "9.4", "10.3", "13.3"],
+  ]}
+/>
 
 <VideoGrid
   items={[
-    { src: "/projects/sgm-preview-7a2f/videos/crossembod_ur5e_dyn_armlink_v2_seed6_mpc_filter.mp4", label: "UR5e" },
-    { src: "/projects/sgm-preview-7a2f/videos/crossembod_iiwa_dyn_armlink_v2_seed9_mpc_filter.mp4", label: "KUKA IIWA" },
-    { src: "/projects/sgm-preview-7a2f/videos/crossembod_kinova3_dyn_armlink_v1_seed6_mpc_filter.mp4", label: "Kinova Gen3" },
+    { src: "/projects/sgm-preview-7a2f/videos/cross_ur5e_designed_a.mp4", label: "UR5e, designed, motion (a)" },
+    { src: "/projects/sgm-preview-7a2f/videos/cross_iiwa_designed_b.mp4", label: "KUKA IIWA, designed, motion (b)" },
+    { src: "/projects/sgm-preview-7a2f/videos/cross_kinova_designed_d.mp4", label: "Kinova Gen3, designed, motion (d)" },
   ]}
-  caption="The whole-arm filter retargeted to three additional arms with no robot-specific source edit."
+  caption="Designed set, frozen generator on the left and our filter on the right."
 />
 
-<ResultsTable
-  caption="Table 4a. Cross-embodiment transfer, designed dynamic matrix (n = 160 per arm). Frozen generator vs. the whole-arm filter; same generator-agnostic whole-arm MPC-CBF filter, no robot-specific source edits. Filter checkpoint iteration noted per arm (@Nk)."
-  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑", "Δ Safe vs frozen"]}
-  rows={[
-    ["UR5e", "Frozen Generator", 63.8, 45.6, 36.2, "—"],
-    ["UR5e", "Filter @20k", 32.5, 0.0, 32.5, "-3.7 (edge case)"],
-    ["KUKA IIWA", "Frozen Generator", 57.5, 56.2, 20.0, "—"],
-    ["KUKA IIWA", "Filter @10k", 29.4, 6.9, 25.6, "+5.6 (HOLDS)"],
-    ["Kinova Gen3", "Frozen Generator", 55.6, 48.1, 20.0, "—"],
-    ["Kinova Gen3", "Filter @25k", 26.9, 13.1, 23.8, "+3.8 (HOLDS)"],
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/cross_ur5e_stress_1d.mp4", label: "UR5e, stress, pose 1d" },
+    { src: "/projects/sgm-preview-7a2f/videos/cross_iiwa_stress_1j.mp4", label: "KUKA IIWA, stress, pose 1j" },
+    { src: "/projects/sgm-preview-7a2f/videos/cross_kinova_stress_1d.mp4", label: "Kinova Gen3, stress, pose 1d" },
   ]}
-/>
-
-<ResultsTable
-  caption="Table 4b. Cross-embodiment transfer, gold/silver stress set (n = 220 per arm). Static curated poses (no obstacle motion); penetration is the primary axis. A Panda reference row (paper number, n = 220) is included for scale."
-  headers={["Arm", "Method", "Success %", "Penetration % (d<0) ↓", "Safe-Succ % ↑", "Δ Safe vs frozen"]}
-  rows={[
-    ["UR5e", "Frozen Generator", 65.9, 88.6, 4.5, "—"],
-    ["UR5e", "Filter @20k", 5.0, 5.5, 5.0, "+0.5"],
-    ["KUKA IIWA", "Frozen Generator", 71.8, 88.2, 6.4, "—"],
-    ["KUKA IIWA", "Filter @10k", 7.3, 9.1, 7.3, "+0.9"],
-    ["Kinova Gen3", "Frozen Generator", 55.9, 75.5, 8.2, "—"],
-    ["Kinova Gen3", "Filter @25k", 8.6, 15.5, 8.6, "+0.4"],
-    ["Panda (paper ref)", "DP Filter", 47.7, 0.0, 47.7, "—"],
-  ]}
+  caption="Stress set, frozen generator on the left and our filter on the right."
 />
 
 </Tab>
 
-<Tab id="safelibero">
+<Tab id="nut">
 
-### SafeLIBERO: safety on a frozen pi0.5 VLA
+### Nut assembly task
 
-The same filter also wraps a frozen pi0.5 vision-language-action policy on LIBERO tasks, without retraining the policy. The VLA's end-effector action is bridged into the filter by differential inverse kinematics, and the filter cuts physical arm-collision accordingly. Two metrics are reported per suite: TSR, task success rate, and CAR, collision-avoidance rate, where a higher CAR means fewer collisions.
+NutAssemblySquare is a second task, in which the robot picks a square nut and places it on a peg. We repeat the protocol of the pick-and-place scenario with Diffusion Policy only, trained on the RoboMimic demonstrations of this task. The human arm is the obstacle, and we use two sets of obstacle scenes. The designed set is eight motions of the human arm and a faster copy of six of them, and the stress set is 22 static poses at two levels of difficulty.
 
-One representative scenario from each of the four suites is shown below, bare frozen policy versus the same policy under our filter.
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_nut_setup.webp" alt="Nut assembly setup figure" caption="The nut assembly scenario. The robot picks the square nut and places it on the square peg. In this scene of the designed set, the human arm starts beside the gripper, and its hand moves across the peg side of the table along the cyan arrow." />
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_bare.mp4", label: "Frozen pi0.5 (bare)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_object_milk_whole_arm_mpc.mp4", label: "Filter (ours)" }}
-  caption="Object suite, milk — the filter is wrapped around the frozen policy with no retraining."
-/>
+#### Obstacle scenes
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_cabinet_bare.mp4", label: "Frozen pi0.5 (bare)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_spatial_bowl_on_cabinet_whole_arm_mpc.mp4", label: "Filter (ours)" }}
-  caption="Spatial suite, bowl-on-cabinet — the bare policy clips the scene furniture; the filter reroutes the whole arm."
-/>
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_nut_designed.webp" alt="Nut designed-set gallery" caption="The designed set of the nut assembly scenario. Each panel, (a) to (h), shows one of the eight motions of the human arm at the start of seed 0, with translucent copies of later poses and the path of its hand in cyan. The faster copies follow the same paths and are not shown." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_nut_stress.webp" alt="Nut stress-set gallery" caption="The stress set of the nut assembly scenario. Each panel shows one static pose of the human arm at the start of seed 0, with the first level in panels 1a to 1k and the second level in panels 2a to 2j, separated by a line. The eleventh pose of the second level is excluded at every seed and is not shown." />
 
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_cream_cheese_bare.mp4", label: "Frozen pi0.5 (bare)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_goal_cream_cheese_whole_arm_mpc.mp4", label: "Filter (ours)" }}
-  caption="Goal suite, cream-cheese — the end-effector action is bridged into the filter by differential inverse kinematics."
-/>
-
-<VideoCompare
-  left={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_long_scene6_white_mug_bare.mp4", label: "Frozen pi0.5 (bare)" }}
-  right={{ src: "/projects/sgm-preview-7a2f/videos/safelibero_long_scene6_white_mug_whole_arm_mpc.mp4", label: "Filter (ours)" }}
-  caption="Long suite, white-mug — a long-horizon task where the filter holds safety across the full sequence."
-/>
+#### Results
 
 <ResultsTable
-  caption="Table 5a. SafeLIBERO per-suite TSR / CAR (%), frozen pi0.5 VLA, n = 400 per suite per arm. Higher CAR = fewer collisions. AEGIS repro is a faithful single-end-effector-ellipsoid CBF reproduction (a baseline, not one of our path methods); Filter is the whole-arm HOCBF (ours), fixed post-fix run."
-  headers={["Suite", "Frozen Generator (bare) TSR", "Frozen Generator (bare) CAR", "AEGIS repro (ee_cbf_osc) TSR", "AEGIS repro (ee_cbf_osc) CAR", "Filter (whole_arm_mpc, ours) TSR", "Filter (whole_arm_mpc, ours) CAR"]}
+  caption="Diffusion Policy places a square nut on a peg while the human arm moves over the task (designed set) or holds a static pose (stress set). Safe-Succ., safe success. Coll., collision rate. Rates in %. Guidance runs with half of its pick-and-place guidance scale, a compromise between the two sets."
+  headers={["Method", "Designed Safe-Succ.↑ (124)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (208)", "Stress Success↑", "Stress Coll.↓"]}
   rows={[
-    ["Object", 49.0, 22.8, 63.2, 70.8, 38.5, 94.0],
-    ["Spatial", 61.8, 26.2, 64.8, 81.8, 42.0, 96.2],
-    ["Goal", 60.5, 17.5, 68.5, 82.5, 34.2, 97.5],
-    ["Long", 27.5, 17.2, 23.8, 79.0, 11.0, 85.8],
-    ["Macro", 49.7, 20.9, 55.1, 78.5, 31.4, 93.4],
+    ["Frozen generator", "8.1", "58.1", "83.9", "28.8", "74.5", "61.5"],
+    ["CBF-QP", "13.7", "58.1", "70.2", "21.6", "55.3", "57.2"],
+    ["Guidance (ours)", "21.8", "24.2", "13.7", "6.7", "6.7", "4.8"],
+    ["Hybrid (ours)", "37.1", "37.9", "0.8", "26.4", "26.4", "1.4"],
+    ["Filter (ours)", "41.1", "41.1", "0.0", "31.3", "31.3", "1.9"],
   ]}
 />
 
-<ResultsTable
-  caption="Table 5b. SafeLIBERO macro physical arm-collision + Safe-Success (%), macro of 4 suites (n = 1600). Physical = actual robot-arm-geom vs. obstacle-box-geom penetration via exact MuJoCo geom-distance, runtime ticks only; non-EE = robot links only, all-arm = plus gripper. This is the source of the paper's headline collision-rate column (all-arm)."
-  headers={["Arm", "TSR %", "CAR %", "Phys armcol non-EE % ↓", "Phys armcol all-arm % ↓", "SafeSucc (phys, non-EE) %", "SafeSucc (phys, all-arm) %"]}
-  rows={[
-    ["Frozen Generator (bare)", 49.7, 20.9, 13.5, 67.2, 42.4, 22.9],
-    ["AEGIS repro (ee_cbf_osc)", 55.1, 78.5, 11.4, 15.7, 51.4, 48.9],
-    ["Filter (whole_arm_mpc, ours)", 31.4, 93.4, 0.6, 2.5, 31.4, 30.8],
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/nut_designed_a.mp4", label: "Designed, motion (a)" },
+    { src: "/projects/sgm-preview-7a2f/videos/nut_designed_d.mp4", label: "Designed, motion (d)" },
+    { src: "/projects/sgm-preview-7a2f/videos/nut_stress_2e.mp4", label: "Stress, pose 2e" },
+    { src: "/projects/sgm-preview-7a2f/videos/nut_stress_1g.mp4", label: "Stress, pose 1g" },
   ]}
+  caption="Nut assembly, frozen generator on the left and our filter on the right."
+/>
+
+<VideoGrid
+  items={[{ src: "/projects/sgm-preview-7a2f/videos/nut_fivepanel_c.mp4", label: "Designed, motion (c)" }]}
+  caption="Nut assembly, designed motion (c). Five panels: frozen generator, the published CBF-QP, Guidance (ours), Hybrid (ours) and Filter (ours)."
 />
 
 </Tab>
 
-<Tab id="scenes">
+<Tab id="vla">
 
-### Per-scene placement gallery
+### VLA policies
 
-Every scene's start/finish placement composite, across three cameras, with swept-motion traces: magenta marks the obstacle path, orange the frozen-generator end-effector trace, and cyan the filter end-effector trace.
+VLA policies output end-effector actions. The interface converts these actions into joint increments for the filter, and converts the filtered command back.
 
-#### Designed dynamic scenes (16)
+#### SafeLIBERO
 
-<Gallery scenes={dynamicScenes} />
+SafeLIBERO adds static obstacles to 32 scenarios of the LIBERO benchmark, with 50 episodes each. The policy is π0.5, with its public checkpoint for LIBERO, and it acts on the translation of the end effector, as in the evaluation of AEGIS. As in that evaluation, the filter receives the obstacle from perception on the camera images, not from the simulator. At the start of each episode it detects the obstacle on the rendered camera images, turns the depth inside the detection into points, and fits one capsule around them.
 
-#### Gold/silver stress scenes (22)
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_safelibero_setup.webp" alt="SafeLIBERO setup figure" caption="An example of the SafeLIBERO scenario. The robot picks the bowl on the ramekin, and a static red mug is the obstacle. The filter does not use the ground-truth pose of the obstacle. At the start of each episode, it detects the mug on the rendered camera images, turns the depth inside the detection into points (orange), and fits one capsule around them (cyan). The inset shows the camera view with the extent of the detected points." />
 
-<Gallery scenes={goldSilverScenes} />
+The SafeLIBERO scenarios are described on the [benchmark project page](https://vlsa-aegis.github.io/).
+
+<ResultsTable
+  caption="π0.5 performs 32 SafeLIBERO tasks with a static obstacle, which the filter perceives from the camera images. CAR, collision avoidance rate, episodes in which the obstacle moves by 1 mm or less. TSR, task success rate. Coll., collision rate. Rates in %."
+  headers={["Method", "CAR↑ (Episodes 1,527)", "TSR↑", "Coll.↓"]}
+  rows={[
+    ["Frozen π0.5", "20.8", "49.8", "68.2"],
+    ["AEGIS, reported", "77.9", "68.1", "—"],
+    ["AEGIS, our reproduction", "79.6", "55.5", "15.3"],
+    ["Filter (ours), 1 mm margin", "79.3", "52.7", "13.5"],
+    ["Filter (ours)", "94.0", "30.6", "2.0"],
+  ]}
+/>
+
+*On the clip plates, each panel reads either no collision or the overlap depth in millimetres.*
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/vla_sl_goal.mp4", label: "Goal suite: open the top drawer and put the bowl inside" },
+    { src: "/projects/sgm-preview-7a2f/videos/vla_sl_long.mp4", label: "Long suite: put both the alphabet soup and the cream cheese box in the basket" },
+    { src: "/projects/sgm-preview-7a2f/videos/vla_sl_object.mp4", label: "Object suite: pick up the bbq sauce and place it in the basket" },
+  ]}
+  caption="SafeLIBERO, three panels: Frozen π0.5, AEGIS our reproduction, and Filter (ours). Only the filter panel shows the perceived capsule, because the AEGIS run perceived the obstacle live and did not record it."
+/>
+
+#### LIBERO-Safety
+
+LIBERO-Safety is a separate benchmark, which we did not build, and whose obstacles can move. The policy is π0.5, fine-tuned on this benchmark. We run its 48 scenes with an obstacle, 13 of them with a moving obstacle, each from the 50 initial states of the benchmark. The filter reads the pose of the obstacle from the simulator and, on the scenes where the obstacle moves, predicts its motion from the velocity the benchmark declares. On the 13 scenes with a moving obstacle, the frozen policy collides in 15.2% of the episodes, against 39.8% on the static scenes, so the moving obstacles of the benchmark reach the robot less often than the static ones. We therefore author two scenes in which a human hand moves in over the task and back, so that the moving obstacle reaches the robot.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_liberosafety_setup.webp" alt="LIBERO-Safety setup figure" caption="An example of the LIBERO-Safety scenario, in one of the two scenes that we authored. A human hand, the obstacle, moves in over the basket and back along the cyan arrow. The translucent copy shows the hand at its closest point." />
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_gallery_liberosafety.webp" alt="Authored LIBERO-Safety scenes gallery" caption="The two LIBERO-Safety scenes that we authored, (a) the soup scene and (b) the bowl scene. In each, a human hand moves in over the task along the cyan arrow and back." />
+
+The LIBERO-Safety scenes are described on the [benchmark project page](https://libero-safety.github.io/).
+
+<ResultsTable
+  caption="A fine-tuned π0.5 performs the LIBERO-Safety tasks, in the 48 scenes of the benchmark and in two scenes that we authored with a moving hand. Safe-Succ., safe success. Coll., collision rate. Rates in %. Task success is scored on 2,222 benchmark episodes."
+  headers={["Method", "Benchmark Safe-Succ.↑ (2,372)", "Benchmark Success↑", "Benchmark Coll.↓", "Authored Safe-Succ.↑ (100)", "Authored Success↑", "Authored Coll.↓"]}
+  rows={[
+    ["Frozen π0.5", "13.5", "17.8", "33.3", "15.0", "72.0", "74.0"],
+    ["Filter (ours)", "12.7", "12.7", "1.7", "73.0", "75.0", "4.0"],
+  ]}
+/>
+
+*On the clip plates, each panel shows the signed clearance in millimetres.*
+
+<VideoGrid
+  items={[
+    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_authored_bowl.mp4", label: "Authored bowl scene" },
+    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_authored_soup.mp4", label: "Authored soup scene" },
+    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_bench_banana.mp4", label: "Benchmark, moving obstacle: pick up the banana and put it on the plate in my hand" },
+    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_bench_hammer.mp4", label: "Benchmark, static obstacle: pass me the hammer" },
+    { src: "/projects/sgm-preview-7a2f/videos/vla_ls_bench_soda.mp4", label: "Benchmark, static obstacle: pick up the can of soda and put it on the plate in my hand" },
+  ]}
+  caption="LIBERO-Safety, frozen π0.5 on the left and our filter on the right. The two authored scenes, one benchmark scene with a moving obstacle, and two benchmark scenes with a static obstacle."
+/>
+
+</Tab>
+
+<Tab id="hardware">
+
+### Real robot
+
+We run the safety layer on a real robot, a Realman RM65-BI arm with six joints. We fit its capsules to its collision meshes in the same way as for the simulated arms, and the filter protects the whole arm. A depth camera above the workspace observes the obstacle, a hand model that an operator moves on a rod, and the filter receives it as one capsule at each control step. In three hold runs, the arm holds a pose while the operator pushes the obstacle at it. In six reach runs, a diffusion planner trained on a reach task moves the arm between two targets while the obstacle is pushed at it.
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_setup.webp" alt="Hardware setup figure" caption="The hardware setup. A Realman RM65-BI arm moves between two targets, A and B, while an operator pushes an obstacle toward it. The left panel shows the workspace, and the right panel shows the view of the overhead depth camera with the tracked obstacle." />
+
+<ResultsTable
+  caption="The real Realman RM65-BI robot holds a pose (H) or reaches between two targets (P) while an obstacle is pushed at it. Limit, filter velocity limit. Laps, arrivals at a target. Tracked, control steps in which the obstacle is tracked. Solve and Plan, median time of one filter solve and of one motion plan."
+  headers={["Run", "Control steps", "Limit (°/s)", "Laps", "Tracked (%)", "Median (ms)", "p95 (ms)", "Over 50 ms (%)", "Solve (ms)", "Plan (ms)"]}
+  rows={[
+    ["H1", "500", "10", "—", "64.6", "35.0", "53.9", "13.0", "6.69", "—"],
+    ["H2", "500", "10", "—", "86.8", "35.0", "48.1", "3.2", "6.65", "—"],
+    ["H3", "500", "10", "—", "65.0", "29.7", "41.2", "2.8", "6.69", "—"],
+    ["P2", "2000", "20", "4", "44.8", "31.8", "94.4", "21.3", "6.52", "58.7"],
+    ["P3", "800", "20", "1", "56.3", "31.4", "92.2", "20.8", "6.56", "58.5"],
+    ["P4", "1000", "20", "2", "60.0", "31.2", "91.7", "20.7", "6.43", "58.0"],
+    ["P5", "1000", "20", "2", "38.5", "30.7", "93.8", "20.9", "6.51", "59.8"],
+    ["P6", "1000", "20", "2", "74.5", "32.4", "94.1", "20.9", "6.64", "58.7"],
+    ["P7", "1000", "20", "1", "54.8", "32.5", "93.5", "20.5", "6.32", "58.2"],
+  ]}
+/>
+
+<ResultsTable
+  caption="Settings of the hardware experiment with the Realman RM65-BI arm. The calibration error is the mean ± the standard deviation over 200 held-out splits. The other parameters of the filter are those of the article."
+  headers={["Parameter", "Value"]}
+  rows={[
+    ["Robot and filter", ""],
+    ["Joints", "6"],
+    ["Capsules", "7 (6 links and the base)"],
+    ["Control period", "50 ms"],
+    ["Filter velocity limit, hold runs", "10°/s"],
+    ["Filter velocity limit, reach runs", "20°/s"],
+    ["Culling distance", "0.6 m"],
+    ["Joint-limit margin", "2°"],
+    ["Perception", ""],
+    ["Camera", "Intel RealSense D435"],
+    ["Colour resolution", "1280×720"],
+    ["Depth resolution", "848×480"],
+    ["Frame rate", "30 fps"],
+    ["Calibration poses", "204"],
+    ["Calibration error, held-out", "2.97 ± 0.44 mm"],
+    ["Obstacle", "3D-printed hand model"],
+    ["Obstacle extent, median", "120×139×68 mm"],
+    ["Obstacle capsule radius, median", "63 mm"],
+    ["Tracker coasting limit", "0.5 s"],
+    ["Runs", ""],
+    ["Replanning interval of the reach planner", "5 control steps"],
+    ["Distance between targets", "492 mm"],
+    ["Arrival tolerance", "0.05 m"],
+    ["Excluded runs", "1"],
+  ]}
+/>
+
+Each clip is a panel of four views. The top row shows the workspace camera and the overhead camera with the perceived obstacle points. The bottom row shows two simulation views of the arm at its recorded joint angles with the perceived points and capsule, which is what the controller receives.
+
+<VideoGrid
+  items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_H3.mp4", label: "Hold run H3" }]}
+  caption="Hold run H3. 500 control steps at a 10°/s filter velocity limit, the obstacle tracked on 65.0% of control steps, a median control-step time of 29.7 ms with 2.8% of control steps over the 50 ms budget, and a median filter solve of 6.69 ms."
+/>
+
+<VideoGrid
+  items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_P2.mp4", label: "Reach run P2" }]}
+  caption="Reach run P2. 2000 control steps over 4 laps at a 20°/s filter velocity limit, the obstacle tracked on 44.8% of control steps, a median control-step time of 31.8 ms with 21.3% of control steps over the 50 ms budget, a median filter solve of 6.52 ms and a median motion plan of 58.7 ms."
+/>
+
+<VideoGrid
+  items={[{ src: "/projects/sgm-preview-7a2f/videos/hw_P6.mp4", label: "Reach run P6" }]}
+  caption="Reach run P6. 1000 control steps over 2 laps at a 20°/s filter velocity limit, the obstacle tracked on 74.5% of control steps, a median control-step time of 32.4 ms with 20.9% of control steps over the 50 ms budget, a median filter solve of 6.64 ms and a median motion plan of 58.7 ms."
+/>
+
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_hold.webp" alt="Hold run deviation figure" caption="A hold run. The arm moves away from its held pose when the obstacle approaches, by 16.3° at 11.0 s, and returns to it once the obstacle moves away. Each panel reports the time and the deviation from the held pose." />
+<Figure src="/projects/sgm-preview-7a2f/figures/fig_hardware_reach.webp" alt="Reach run overhead figure" caption="A reach run, seen from the overhead camera. The diffusion planner drives the arm from target A to target B, 492 mm apart, while the obstacle is pushed at it. The arm arrives within 49 mm of target B at 17.5 s." />
+
+**Full clip inventory** (external archive, link coming soon).
 
 </Tab>
 
@@ -460,4 +1094,4 @@ Every scene's start/finish placement composite, across three cameras, with swept
 
 ## Closing note
 
-This is an anonymous preview page hosted alongside a paper under double-anonymous review. It shows a curated subset of the supplementary qualitative results and the two headline result tables; it is not indexed and is not linked from the site's public project listing.
+The numbers on this page come from the tables of the paper, and each clip shows one episode.

@@ -95,21 +95,15 @@ test('a project detail page renders its hero, table, and links', async ({ page }
   await expect(page.getByRole('link', { name: 'Paper', exact: true })).toBeVisible();
 });
 
-test('an unlisted project page is password-gated and absent from the projects index', async ({ page }) => {
+test('an unlisted project page is reachable without a gate and absent from the projects index', async ({ page }) => {
   await page.goto('/en/projects/sgm-preview-7a2f/');
-  // The password gate is shown; the real content is hidden behind it.
-  await expect(page.getByRole('heading', { name: 'Private preview' })).toBeVisible();
-  await expect(page.getByLabel('Password')).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Safe Generative Motion/ })).toBeHidden();
-  // Entering the correct password unlocks the page and reveals the content.
-  // NOTE: keep this in sync with `passwordHash` in sgm-preview-7a2f.mdx
-  // (sha256 of this string). If you change the page password, update it here.
-  await page.getByLabel('Password').fill('safe-motion-2026');
-  await page.getByRole('button', { name: 'Unlock' }).click();
-  await expect(page.getByRole('heading', { name: /Safe Generative Motion/ })).toBeVisible();
-  // It stays absent from the public projects index regardless.
+  // No password gate: the real content is visible directly.
+  await expect(page.getByRole('heading', { name: /PRESAGE/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Private preview' })).toHaveCount(0);
+  await expect(page.getByLabel('Password')).toHaveCount(0);
+  // It stays absent from the public projects index because it is unlisted.
   await page.goto('/en/projects/');
-  await expect(page.getByRole('link', { name: /Safe Generative Motion/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /PRESAGE/ })).toHaveCount(0);
 });
 
 test('an old Jekyll publication URL redirects to the new Astro page', async ({ page }) => {
