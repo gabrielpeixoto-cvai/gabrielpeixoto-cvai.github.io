@@ -364,7 +364,7 @@ In the pick-and-place scenario, the Panda robot picks a can from a box and place
 
 <ResultsTable
   caption="The generators pick and place a can while the human arm moves over the task (designed set) or holds a static pose (stress set). Gen., generator family: Diffusion Policy (DP), diffusion planner (DDPM) or flow matching (FM), with absolute joint targets (abs) or joint increments (delta). Safe-Succ., safe success. Coll., collision rate. Max-slk, maximum slack. Dev-pk, peak deviation. Ctrl, control rate. Rates in %."
-  headers={["Method", "Gen.", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll.", "Designed Max-slk (mm)", "Designed Dev-pk (mm)", "Stress Safe-Succ. (205)", "Stress Success", "Stress Coll.", "Stress Max-slk (mm)", "Stress Dev-pk (mm)", "Ctrl (Hz)"]}
+  headers={["Method", "Gen.", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Designed Max-slk↓ (mm)", "Designed Dev-pk↓ (mm)", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓", "Stress Max-slk↓ (mm)", "Stress Dev-pk↓ (mm)", "Ctrl (Hz)"]}
   rows={[
     ["Frozen generator", "DP abs", "20.5", "84.6", "76.3", "—", "—", "16.6", "80.0", "82.4", "—", "—", "57.1"],
     ["CBF-QP", "FM delta", "30.8", "69.2", "59.6", "—", "62", "13.7", "79.5", "84.9", "—", "62", "46.7"],
@@ -408,7 +408,7 @@ The stress set was selected by a screen that used the filter, so we also ran a c
 
 <ResultsTable
   caption="The generators pick and place a can while the human arm holds a static pose of the control set. Safe-Succ., safe success. Coll., collision rate. Rates in %."
-  headers={["Method", "Gen.", "Control Safe-Succ. (587)", "Control Success", "Control Coll."]}
+  headers={["Method", "Gen.", "Control Safe-Succ.↑ (587)", "Control Success↑", "Control Coll.↓"]}
   rows={[
     ["Frozen generator", "DP abs", "8.3", "78.4", "90.6"],
     ["Filter (ours)", "DP abs", "24.2", "24.2", "0.0"],
@@ -427,7 +427,7 @@ The stress set was selected by a screen that used the filter, so we also ran a c
 
 <ResultsTable
   caption="Ablation of our filter in the pick-and-place scenario with Diffusion Policy. A cross marks a removed component. Safe-Succ., safe success. Coll., collision rate. Rates in %."
-  headers={["Whole arm", "Prediction", "Horizon (control steps)", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll.", "Stress Safe-Succ. (205)", "Stress Success", "Stress Coll."]}
+  headers={["Whole arm", "Prediction", "Horizon (control steps)", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓"]}
   rows={[
     ["✓", "✓", "8", "61.5", "61.5", "0.0", "47.8", "47.8", "0.0"],
     ["✗", "✓", "8", "39.7", "68.6", "43.6", "42.9", "56.1", "32.7"],
@@ -451,7 +451,7 @@ We add the components of our filter to the published CBF-QP, in the same task, w
 
 <ResultsTable
   caption="Results of the augmentation experiment in the pick-and-place scenario. Each row is our filter or the augmented CBF-QP, with Diffusion Policy (DP abs) or flow matching with joint increments (FM delta). For the designed set (156 episodes) and the stress set (205), the columns present safe success, task success and collision rate in %."
-  headers={["Method", "Gen.", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll.", "Stress Safe-Succ. (205)", "Stress Success", "Stress Coll."]}
+  headers={["Method", "Gen.", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓"]}
   rows={[
     ["Filter (ours)", "DP abs", "61.5", "61.5", "0.0", "47.8", "47.8", "0.0"],
     ["CBF-QP, augmented", "DP abs", "66.7", "66.7", "0.6", "40.0", "40.0", "0.5"],
@@ -462,7 +462,7 @@ We add the components of our filter to the published CBF-QP, in the same task, w
 
 <ResultsTable
   caption="Results of the knock experiment with Diffusion Policy on the stress set of the pick-and-place scenario (205 episodes). Each row is a configuration of our filter or the augmented CBF-QP. With CBF-QP tracking, our filter follows the motion plan as the CBF-QP does. The columns present safe success, task success, collision rate and can knocks in %. A can knock is an episode in which the can moves by more than 5 mm before the first command to close the gripper."
-  headers={["Method", "Safe-Succ.", "Success", "Coll.", "Can knocks"]}
+  headers={["Method", "Safe-Succ.↑", "Success↑", "Coll.↓", "Can knocks↓"]}
   rows={[
     ["Frozen generator", "16.6", "80.0", "82.4", "8.8"],
     ["Filter (ours)", "47.8", "47.8", "0.0", "7.8"],
@@ -497,7 +497,7 @@ We repeat the comparison with a single convex obstacle in the task, a sphere of 
 
 <ResultsTable
   caption="The generators pick and place a can while a single convex obstacle moves in the task space. Gen., generator family, as in the comparison table. Safe-Succ., safe success. Coll., collision rate. Rates in %."
-  headers={["Method", "Gen.", "Convex Safe-Succ. (94)", "Convex Success", "Convex Coll."]}
+  headers={["Method", "Gen.", "Convex Safe-Succ.↑ (94)", "Convex Success↑", "Convex Coll.↓"]}
   rows={[
     ["Frozen generator", "DP abs", "84.0", "98.9", "14.9"],
     ["CBF-QP", "DP abs", "86.2", "97.9", "12.8"],
@@ -526,7 +526,7 @@ Each randomized motion keeps the start and end poses of a designed motion, and w
 
 <ResultsTable
   caption="Diffusion Policy picks and places a can while the human arm executes randomized motions, with the designed motions for reference. Safe-Succ., safe success. Coll., collision rate. Rates in %."
-  headers={["Method", "Randomized Safe-Succ. (236)", "Randomized Success", "Randomized Coll.", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll."]}
+  headers={["Method", "Randomized Safe-Succ.↑ (236)", "Randomized Success↑", "Randomized Coll.↓", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓"]}
   rows={[
     ["Frozen generator", "14.8", "84.3", "82.6", "20.5", "84.6", "76.3"],
     ["Guidance (ours)", "28.8", "35.2", "9.3", "39.1", "42.9", "9.6"],
@@ -552,7 +552,7 @@ The second-arm setup has no generator and no task, so we also test the speed res
 
 <ResultsTable
   caption="Diffusion Policy picks and places a can while the human arm executes six designed motions at increasing final speeds, with the whole-arm filter. Safe-Succ., safe success. Coll., collision rate. Rates in %. A range covers episodes whose collision is not resolved."
-  headers={["Final speed (m/s)", "Const. accel. Safe-Succ. (58)", "Const. accel. Coll.", "Const. speed Safe-Succ. (58)", "Const. speed Coll."]}
+  headers={["Final speed (m/s)", "Const. accel. Safe-Succ.↑ (58)", "Const. accel. Coll.↓", "Const. speed Safe-Succ.↑ (58)", "Const. speed Coll.↓"]}
   rows={[
     ["0.40", "67.2", "0.0", "67.2", "0.0"],
     ["0.80", "62.1", "1.7", "63.8", "3.4"],
@@ -592,7 +592,7 @@ A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and adva
 
 <ResultsTable
   caption="A convex obstacle advances on one link of the held robot, or on the object it carries, with the whole-arm filter. n, approaches. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
-  headers={["Link (joint)", "n", "Coll."]}
+  headers={["Link (joint)", "n", "Coll.↓"]}
   rows={[
     ["Gripper (7)", "38", "0.0 ± 9.2"],
     ["Wrist (6)", "35", "2.9 ± 11.7"],
@@ -623,7 +623,7 @@ A convex obstacle, a sphere of 60 mm radius, travels 0.60 m at 0.40 m/s and adva
 
 <ResultsTable
   caption="Up to four convex obstacles advance on the held robot, each aimed at a different link, together or one after another. n, obstacles that come within 40 mm of the robot, out of 128 per obstacle and setting. Coll., share of these obstacles that collide, ± the 95% Wilson interval. Rates in %."
-  headers={["Obstacles", "Together n", "Together Coll.", "One after another n", "One after another Coll."]}
+  headers={["Obstacles", "Together n", "Together Coll.↓", "One after another n", "One after another Coll.↓"]}
   rows={[
     ["1", "107", "15.9 ± 8.1", "107", "15.9 ± 8.1"],
     ["2", "197", "38.1 ± 6.9", "205", "22.9 ± 6.2"],
@@ -657,7 +657,7 @@ A second Panda arm, described by 14 capsules, moves through the space of the hel
 
 <ResultsTable
   caption="A second arm moves through the space of the held robot at 0.40 m/s. Coll., collision rate, ± the 95% Wilson interval. Clear., median over paths of the smallest distance between the two arms. Rates in %."
-  headers={["Configuration", "Coll. (Paths 1,382)", "Clear. (mm)"]}
+  headers={["Configuration", "Coll.↓ (Paths 1,382)", "Clear.↑ (mm)"]}
   rows={[
     ["No safety layer", "100.0 ± 0.3", "-70.5"],
     ["Filter (ours), end-effector", "83.5 ± 2.0", "-54.8"],
@@ -667,7 +667,7 @@ A second Panda arm, described by 14 capsules, moves through the space of the hel
 
 <ResultsTable
   caption="A second arm moves through the space of the held robot at 0.90 m/s, with the whole-arm filter. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
-  headers={["Prediction", "Horizon (control steps)", "Coll. (Paths 96)"]}
+  headers={["Prediction", "Horizon (control steps)", "Coll.↓ (Paths 96)"]}
   rows={[
     ["✓", "8", "20.8 ± 9.2"],
     ["✓", "1", "24.0 ± 9.4"],
@@ -686,7 +686,7 @@ The prediction removes the failures on 67 of the 96 paths, and the same 23 paths
 
 <ResultsTable
   caption="(a) A second arm moves through the space of the held robot at increasing speeds. n, paths that collide without the safety layer. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
-  headers={["Commanded (m/s)", "Realised (m/s)", "n", "Coll. end-effector", "Coll. whole-arm"]}
+  headers={["Commanded (m/s)", "Realised (m/s)", "n", "Coll.↓ end-effector", "Coll.↓ whole-arm"]}
   rows={[
     ["0.15", "0.15", "1425", "83.8 ± 2.0", "0.4 ± 0.5"],
     ["0.20", "0.20", "1425", "83.7 ± 2.0", "0.4 ± 0.5"],
@@ -711,7 +711,7 @@ The prediction removes the failures on 67 of the 96 paths, and the same 23 paths
 
 <ResultsTable
   caption="(b) The whole-arm filter at 0.90 m/s, in one held pose, with a tracking weight of 10 and each filter velocity limit. Coll., collision rate, ± the 95% Wilson interval. Rates in %."
-  headers={["Filter velocity limit (rad/s)", "Coll. (Paths 96)"]}
+  headers={["Filter velocity limit (rad/s)", "Coll.↓ (Paths 96)"]}
   rows={[
     ["1.50", "16.7 ± 8.7"],
     ["1.60", "14.6 ± 8.4"],
@@ -740,7 +740,7 @@ From these measurements we build the obstacle that the filter receives. At each 
 
 <ResultsTable
   caption="Diffusion Policy picks and places a can while our filter receives the human arm from its exact pose or from simulated perception on a sparse (40×30) or dense (160×120) depth grid. Safe-Succ., safe success. Coll., collision rate. Rates in %."
-  headers={["Method", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll.", "Stress Safe-Succ. (205)", "Stress Success", "Stress Coll."]}
+  headers={["Method", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (205)", "Stress Success↑", "Stress Coll.↓"]}
   rows={[
     ["Filter (ours), exact obstacle pose", "61.5", "61.5", "0.0", "47.8", "47.8", "0.0"],
     ["Filter (ours), sparse perception", "46.2", "48.1", "3.2", "39.5", "43.9", "14.1"],
@@ -762,7 +762,7 @@ We add one error at a time to the sparse pipeline on the designed set. We take t
 
 <ResultsTable
   caption="Results of the perception errors in the pick-and-place scenario with Diffusion Policy, sparse perception and the designed set (156 episodes). Each row adds one error, at its strongest level, to the perception pipeline. Rates in %. The table below presents every level and the meaning of each unit."
-  headers={["Error", "Level", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll."]}
+  headers={["Error", "Level", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓"]}
   rows={[
     ["No added error", "—", "46.2", "48.1", "3.2"],
     ["Body tracker", "", "", "", ""],
@@ -781,7 +781,7 @@ We add one error at a time to the sparse pipeline on the designed set. We take t
 
 <ResultsTable
   caption="Perception robustness with Diffusion Policy and the sparse pipeline, on the designed set of the pick-and-place scenario (156 episodes). Each row adds one error to the simulated perception pipeline. The delay and the Kinect-v2 model replace the base delay and depth noise. Dark returns lie on the upper arm and forearm, or at an incidence of 70° or more. Rates in %."
-  headers={["Error", "Level", "Designed Safe-Succ. (156)", "Designed Success", "Designed Coll."]}
+  headers={["Error", "Level", "Designed Safe-Succ.↑ (156)", "Designed Success↑", "Designed Coll.↓"]}
   rows={[
     ["No added error", "—", "46.2", "48.1", "3.2"],
     ["Body tracker", "", "", "", ""],
@@ -865,7 +865,7 @@ These arms use the designed and stress sets of the pick-and-place task. The scen
 
 <ResultsTable
   caption="Three other arms pick and place a can, each with its own Diffusion Policy, while the human arm moves over the task (designed set) or holds a static pose (stress set). Safe-Succ., safe success. Coll., collision rate. Rates in %."
-  headers={["Robot", "Method", "Designed n", "Designed Safe-Succ.", "Designed Success", "Designed Coll.", "Stress n", "Stress Safe-Succ.", "Stress Success", "Stress Coll."]}
+  headers={["Robot", "Method", "Designed n", "Designed Safe-Succ.↑", "Designed Success↑", "Designed Coll.↓", "Stress n", "Stress Safe-Succ.↑", "Stress Success↑", "Stress Coll.↓"]}
   rows={[
     ["UR5e", "Frozen generator", "160", "13.8", "60.0", "73.8", "203", "0.0", "65.0", "97.5"],
     ["UR5e", "Filter (ours)", "160", "36.9", "36.9", "0.6", "203", "7.9", "7.9", "2.0"],
@@ -913,7 +913,7 @@ NutAssemblySquare is a second task, in which the robot picks a square nut and pl
 
 <ResultsTable
   caption="Diffusion Policy places a square nut on a peg while the human arm moves over the task (designed set) or holds a static pose (stress set). Safe-Succ., safe success. Coll., collision rate. Rates in %. Guidance runs with half of its pick-and-place guidance scale, a compromise between the two sets."
-  headers={["Method", "Designed Safe-Succ. (124)", "Designed Success", "Designed Coll.", "Stress Safe-Succ. (208)", "Stress Success", "Stress Coll."]}
+  headers={["Method", "Designed Safe-Succ.↑ (124)", "Designed Success↑", "Designed Coll.↓", "Stress Safe-Succ.↑ (208)", "Stress Success↑", "Stress Coll.↓"]}
   rows={[
     ["Frozen generator", "8.1", "58.1", "83.9", "28.8", "74.5", "61.5"],
     ["CBF-QP", "13.7", "58.1", "70.2", "21.6", "55.3", "57.2"],
@@ -956,7 +956,7 @@ The SafeLIBERO scenarios are described on the [benchmark project page](https://v
 
 <ResultsTable
   caption="π0.5 performs 32 SafeLIBERO tasks with a static obstacle, which the filter perceives from the camera images. CAR, collision avoidance rate, episodes in which the obstacle moves by 1 mm or less. TSR, task success rate. Coll., collision rate. Rates in %."
-  headers={["Method", "CAR (Episodes 1,527)", "TSR", "Coll."]}
+  headers={["Method", "CAR↑ (Episodes 1,527)", "TSR↑", "Coll.↓"]}
   rows={[
     ["Frozen π0.5", "20.8", "49.8", "68.2"],
     ["AEGIS, reported", "77.9", "68.1", "—"],
@@ -989,7 +989,7 @@ The LIBERO-Safety scenes are described on the [benchmark project page](https://l
 
 <ResultsTable
   caption="A fine-tuned π0.5 performs the LIBERO-Safety tasks, in the 48 scenes of the benchmark and in two scenes that we authored with a moving hand. Safe-Succ., safe success. Coll., collision rate. Rates in %. Task success is scored on 2,222 benchmark episodes."
-  headers={["Method", "Benchmark Safe-Succ. (2,372)", "Benchmark Success", "Benchmark Coll.", "Authored Safe-Succ. (100)", "Authored Success", "Authored Coll."]}
+  headers={["Method", "Benchmark Safe-Succ.↑ (2,372)", "Benchmark Success↑", "Benchmark Coll.↓", "Authored Safe-Succ.↑ (100)", "Authored Success↑", "Authored Coll.↓"]}
   rows={[
     ["Frozen π0.5", "13.5", "17.8", "33.3", "15.0", "72.0", "74.0"],
     ["Filter (ours)", "12.7", "12.7", "1.7", "73.0", "75.0", "4.0"],
